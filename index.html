@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>深蹲打怪－簡易觸發版</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <h1 class="title">深蹲打怪－簡易觸發版</h1>
+
+    <section id="start-screen" class="screen active">
+      <div class="card center-card">
+        <h2>開始遊戲</h2>
+        <p>請先輸入名字，再按開始</p>
+        <input id="player-name" class="name-input" type="text" placeholder="請輸入你的名字" maxlength="20" />
+
+        <div class="rule-box">
+          <p>遊戲規則：</p>
+          <p>1. 讓全身盡量入鏡</p>
+          <p>2. 蹲下後再站起來，算一次攻擊</p>
+          <p>3. 每次成功深蹲，角色就會揮劍攻擊怪物</p>
+          <p>4. 把怪物血量打到 0 就勝利</p>
+        </div>
+
+        <button id="start-btn" class="btn">開始遊戲</button>
+      </div>
+    </section>
+
+    <section id="game-screen" class="screen">
+      <div class="game-layout">
+        <div class="card camera-panel">
+          <div class="camera-box">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+          </div>
+
+          <p id="status">系統準備中...</p>
+          <p id="hint">提示：請先站穩並讓全身入鏡</p>
+
+          <div class="metrics">
+            <p id="player-display-name">玩家：--</p>
+            <p id="knee-angle">膝蓋角度：--</p>
+            <p id="depth-status">深度判定：--</p>
+          </div>
+        </div>
+
+        <div class="card game-panel">
+          <div class="battle-area">
+            <div id="player" class="player">
+              <span class="player-body">🧍‍♂️</span>
+              <span class="player-sword">🗡️</span>
+            </div>
+            <div id="monster" class="monster">👾</div>
+          </div>
+
+          <div class="hp-bar">
+            <div id="hp-fill"></div>
+          </div>
+          <p id="hp-text">怪物血量：100 / 100</p>
+
+          <p id="damage-text" class="damage-text"></p>
+          <p id="count">深蹲次數：0</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="result-screen" class="screen">
+      <div class="card center-card">
+        <h2 id="result-title">遊戲結束</h2>
+        <p id="result-desc">你本次完成了 0 次深蹲</p>
+        <button id="restart-btn" class="btn">再玩一次</button>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
