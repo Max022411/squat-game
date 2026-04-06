@@ -1,0 +1,232 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #0f172a, #111827);
+  color: white;
+  font-family: Arial, "Microsoft JhengHei", sans-serif;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.title {
+  text-align: center;
+  margin: 10px 0 20px;
+  font-size: 40px;
+}
+
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.center-card {
+  max-width: 760px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.rule-box {
+  margin: 18px auto 0;
+  max-width: 520px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 14px 18px;
+  border-radius: 14px;
+}
+
+.name-input {
+  width: 80%;
+  max-width: 380px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.btn {
+  margin-top: 20px;
+  padding: 14px 28px;
+  font-size: 20px;
+  border: none;
+  border-radius: 14px;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.btn:hover {
+  transform: scale(1.03);
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.camera-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin: 0 auto 16px;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  background: black;
+  border-radius: 18px;
+  object-fit: cover;
+  display: block;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  background: transparent;
+  pointer-events: none;
+}
+
+#status,
+#hint,
+#hp-text,
+#count {
+  text-align: center;
+  font-size: 22px;
+  margin: 12px 0;
+}
+
+.metrics {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.metrics p {
+  margin: 8px 0;
+  font-size: 18px;
+}
+
+.battle-area {
+  position: relative;
+  height: 220px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.player,
+.monster {
+  position: absolute;
+  bottom: 0;
+  transition: transform 0.25s ease;
+}
+
+.player {
+  left: 20px;
+  width: 160px;
+  height: 140px;
+}
+
+.player-body {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  font-size: 110px;
+}
+
+.player-sword {
+  position: absolute;
+  right: -10px;
+  bottom: 58px;
+  font-size: 62px;
+  transform: rotate(-25deg);
+  transform-origin: center;
+}
+
+.player.attack {
+  transform: translateX(95px) scale(1.12);
+}
+
+.player.attack .player-sword {
+  transform: rotate(18deg) scale(1.18);
+}
+
+.monster {
+  right: 20px;
+  font-size: 120px;
+}
+
+.monster.hit {
+  transform: scale(1.18) rotate(-10deg);
+}
+
+.hp-bar {
+  width: 100%;
+  max-width: 340px;
+  height: 28px;
+  background: #374151;
+  border-radius: 999px;
+  margin: 12px auto;
+  overflow: hidden;
+}
+
+#hp-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  transition: width 0.25s ease;
+}
+
+.damage-text {
+  height: 38px;
+  font-size: 32px;
+  font-weight: bold;
+  color: #facc15;
+  text-align: center;
+  margin: 10px 0 0;
+}
+
+@media (max-width: 900px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  #status,
+  #hint,
+  #hp-text,
+  #count {
+    font-size: 18px;
+  }
+
+  .metrics p {
+    font-size: 16px;
+  }
+}
