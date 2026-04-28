@@ -4,7 +4,9 @@
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #0f172a, #111827);
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.22), transparent 35%),
+    linear-gradient(180deg, #0f172a, #111827);
   color: white;
   font-family: Arial, "Microsoft JhengHei", sans-serif;
 }
@@ -17,8 +19,16 @@ body {
 
 .title {
   text-align: center;
-  margin: 10px 0 20px;
-  font-size: 40px;
+  margin: 10px 0 6px;
+  font-size: 42px;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  text-align: center;
+  margin: 0 0 22px;
+  color: #cbd5e1;
+  font-size: 18px;
 }
 
 .screen {
@@ -30,10 +40,12 @@ body {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
   padding: 24px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px);
 }
 
 .center-card {
@@ -42,39 +54,54 @@ body {
   text-align: center;
 }
 
+.panel-title {
+  margin: 0 0 16px;
+  font-size: 24px;
+  text-align: center;
+}
+
 .rule-box {
   margin: 18px auto 0;
-  max-width: 520px;
+  max-width: 560px;
   text-align: left;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.07);
   padding: 14px 18px;
-  border-radius: 14px;
+  border-radius: 16px;
+  line-height: 1.7;
+}
+
+.rule-title {
+  font-weight: bold;
+  color: #86efac;
 }
 
 .name-input {
   width: 80%;
   max-width: 380px;
   margin-top: 10px;
-  padding: 12px 14px;
+  padding: 13px 15px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 18px;
+  outline: none;
 }
 
 .btn {
   margin-top: 20px;
-  padding: 14px 28px;
+  padding: 14px 30px;
   font-size: 20px;
   border: none;
-  border-radius: 14px;
-  background: #22c55e;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
 }
 
 .btn:hover {
-  transform: scale(1.03);
+  transform: scale(1.04);
+  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.45);
 }
 
 .game-layout {
@@ -98,6 +125,7 @@ video {
   border-radius: 18px;
   object-fit: cover;
   display: block;
+  transform: scaleX(-1);
 }
 
 canvas {
@@ -108,6 +136,7 @@ canvas {
   border-radius: 18px;
   background: transparent;
   pointer-events: none;
+  transform: scaleX(-1);
 }
 
 #status,
@@ -115,15 +144,24 @@ canvas {
 #hp-text,
 #count {
   text-align: center;
-  font-size: 22px;
+  font-size: 21px;
   margin: 12px 0;
+}
+
+#status {
+  color: #86efac;
+  font-weight: bold;
+}
+
+#hint {
+  color: #cbd5e1;
 }
 
 .metrics {
   margin-top: 14px;
   padding: 12px 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .metrics p {
@@ -131,83 +169,468 @@ canvas {
   font-size: 18px;
 }
 
-.battle-area {
-  position: relative;
-  height: 220px;
-  margin-bottom: 20px;
-  overflow: hidden;
+.top-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.player,
-.monster {
-  position: absolute;
-  bottom: 0;
-  transition: transform 0.25s ease;
+.stat-box {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 16px;
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-box span {
+  display: block;
+  color: #cbd5e1;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.stat-box strong {
+  font-size: 26px;
+  color: #facc15;
+}
+
+.battle-area {
+  position: relative;
+  height: 260px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 70% 75%, rgba(239, 68, 68, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.3), rgba(15, 23, 42, 0.88)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 0px,
+      rgba(255,255,255,0.04) 1px,
+      transparent 1px,
+      transparent 38px
+    );
 }
 
 .player {
-  left: 20px;
-  width: 160px;
-  height: 140px;
+  position: absolute;
+  left: 44px;
+  bottom: 28px;
+  width: 130px;
+  height: 170px;
+  transition: transform 0.25s ease;
+  z-index: 2;
 }
 
-.player-body {
+.hero {
+  position: relative;
+  width: 120px;
+  height: 165px;
+}
+
+.hero-head {
+  position: absolute;
+  left: 39px;
+  top: 4px;
+  width: 42px;
+  height: 42px;
+  background: radial-gradient(circle at 35% 30%, #fde68a, #f59e0b);
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.35);
+  z-index: 3;
+}
+
+.hero-hair {
+  position: absolute;
+  left: 36px;
+  top: 0;
+  width: 48px;
+  height: 24px;
+  background: #111827;
+  border-radius: 22px 22px 10px 10px;
+  z-index: 4;
+}
+
+.hero-body {
+  position: absolute;
+  left: 32px;
+  top: 46px;
+  width: 56px;
+  height: 68px;
+  background: linear-gradient(160deg, #22c55e, #15803d);
+  border-radius: 16px 16px 12px 12px;
+  border: 3px solid rgba(255,255,255,0.18);
+  box-shadow: inset 0 -12px 16px rgba(0,0,0,0.18);
+  z-index: 2;
+}
+
+.hero-arm {
+  position: absolute;
+  top: 54px;
+  width: 14px;
+  height: 58px;
+  background: linear-gradient(#fde68a, #f59e0b);
+  border-radius: 10px;
+  transform-origin: top center;
+  z-index: 4;
+}
+
+.hero-arm.left {
+  left: 20px;
+  transform: rotate(12deg);
+}
+
+.hero-arm.right {
+  right: 22px;
+  transform: rotate(-28deg);
+}
+
+.sword {
+  position: absolute;
+  left: 3px;
+  bottom: -58px;
+  width: 16px;
+  height: 86px;
+  transform: rotate(-12deg);
+  transform-origin: top center;
+}
+
+.blade {
+  position: absolute;
+  left: 5px;
+  top: 0;
+  width: 7px;
+  height: 62px;
+  background: linear-gradient(90deg, #f8fafc, #94a3b8, #e5e7eb);
+  border-radius: 8px 8px 3px 3px;
+  box-shadow: 0 0 14px rgba(226, 232, 240, 0.55);
+}
+
+.guard {
   position: absolute;
   left: 0;
-  bottom: 0;
-  font-size: 110px;
+  top: 58px;
+  width: 18px;
+  height: 6px;
+  background: #facc15;
+  border-radius: 999px;
 }
 
-.player-sword {
+.handle {
   position: absolute;
-  right: -10px;
-  bottom: 58px;
-  font-size: 62px;
-  transform: rotate(-25deg);
-  transform-origin: center;
+  left: 6px;
+  top: 63px;
+  width: 5px;
+  height: 22px;
+  background: #78350f;
+  border-radius: 4px;
+}
+
+.hero-leg {
+  position: absolute;
+  top: 110px;
+  width: 16px;
+  height: 54px;
+  background: linear-gradient(#334155, #0f172a);
+  border-radius: 10px;
+  z-index: 1;
+}
+
+.hero-leg.left {
+  left: 38px;
+  transform: rotate(8deg);
+}
+
+.hero-leg.right {
+  right: 38px;
+  transform: rotate(-8deg);
 }
 
 .player.attack {
-  transform: translateX(95px) scale(1.12);
+  transform: translateX(115px) scale(1.08);
 }
 
-.player.attack .player-sword {
-  transform: rotate(18deg) scale(1.18);
+.player.attack .hero-arm.right {
+  animation: swordSlash 0.42s ease;
+}
+
+@keyframes swordSlash {
+  0% { transform: rotate(-35deg); }
+  45% { transform: rotate(-105deg); }
+  100% { transform: rotate(-28deg); }
 }
 
 .monster {
-  right: 20px;
-  font-size: 120px;
+  position: absolute;
+  right: 42px;
+  bottom: 32px;
+  width: 128px;
+  height: 132px;
+  transition: transform 0.25s ease, filter 0.25s ease;
+  z-index: 1;
+}
+
+.monster-body {
+  position: absolute;
+  left: 8px;
+  top: 18px;
+  width: 112px;
+  height: 104px;
+  background:
+    radial-gradient(circle at 35% 30%, #c084fc, #7e22ce 42%, #3b0764 100%);
+  border-radius: 48% 52% 45% 55%;
+  border: 3px solid rgba(255,255,255,0.18);
+  box-shadow:
+    inset -10px -14px 18px rgba(0,0,0,0.25),
+    0 12px 28px rgba(88, 28, 135, 0.5);
+}
+
+.monster-horn {
+  position: absolute;
+  top: 2px;
+  width: 24px;
+  height: 36px;
+  background: linear-gradient(#fef3c7, #f59e0b);
+  border-radius: 100% 0 100% 0;
+  z-index: 2;
+}
+
+.monster-horn.left {
+  left: 26px;
+  transform: rotate(-28deg);
+}
+
+.monster-horn.right {
+  right: 26px;
+  transform: scaleX(-1) rotate(-28deg);
+}
+
+.monster-eye {
+  position: absolute;
+  top: 50px;
+  width: 22px;
+  height: 22px;
+  background: #f8fafc;
+  border-radius: 50%;
+  z-index: 3;
+}
+
+.monster-eye::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+.monster-eye.left {
+  left: 34px;
+}
+
+.monster-eye.right {
+  right: 34px;
+}
+
+.monster-mouth {
+  position: absolute;
+  left: 43px;
+  top: 88px;
+  width: 42px;
+  height: 20px;
+  background: #111827;
+  border-radius: 0 0 22px 22px;
+  z-index: 3;
+}
+
+.monster-mouth::before,
+.monster-mouth::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 12px;
+  background: #f8fafc;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.monster-mouth::before {
+  left: 9px;
+}
+
+.monster-mouth::after {
+  right: 9px;
+}
+
+.monster-shadow {
+  position: absolute;
+  left: 20px;
+  bottom: 0;
+  width: 90px;
+  height: 18px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 50%;
+  filter: blur(2px);
 }
 
 .monster.hit {
-  transform: scale(1.18) rotate(-10deg);
+  transform: translateX(24px) scale(1.14) rotate(-7deg);
+  filter: brightness(1.45) drop-shadow(0 0 20px #f87171);
+}
+
+.battle-area.shake {
+  animation: shake 0.25s ease;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  50% { transform: translateX(7px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
 }
 
 .hp-bar {
   width: 100%;
-  max-width: 340px;
-  height: 28px;
+  max-width: 360px;
+  height: 30px;
   background: #374151;
   border-radius: 999px;
   margin: 12px auto;
   overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.16);
 }
 
 #hp-fill {
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #ef4444, #f97316);
+  background: linear-gradient(90deg, #ef4444, #f97316, #facc15);
   transition: width 0.25s ease;
 }
 
 .damage-text {
-  height: 38px;
-  font-size: 32px;
+  position: absolute;
+  top: 42px;
+  right: 92px;
+  height: 42px;
+  font-size: 34px;
   font-weight: bold;
   color: #facc15;
+  text-shadow: 0 3px 12px rgba(0,0,0,0.6);
+  margin: 0;
+  opacity: 0;
+  z-index: 5;
+}
+
+.damage-text.show {
+  animation: damageFloat 0.45s ease;
+}
+
+@keyframes damageFloat {
+  0% {
+    transform: translateY(10px) scale(0.8);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(-10px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-28px) scale(1);
+    opacity: 0;
+  }
+}
+
+#result-score {
+  font-size: 24px;
+  color: #facc15;
+  font-weight: bold;
+}
+
+.level-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background:
+    radial-gradient(circle at center, rgba(34, 197, 94, 0.24), transparent 38%),
+    rgba(2, 6, 23, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+
+.level-transition.hidden {
+  display: none;
+}
+
+.level-card {
+  width: min(540px, 90vw);
+  padding: 36px 28px;
+  border-radius: 30px;
   text-align: center;
+  background:
+    linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
+  border: 1px solid rgba(250, 204, 21, 0.42);
+  box-shadow:
+    0 0 44px rgba(250, 204, 21, 0.14),
+    0 24px 80px rgba(0, 0, 0, 0.6);
+  animation: levelPop 0.45s ease;
+}
+
+#level-small-text {
+  margin: 0 0 8px;
+  color: #facc15;
+  letter-spacing: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#level-title {
+  margin: 0;
+  font-size: 40px;
+}
+
+#level-desc {
+  color: #cbd5e1;
+  font-size: 18px;
+}
+
+.level-monster {
+  font-size: 92px;
+  margin: 16px 0;
+  animation: monsterFloat 1s infinite alternate ease-in-out;
+}
+
+#level-countdown {
   margin: 10px 0 0;
+  font-size: 54px;
+  font-weight: bold;
+  color: #86efac;
+}
+
+@keyframes levelPop {
+  from {
+    transform: scale(0.86);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes monsterFloat {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(-10px) scale(1.08);
+  }
 }
 
 @media (max-width: 900px) {
@@ -228,5 +651,9 @@ canvas {
 
   .metrics p {
     font-size: 16px;
+  }
+
+  .top-stats {
+    grid-template-columns: 1fr;
   }
 }
