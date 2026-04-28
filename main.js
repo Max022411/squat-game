@@ -68,15 +68,13 @@ let squatLocked = false;
 let lastDownTime = 0;
 
 const MAX_LEVEL = 10;
-
 const VISIBILITY_THRESHOLD = 0.35;
 
-// 標準深蹲判斷參數
-const STAND_KNEE_MIN = 155;       // 站直角度
-const SQUAT_KNEE_MAX = 105;       // 深蹲角度，越小越深
-const PERFECT_KNEE_ANGLE = 90;    // 接近標準深蹲
-const HIP_DEPTH_MARGIN = -0.02;   // 髖部接近膝蓋高度
-const MIN_SQUAT_TIME = 600;       // 太快不算，至少 0.6 秒
+const STAND_KNEE_MIN = 155;
+const SQUAT_KNEE_MAX = 105;
+const PERFECT_KNEE_ANGLE = 90;
+const HIP_DEPTH_MARGIN = -0.02;
+const MIN_SQUAT_TIME = 600;
 
 const BASE_DAMAGE = 10;
 const COMBO_TIMEOUT = 2500;
