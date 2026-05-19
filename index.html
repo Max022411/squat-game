@@ -1,110 +1,579 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>深蹲打怪</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深蹲打怪</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Microsoft JhengHei", Arial, sans-serif;
+  background: #050918;
+  color: white;
+}
+
+.screen {
+  display: none;
+  min-height: 100vh;
+}
+
+.screen.active {
+  display: flex;
+}
+
+.center-screen {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(0, 217, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #050918, #02040d);
+}
+
+.title-box h1 {
+  font-size: 54px;
+  letter-spacing: 12px;
+  margin: 0;
+}
+
+.title-box p {
+  color: #00d9ff;
+  letter-spacing: 6px;
+  font-size: 20px;
+  margin: 22px 0 70px;
+}
+
+.main-btn {
+  width: 250px;
+  height: 70px;
+  border: none;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #16c7f3, #3b82f6);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(0, 217, 255, 0.28);
+}
+
+.main-btn:hover {
+  transform: scale(1.05);
+}
+
+.login-card {
+  width: 600px;
+}
+
+.login-card h2 {
+  font-size: 34px;
+  margin-bottom: 30px;
+}
+
+.login-card input {
+  width: 100%;
+  height: 66px;
+  border-radius: 16px;
+  background: #111827;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: white;
+  font-size: 22px;
+  text-align: center;
+  outline: none;
+  margin-bottom: 28px;
+}
+
+.login-card input:focus {
+  border-color: #00d9ff;
+  box-shadow: 0 0 18px rgba(0,217,255,0.35);
+}
+
+#gameScreen {
+  justify-content: center;
+  background: #050918;
+}
+
+.game-container {
+  width: 760px;
+  padding: 24px;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.player {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  background: #11c9ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+#playerName {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.level {
+  color: #00d9ff;
+  font-size: 13px;
+}
+
+.stage {
+  color: #ffd400;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.battle-area {
+  position: relative;
+  width: 100%;
+  height: 635px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #111827;
+  border: 2px solid rgba(255,255,255,0.13);
+}
+
+#webcam {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.boss {
+  position: absolute;
+  top: 155px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 105px;
+  z-index: 5;
+  filter: drop-shadow(0 0 18px rgba(180, 110, 255, 0.9));
+}
+
+.pet {
+  position: absolute;
+  right: 60px;
+  bottom: 100px;
+  font-size: 72px;
+  z-index: 6;
+  filter: drop-shadow(0 0 16px rgba(0, 217, 255, 0.8));
+}
+
+.guide {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20,20,30,0.9);
+  border: 2px solid #ff3355;
+  border-radius: 22px;
+  padding: 12px 28px;
+  z-index: 10;
+}
+
+.camera-status {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  background: rgba(0,0,0,0.65);
+  color: #00d9ff;
+  padding: 10px 16px;
+  border-radius: 16px;
+  z-index: 10;
+}
+
+.panel {
+  margin-top: 18px;
+  background: #10172a;
+  border-radius: 28px;
+  padding: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.stats {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.stats span {
+  display: block;
+  color: #7e91bd;
+  font-size: 13px;
+}
+
+.stats strong {
+  color: #ffd400;
+  font-size: 28px;
+}
+
+.combo {
+  text-align: center;
+  color: #ffd400;
+  font-size: 30px;
+  font-weight: bold;
+  margin: 12px 0;
+  opacity: 0;
+}
+
+.combo.show {
+  animation: pop 0.45s;
+  opacity: 1;
+}
+
+.hp-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hp-bar {
+  height: 16px;
+  background: #1e293b;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+#hpFill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #4ade80, #00d4ff);
+  transition: 0.3s;
+}
+
+.extra {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  color: #facc15;
+  font-size: 14px;
+}
+
+#hitEffect {
+  position: absolute;
+  top: 210px;
+  left: 50%;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff176, rgba(255,100,0,0.55), transparent 70%);
+  opacity: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+#hitEffect.show {
+  animation: explosion 0.5s;
+}
+
+#floatingText {
+  position: absolute;
+  top: 190px;
+  left: 50%;
+  color: #ffd400;
+  font-size: 38px;
+  font-weight: bold;
+  text-shadow: 0 0 14px #ff6600;
+  opacity: 0;
+  z-index: 9;
+}
+
+#floatingText.show {
+  animation: floatText 0.75s;
+}
+
+.hit {
+  animation: bossHit 0.35s;
+}
+
+.petAttack {
+  animation: petJump 0.45s;
+}
+
+@keyframes bossHit {
+  0% { transform: translateX(-50%) scale(1); }
+  25% { transform: translateX(calc(-50% - 16px)) scale(1.15); filter: brightness(2); }
+  50% { transform: translateX(calc(-50% + 16px)) scale(1.15); filter: brightness(2); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+@keyframes petJump {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-45px) scale(1.2); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes explosion {
+  0% { transform: translateX(-50%) scale(0.3); opacity: 1; }
+  100% { transform: translateX(-50%) scale(2.3); opacity: 0; }
+}
+
+@keyframes floatText {
+  0% { transform: translate(-50%, 20px) scale(0.8); opacity: 0; }
+  40% { transform: translate(-50%, 0) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -55px) scale(1); opacity: 0; }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); }
+}
+</style>
 </head>
+
 <body>
 
-  <!-- 登入畫面 -->
-  <section id="loginScreen" class="screen active">
-    <div class="login-bg-glow"></div>
+<section id="homeScreen" class="screen active center-screen">
+  <div class="title-box">
+    <h1>深蹲打怪</h1>
+    <p>SQUAT HERO ADVENTURE</p>
+    <button id="goLoginBtn" class="main-btn">開始冒險</button>
+  </div>
+</section>
 
-    <div class="login-card">
-      <div class="game-logo">⚔️</div>
-      <h1>深蹲打怪</h1>
-      <p>SQUAT HERO ADVENTURE</p>
+<section id="loginScreen" class="screen center-screen">
+  <div class="login-card">
+    <h2>輸入勇者尊姓大名</h2>
+    <input id="nameInput" type="text" placeholder="勇者名稱..." maxlength="12">
+    <button id="startBtn" class="main-btn">出發！</button>
+  </div>
+</section>
 
-      <div class="login-form">
-        <label>勇者登入</label>
-        <input id="nameInput" type="text" placeholder="輸入勇者名稱..." maxlength="12" />
-        <button id="startBtn">開始冒險</button>
+<section id="gameScreen" class="screen">
+  <div class="game-container">
+
+    <header class="top-bar">
+      <div class="player">
+        <div class="avatar">⚔️</div>
+        <div>
+          <div id="playerName">勇者</div>
+          <div class="level">LV.1 冒險者</div>
+        </div>
+      </div>
+      <div class="stage">STAGE 1</div>
+    </header>
+
+    <main class="battle-area">
+      <video id="webcam" autoplay playsinline muted></video>
+
+      <div id="cameraStatus" class="camera-status">正在開啟鏡頭...</div>
+
+      <div id="boss" class="boss">👾</div>
+      <div id="pet" class="pet">🐲</div>
+
+      <div id="hitEffect"></div>
+      <div id="floatingText">HIT!</div>
+
+      <div class="guide">⚠️ 請往後退，拍到膝蓋與腳踝</div>
+    </main>
+
+    <section class="panel">
+      <div class="stats">
+        <div>
+          <span>SCORE</span>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <span>ATTACK ENERGY</span>
+          <strong id="energy">0</strong>
+        </div>
+        <div>
+          <span>POWER</span>
+          <strong>100%</strong>
+        </div>
       </div>
 
-      <div class="login-tip">登入後請允許攝影機權限</div>
-    </div>
-  </section>
+      <div id="combo" class="combo">COMBO x0</div>
 
-  <!-- 遊戲畫面 -->
-  <section id="gameScreen" class="screen">
-    <div class="game-wrap">
-
-      <header class="top-bar">
-        <div class="player">
-          <div class="avatar">⚔️</div>
-          <div>
-            <div id="playerName">勇者</div>
-            <small>LV.1 冒險者</small>
-          </div>
-        </div>
-
-        <div class="stage">STAGE 1</div>
-      </header>
-
-      <main class="battle-card">
-        <video id="webcam" autoplay playsinline muted></video>
-
-        <div class="boss-area">
-          <div id="boss" class="boss">👾</div>
-          <div class="boss-name">暗影史萊姆</div>
-        </div>
-
-        <div id="pet" class="pet">🐲</div>
-
-        <div id="hitEffect"></div>
-        <div id="floatingText">HIT!</div>
-
-        <div id="cameraStatus">正在開啟鏡頭...</div>
-
-        <div class="guide">
-          ⚠️ 請往後退，拍到膝蓋與腳踝
-        </div>
-      </main>
-
-      <section class="panel">
-        <div class="stats">
-          <div>
-            <span>SCORE</span>
-            <strong id="score">0</strong>
-          </div>
-
-          <div>
-            <span>攻擊能量</span>
-            <strong id="energy">0</strong>
-          </div>
-
-          <div>
-            <span>POWER</span>
-            <strong>100%</strong>
-          </div>
-        </div>
-
-        <div id="combo">COMBO x0</div>
-
-        <div class="hp-title">
-          <span>ENEMY HP</span>
-          <span id="hpText">100 / 100</span>
-        </div>
-
-        <div class="hp-bar">
-          <div id="hpFill"></div>
-        </div>
-
-        <div class="extra-info">
-          <span>🔥 DAILY STREAK：1 DAYS</span>
-          <span>超越 87% 冒險者</span>
-        </div>
-      </section>
-
-      <div class="test-tip">
-        測試用：按空白鍵 = 成功深蹲一次
+      <div class="hp-title">
+        <span>ENEMY HP</span>
+        <span id="hpText">100 / 100</span>
       </div>
 
-    </div>
-  </section>
+      <div class="hp-bar">
+        <div id="hpFill"></div>
+      </div>
 
-  <script src="script.js"></script>
+      <div class="extra">
+        <span>🔥 DAILY STREAK：1 DAYS</span>
+        <span>超越 87% 冒險者</span>
+      </div>
+    </section>
+
+  </div>
+</section>
+
+<script>
+let score = 0;
+let energy = 0;
+let combo = 0;
+let bossHp = 100;
+const maxBossHp = 100;
+
+const homeScreen = document.getElementById("homeScreen");
+const loginScreen = document.getElementById("loginScreen");
+const gameScreen = document.getElementById("gameScreen");
+
+const goLoginBtn = document.getElementById("goLoginBtn");
+const startBtn = document.getElementById("startBtn");
+const nameInput = document.getElementById("nameInput");
+
+const playerName = document.getElementById("playerName");
+const webcam = document.getElementById("webcam");
+const cameraStatus = document.getElementById("cameraStatus");
+
+const scoreText = document.getElementById("score");
+const energyText = document.getElementById("energy");
+const comboText = document.getElementById("combo");
+const boss = document.getElementById("boss");
+const pet = document.getElementById("pet");
+const hpFill = document.getElementById("hpFill");
+const hpText = document.getElementById("hpText");
+const hitEffect = document.getElementById("hitEffect");
+const floatingText = document.getElementById("floatingText");
+
+goLoginBtn.onclick = function () {
+  homeScreen.classList.remove("active");
+  loginScreen.classList.add("active");
+};
+
+startBtn.onclick = function () {
+  startGame();
+};
+
+nameInput.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    startGame();
+  }
+});
+
+async function startGame() {
+  const name = nameInput.value.trim();
+
+  if (name === "") {
+    alert("請先輸入勇者名稱");
+    return;
+  }
+
+  playerName.textContent = name;
+
+  loginScreen.classList.remove("active");
+  gameScreen.classList.add("active");
+
+  await startCamera();
+}
+
+async function startCamera() {
+  cameraStatus.textContent = "正在開啟鏡頭...";
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
+    });
+
+    webcam.srcObject = stream;
+
+    webcam.onloadedmetadata = function () {
+      webcam.play();
+      cameraStatus.textContent = "鏡頭已啟動";
+
+      setTimeout(function () {
+        cameraStatus.style.display = "none";
+      }, 1500);
+    };
+
+  } catch (error) {
+    cameraStatus.textContent = "鏡頭開啟失敗";
+    alert("鏡頭開啟失敗，請確認瀏覽器有允許攝影機權限。");
+  }
+}
+
+function onSquatSuccess() {
+  score += 10;
+  energy += 1;
+  combo += 1;
+
+  let damage = 8;
+
+  if (combo % 5 === 0) {
+    damage = 18;
+    floatingText.textContent = "CRITICAL!";
+  } else {
+    floatingText.textContent = "HIT!";
+  }
+
+  bossHp -= damage;
+  if (bossHp < 0) bossHp = 0;
+
+  updateUI();
+  playAttackEffect();
+
+  if (bossHp <= 0) {
+    setTimeout(function () {
+      alert("Boss 擊敗！進入下一個探險地圖！");
+      bossHp = maxBossHp;
+      combo = 0;
+      updateUI();
+    }, 500);
+  }
+}
+
+function updateUI() {
+  scoreText.textContent = score;
+  energyText.textContent = energy;
+  comboText.textContent = "COMBO x" + combo;
+
+  comboText.classList.remove("show");
+  void comboText.offsetWidth;
+  comboText.classList.add("show");
+
+  hpFill.style.width = (bossHp / maxBossHp * 100) + "%";
+  hpText.textContent = bossHp + " / " + maxBossHp;
+}
+
+function playAttackEffect() {
+  boss.classList.remove("hit");
+  pet.classList.remove("petAttack");
+  hitEffect.classList.remove("show");
+  floatingText.classList.remove("show");
+
+  void boss.offsetWidth;
+
+  boss.classList.add("hit");
+  pet.classList.add("petAttack");
+  hitEffect.classList.add("show");
+  floatingText.classList.add("show");
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.code === "Space" && gameScreen.classList.contains("active")) {
+    onSquatSuccess();
+  }
+});
+</script>
+
 </body>
 </html>
