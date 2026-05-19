@@ -2,86 +2,111 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>Fitness RPG</title>
+  <title>深蹲打怪 Squat Hero Adventure</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="game-container">
+  <!-- 登入畫面 -->
+  <section id="loginScreen" class="screen active">
+    <div class="login-card">
+      <div class="logo-circle">⚔️</div>
 
-    <header class="top-bar">
-      <div class="player-info">
-        <div class="avatar">⚔️</div>
-        <div>
-          <div class="player-name">666</div>
-          <div class="player-level">LV.1 冒險者</div>
-        </div>
+      <h1>深蹲打怪</h1>
+      <p class="subtitle">SQUAT HERO ADVENTURE</p>
+
+      <div class="login-box">
+        <label>輸入勇者尊姓大名</label>
+        <input id="nameInput" type="text" placeholder="勇者名稱..." maxlength="12">
+
+        <button id="startBtn">出發！</button>
       </div>
 
-      <div class="stage-title">DUNGEON 1</div>
-    </header>
+      <p class="hint">登入後將開啟鏡頭，請允許攝影機權限</p>
+    </div>
+  </section>
 
-    <main class="battle-area">
+  <!-- 遊戲畫面 -->
+  <section id="gameScreen" class="screen">
 
-      <video id="webcam" autoplay playsinline></video>
+    <div class="game-container">
 
-      <canvas id="poseCanvas"></canvas>
-
-      <img id="boss" src="boss.png" alt="Boss">
-
-      <img id="pet" src="pet.png" alt="Pet">
-
-      <div id="hitEffect"></div>
-
-      <div id="floatingText">CRITICAL!</div>
-
-      <div id="warningText">
-        ⚠️ 請往後退，拍到膝蓋與腳踝
-      </div>
-
-    </main>
-
-    <section class="status-panel">
-
-      <div class="status-row">
-        <div>
-          <div class="label">BATTLE SCORE</div>
-          <div id="score" class="value">0</div>
+      <header class="top-bar">
+        <div class="player-info">
+          <div class="avatar">⚔️</div>
+          <div>
+            <div id="playerName" class="player-name">勇者</div>
+            <div class="player-level">LV.1 冒險者</div>
+          </div>
         </div>
 
-        <div>
-          <div class="label">ATTACK ENERGY</div>
-          <div id="energy" class="value">0</div>
+        <div class="stage-title">探險地圖 1</div>
+      </header>
+
+      <main class="battle-area">
+
+        <video id="webcam" autoplay playsinline muted></video>
+
+        <canvas id="poseCanvas"></canvas>
+
+        <div id="boss" class="boss">👾</div>
+
+        <div id="pet" class="pet">🐲</div>
+
+        <div id="hitEffect"></div>
+
+        <div id="floatingText">CRITICAL!</div>
+
+        <div id="cameraStatus">
+          正在開啟鏡頭...
         </div>
 
-        <div>
-          <div class="label">MANA</div>
-          <div id="power" class="value">100%</div>
+        <div id="warningText">
+          ⚠️ 請往後退，拍到膝蓋與腳踝
         </div>
-      </div>
 
-      <div id="combo" class="combo">COMBO x0</div>
+      </main>
 
-      <div class="hp-title">
-        <span>BOSS HP</span>
-        <span id="bossHpText">100 / 100</span>
-      </div>
+      <section class="status-panel">
 
-      <div class="hp-bar">
-        <div id="bossHpBar"></div>
-      </div>
+        <div class="status-row">
+          <div>
+            <div class="label">BATTLE SCORE</div>
+            <div id="score" class="value">0</div>
+          </div>
 
-      <div class="daily-box">
-        🔥 DAILY STREAK：<span id="streak">1</span> DAYS
-      </div>
+          <div>
+            <div class="label">ATTACK ENERGY</div>
+            <div id="energy" class="value">0</div>
+          </div>
 
-      <div class="rank-box">
-        你今天超越了 <span id="rankPercent">87%</span> 的冒險者
-      </div>
+          <div>
+            <div class="label">MANA</div>
+            <div id="power" class="value">100%</div>
+          </div>
+        </div>
 
-    </section>
+        <div id="combo" class="combo">COMBO x0</div>
 
-  </div>
+        <div class="hp-title">
+          <span>BOSS HP</span>
+          <span id="bossHpText">100 / 100</span>
+        </div>
+
+        <div class="hp-bar">
+          <div id="bossHpBar"></div>
+        </div>
+
+        <div class="bottom-info">
+          <div>🔥 DAILY STREAK：<span id="streak">1</span> DAYS</div>
+          <div>你今天超越了 <span id="rankPercent">87%</span> 的冒險者</div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </section>
 
   <audio id="hitSound" src="hit.mp3"></audio>
 
