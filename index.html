@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
 <title>深蹲打怪</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
@@ -10,15 +11,26 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
+
 body{
   margin:0;
   background:#050918;
   color:white;
   font-family:"Microsoft JhengHei",Arial,sans-serif;
 }
-.screen{display:none;min-height:100vh}
-.screen.active{display:flex}
+
+.screen{
+  display:none;
+  min-height:100vh;
+}
+
+.screen.active{
+  display:flex;
+}
+
 .center{
   justify-content:center;
   align-items:center;
@@ -28,31 +40,63 @@ body{
     radial-gradient(circle at 70% 70%,rgba(255,214,10,.12),transparent 25%),
     linear-gradient(180deg,#050918,#02040d);
 }
+
 .logo{
-  width:86px;height:86px;margin:0 auto 26px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
+  width:86px;
+  height:86px;
+  margin:0 auto 26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   background:linear-gradient(135deg,#00d9ff,#3b82f6);
-  font-size:44px;box-shadow:0 0 34px rgba(0,217,255,.6);
+  font-size:44px;
+  box-shadow:0 0 34px rgba(0,217,255,.6);
 }
-h1{margin:0;font-size:46px;letter-spacing:8px}
-.subtitle{color:#00d9ff;letter-spacing:5px;margin:18px 0 54px}
-button{border:none;cursor:pointer}
+
+h1{
+  margin:0;
+  font-size:46px;
+  letter-spacing:8px;
+}
+
+.subtitle{
+  color:#00d9ff;
+  letter-spacing:5px;
+  margin:18px 0 54px;
+}
+
+button{
+  border:none;
+  cursor:pointer;
+}
+
 .main-btn{
-  width:240px;height:66px;border-radius:40px;
+  width:240px;
+  height:66px;
+  border-radius:40px;
   background:linear-gradient(135deg,#16c7f3,#3b82f6);
-  color:white;font-size:22px;font-weight:bold;
+  color:white;
+  font-size:22px;
+  font-weight:bold;
   box-shadow:0 0 24px rgba(0,217,255,.35);
 }
-.main-btn:active{transform:scale(.96)}
+
 input{
-  width:88%;max-width:420px;height:60px;border-radius:18px;
+  width:88%;
+  max-width:420px;
+  height:60px;
+  border-radius:18px;
   background:rgba(17,24,39,.95);
   border:1px solid rgba(255,255,255,.25);
-  color:white;text-align:center;font-size:20px;outline:none;
+  color:white;
+  text-align:center;
+  font-size:20px;
+  outline:none;
   margin:30px 0 24px;
 }
-input:focus{border-color:#00d9ff;box-shadow:0 0 18px rgba(0,217,255,.35)}
 
+/* 共用背景 */
 .app-bg{
   justify-content:center;
   background:
@@ -60,39 +104,57 @@ input:focus{border-color:#00d9ff;box-shadow:0 0 18px rgba(0,217,255,.35)}
     radial-gradient(circle at 80% 80%,rgba(255,214,10,.12),transparent 26%),
     linear-gradient(180deg,#050918,#07111f);
 }
+
 .phone{
   width:100%;
   max-width:430px;
   padding:18px;
 }
+
+/* 大廳 */
 .top-user{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:16px;
 }
+
 .user-left{
   display:flex;
   gap:10px;
   align-items:center;
 }
+
 .avatar{
-  width:46px;height:46px;border-radius:50%;
+  width:46px;
+  height:46px;
+  border-radius:50%;
   background:linear-gradient(135deg,#00d9ff,#3b82f6);
-  display:flex;align-items:center;justify-content:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-size:24px;
-  box-shadow:0 0 18px rgba(0,217,255,.45);
 }
-.name{font-size:18px;font-weight:bold}
-.level{font-size:12px;color:#00d9ff}
+
+.name{
+  font-size:18px;
+  font-weight:bold;
+}
+
+.level{
+  font-size:12px;
+  color:#00d9ff;
+}
+
 .coin{
   background:rgba(15,23,42,.9);
   border:1px solid rgba(255,255,255,.12);
-  padding:9px 14px;border-radius:18px;
-  color:#ffd400;font-weight:bold;
+  padding:9px 14px;
+  border-radius:18px;
+  color:#ffd400;
+  font-weight:bold;
 }
 
-/* 大廳 */
 .lobby-hero{
   position:relative;
   height:210px;
@@ -103,49 +165,28 @@ input:focus{border-color:#00d9ff;box-shadow:0 0 18px rgba(0,217,255,.35)}
     radial-gradient(circle at 72% 40%,rgba(0,217,255,.22),transparent 32%),
     linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.88));
   border:1px solid rgba(255,255,255,.13);
-  box-shadow:0 0 34px rgba(0,0,0,.35);
 }
+
 .lobby-hero h2{
   margin:0;
   font-size:30px;
   color:#ffd400;
 }
-.lobby-hero p{
-  width:58%;
-  color:#cbd5e1;
-  line-height:1.5;
-}
+
 .hero-knight{
   position:absolute;
   right:24px;
   bottom:18px;
   font-size:96px;
-  filter:drop-shadow(0 0 22px rgba(0,217,255,.75));
 }
-.daily-card{
-  margin-top:14px;
-  padding:15px 18px;
-  border-radius:24px;
-  background:rgba(15,23,42,.92);
-  border:1px solid rgba(255,255,255,.12);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.daily-card strong{color:#facc15}
-.small-btn{
-  padding:9px 15px;
-  border-radius:999px;
-  background:linear-gradient(135deg,#facc15,#f97316);
-  color:#111827;
-  font-weight:bold;
-}
+
 .menu-grid{
   margin-top:16px;
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:14px;
 }
+
 .menu-card{
   height:118px;
   border-radius:26px;
@@ -154,192 +195,243 @@ input:focus{border-color:#00d9ff;box-shadow:0 0 18px rgba(0,217,255,.35)}
     radial-gradient(circle at 80% 20%,rgba(0,217,255,.16),transparent 30%),
     rgba(15,23,42,.92);
   border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 0 20px rgba(0,0,0,.25);
 }
-.menu-card:active{transform:scale(.97)}
-.menu-icon{font-size:34px;margin-bottom:8px}
-.menu-title{font-size:20px;font-weight:bold}
-.menu-desc{font-size:12px;color:#94a3b8;margin-top:5px}
-.notice{
-  margin-top:16px;
-  padding:15px;
-  border-radius:22px;
-  background:rgba(0,217,255,.08);
-  border:1px solid rgba(0,217,255,.2);
-  color:#cbd5e1;
-  font-size:13px;
+
+.menu-icon{
+  font-size:34px;
+  margin-bottom:8px;
+}
+
+.menu-title{
+  font-size:20px;
+  font-weight:bold;
+}
+
+.menu-desc{
+  font-size:12px;
+  color:#94a3b8;
+  margin-top:5px;
 }
 
 /* 地圖 */
-.map-title{text-align:center;color:#ffd400;font-size:30px;font-weight:bold;margin-bottom:18px}
-.map-subtitle{text-align:center;color:#94a3b8;margin-bottom:18px;font-size:14px}
 .map{
-  position:relative;height:620px;border-radius:32px;
+  position:relative;
+  height:620px;
+  border-radius:32px;
   background:
     radial-gradient(circle at 50% 10%,rgba(0,217,255,.18),transparent 35%),
     linear-gradient(180deg,rgba(15,23,42,.95),rgba(3,7,18,.95));
   border:1px solid rgba(255,255,255,.14);
-  overflow:hidden;box-shadow:0 0 34px rgba(0,0,0,.45);
+  overflow:hidden;
 }
-.map::before{
-  content:"";position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
-  background-size:32px 32px;opacity:.35;
-}
+
 .path-line{
-  position:absolute;width:5px;
+  position:absolute;
+  width:5px;
   background:linear-gradient(#00d9ff,#ffd400,#ff3355);
-  opacity:.45;left:50%;top:42px;bottom:42px;
+  opacity:.45;
+  left:50%;
+  top:42px;
+  bottom:42px;
   transform:translateX(-50%);
-  border-radius:999px;box-shadow:0 0 16px rgba(0,217,255,.5);
 }
+
 .stage-node{
-  position:absolute;width:58px;height:58px;border-radius:50%;
-  background:#111827;border:3px solid #00d9ff;color:white;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:bold;box-shadow:0 0 18px rgba(0,217,255,.4);z-index:3;
+  position:absolute;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:#111827;
+  border:3px solid #00d9ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
 }
+
 .stage-node.elite{
-  width:76px;height:76px;border-color:#ff3355;
-  background:radial-gradient(circle,#7f1d1d,#1e1020);
-  box-shadow:0 0 30px rgba(255,51,85,.8);
-  font-size:28px;
+  width:76px;
+  height:76px;
+  border-color:#ff3355;
+  background:#3b0a20;
 }
+
 .stage-node.current{
   border-color:#ffd400;
-  box-shadow:0 0 34px rgba(255,212,0,.9);
-  animation:pulse 1.4s infinite;
-}
-.map-footer{text-align:center;margin-top:20px}
-.back-btn{
-  margin-top:12px;
-  background:transparent;
-  color:#94a3b8;
-  font-size:14px;
 }
 
 /* 戰鬥 */
-.game{width:100%;max-width:430px;padding:14px}
+.game{
+  width:100%;
+  max-width:430px;
+  padding:14px;
+}
+
 .top{
-  display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:13px;
 }
-#stageText{color:#ffd400;font-size:24px;font-weight:bold}
+
+#stageText{
+  color:#ffd400;
+  font-size:24px;
+  font-weight:bold;
+}
+
+.back-battle-btn{
+  background:rgba(15,23,42,.9);
+  border:1px solid rgba(255,255,255,.12);
+  color:#cbd5e1;
+  padding:8px 14px;
+  border-radius:16px;
+  font-size:13px;
+}
+
 .battle{
-  position:relative;height:540px;border-radius:28px;overflow:hidden;
-  background:#111827;border:2px solid rgba(255,255,255,.13);
-  box-shadow:0 0 28px rgba(0,0,0,.45);
+  position:relative;
+  height:540px;
+  border-radius:28px;
+  overflow:hidden;
+  background:#111827;
+  border:2px solid rgba(255,255,255,.13);
 }
-video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-video{transform:scaleX(-1)}
-canvas{z-index:2}
-.battle::after{
-  content:"";position:absolute;inset:0;
-  background:
-    linear-gradient(180deg,rgba(3,7,18,.1),rgba(3,7,18,.38)),
-    radial-gradient(circle at 50% 35%,transparent 35%,rgba(3,7,18,.28));
-  z-index:3;pointer-events:none;
+
+video,canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
+
+video{
+  transform:scaleX(-1);
+}
+
+canvas{
+  z-index:2;
+}
+
 .monster{
-  position:absolute;top:74px;left:50%;transform:translateX(-50%);
-  font-size:86px;z-index:5;
-  filter:drop-shadow(0 0 18px rgba(180,110,255,.9));
+  position:absolute;
+  top:74px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:86px;
+  z-index:5;
 }
-.monster.elite-mode{
-  font-size:108px;
-  filter:drop-shadow(0 0 28px rgba(255,51,85,1));
-}
+
 .knight{
-  position:absolute;right:26px;bottom:92px;
-  font-size:62px;z-index:6;
-  filter:drop-shadow(0 0 18px rgba(0,217,255,.9));
+  position:absolute;
+  right:26px;
+  bottom:92px;
+  font-size:62px;
+  z-index:6;
 }
-.guide{
-  position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
-  z-index:9;width:86%;background:rgba(20,20,30,.9);
-  border:2px solid #ff3355;border-radius:20px;padding:10px;
-  text-align:center;font-size:14px;
-}
-.status{
-  position:absolute;top:12px;left:12px;z-index:9;
-  background:rgba(0,0,0,.6);padding:8px 12px;
-  border-radius:14px;color:#00d9ff;font-size:13px;
-}
+
 .effect{
-  position:absolute;top:118px;left:50%;width:190px;height:190px;
+  position:absolute;
+  top:118px;
+  left:50%;
+  width:190px;
+  height:190px;
   border-radius:50%;
   background:radial-gradient(circle,#fff176,rgba(255,100,0,.55),transparent 70%);
-  opacity:0;z-index:8;
+  opacity:0;
+  z-index:8;
 }
-.effect.show{animation:boom .5s}
-.slash{
-  position:absolute;top:145px;left:50%;width:160px;height:20px;
-  background:linear-gradient(90deg,transparent,#fff,#ffd400,transparent);
-  transform:translateX(-50%) rotate(-28deg);
-  opacity:0;z-index:9;border-radius:999px;
-  box-shadow:0 0 18px #ffd400;
-}
-.slash.show{animation:slash .35s}
-.float{
-  position:absolute;top:106px;left:50%;z-index:9;
-  color:#ffd400;font-size:34px;font-weight:bold;opacity:0;
-  text-shadow:0 0 14px #ff6600;
-}
-.float.show{animation:floatText .75s}
-.monster.hit{animation:hit .35s}
-.knight.attack{animation:knightAttack .45s}
-.panel{
-  margin-top:12px;padding:18px;border-radius:24px;
-  background:#10172a;border:1px solid rgba(255,255,255,.08);
-}
-.stats{display:flex;justify-content:space-around;text-align:center}
-.stats span{display:block;color:#7e91bd;font-size:12px}
-.stats strong{color:#ffd400;font-size:24px}
-.combo{text-align:center;color:#ffd400;font-size:26px;font-weight:bold;margin:8px 0}
-.hp-title{display:flex;justify-content:space-between;font-size:14px}
-.hp-bar{
-  height:14px;background:#1e293b;border-radius:20px;overflow:hidden;margin-top:6px;
-}
-#hpFill{
-  height:100%;width:100%;
-  background:linear-gradient(90deg,#4ade80,#00d4ff);
-  transition:.25s;
-}
-.quest{margin-top:10px;color:#facc15;font-size:13px;text-align:center}
-.debug{margin-top:8px;color:#94a3b8;font-size:12px;text-align:center}
 
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-@keyframes hit{
-  0%{transform:translateX(-50%) scale(1)}
-  25%{transform:translateX(calc(-50% - 16px)) scale(1.15)}
-  50%{transform:translateX(calc(-50% + 16px)) scale(1.15)}
-  100%{transform:translateX(-50%) scale(1)}
+.effect.show{
+  animation:boom .5s;
 }
-@keyframes knightAttack{
-  0%{transform:translate(0,0)}
-  45%{transform:translate(-70px,-40px) scale(1.2)}
-  100%{transform:translate(0,0)}
+
+.float{
+  position:absolute;
+  top:106px;
+  left:50%;
+  z-index:9;
+  color:#ffd400;
+  font-size:34px;
+  font-weight:bold;
+  opacity:0;
 }
+
+.float.show{
+  animation:floatText .75s;
+}
+
+.panel{
+  margin-top:12px;
+  padding:18px;
+  border-radius:24px;
+  background:#10172a;
+}
+
+.stats{
+  display:flex;
+  justify-content:space-around;
+  text-align:center;
+}
+
+.stats strong{
+  color:#ffd400;
+  font-size:24px;
+}
+
+.hp-bar{
+  height:14px;
+  background:#1e293b;
+  border-radius:20px;
+  overflow:hidden;
+  margin-top:6px;
+}
+
+#hpFill{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg,#4ade80,#00d4ff);
+}
+
+.combo{
+  text-align:center;
+  color:#ffd400;
+  font-size:26px;
+  font-weight:bold;
+  margin:8px 0;
+}
+
 @keyframes boom{
-  0%{transform:translateX(-50%) scale(.3);opacity:1}
-  100%{transform:translateX(-50%) scale(2.2);opacity:0}
+  0%{
+    transform:translateX(-50%) scale(.3);
+    opacity:1;
+  }
+  100%{
+    transform:translateX(-50%) scale(2.2);
+    opacity:0;
+  }
 }
-@keyframes slash{
-  0%{opacity:0;transform:translateX(-50%) rotate(-28deg) scaleX(.2)}
-  50%{opacity:1;transform:translateX(-50%) rotate(-28deg) scaleX(1.2)}
-  100%{opacity:0;transform:translateX(-50%) rotate(-28deg) scaleX(1.7)}
-}
+
 @keyframes floatText{
-  0%{transform:translate(-50%,20px);opacity:0}
-  40%{transform:translate(-50%,0) scale(1.2);opacity:1}
-  100%{transform:translate(-50%,-55px);opacity:0}
+  0%{
+    transform:translate(-50%,20px);
+    opacity:0;
+  }
+  40%{
+    opacity:1;
+  }
+  100%{
+    transform:translate(-50%,-55px);
+    opacity:0;
+  }
 }
 </style>
 </head>
 
 <body>
 
+<!-- 首頁 -->
 <section id="homeScreen" class="screen active center">
   <div>
     <div class="logo">⚔️</div>
@@ -349,154 +441,175 @@ canvas{z-index:2}
   </div>
 </section>
 
+<!-- 登入 -->
 <section id="loginScreen" class="screen center">
   <div>
     <div class="logo">🛡️</div>
     <h1>勇者登入</h1>
-    <input id="nameInput" placeholder="輸入勇者名稱..." maxlength="12" />
+
+    <input id="nameInput" placeholder="輸入勇者名稱..." maxlength="12">
+
     <br>
+
     <button class="main-btn" id="toLobbyBtn">出發！</button>
   </div>
 </section>
 
+<!-- 大廳 -->
 <section id="lobbyScreen" class="screen app-bg">
   <div class="phone">
+
     <div class="top-user">
       <div class="user-left">
         <div class="avatar">⚔️</div>
+
         <div>
           <div id="lobbyName" class="name">勇者</div>
           <div class="level">LV.1 見習騎士</div>
         </div>
       </div>
+
       <div class="coin">🪙 1200</div>
     </div>
 
     <div class="lobby-hero">
       <h2>今日冒險</h2>
-      <p>完成深蹲，累積攻擊能量，與騎士一起突破地城。</p>
+      <p>完成深蹲，累積攻擊能量。</p>
+
       <div class="hero-knight">🤺</div>
     </div>
 
-    <div class="daily-card">
-      <div>
-        <strong>每日任務</strong><br>
-        <span>完成 30 次深蹲</span>
-      </div>
-      <button class="small-btn">領取</button>
-    </div>
-
     <div class="menu-grid">
+
       <div class="menu-card" id="goMapBtn">
         <div class="menu-icon">🗺️</div>
         <div class="menu-title">關卡</div>
         <div class="menu-desc">進入探險地圖</div>
       </div>
 
-      <div class="menu-card" onclick="alert('寵物系統：之後可用健身幣升級。')">
+      <div class="menu-card">
         <div class="menu-icon">🐾</div>
         <div class="menu-title">寵物</div>
-        <div class="menu-desc">收集與培養夥伴</div>
       </div>
 
-      <div class="menu-card" onclick="alert('角色系統：之後可更換騎士外觀。')">
+      <div class="menu-card">
         <div class="menu-icon">🛡️</div>
         <div class="menu-title">角色</div>
-        <div class="menu-desc">裝備與造型</div>
       </div>
 
-      <div class="menu-card" onclick="alert('抽獎系統：可抽寵物、特效、裝備。')">
+      <div class="menu-card">
         <div class="menu-icon">🎁</div>
         <div class="menu-title">抽獎</div>
-        <div class="menu-desc">獲得稀有獎勵</div>
       </div>
 
-      <div class="menu-card" onclick="alert('今日已簽到！獲得 100 健身幣。')">
+      <div class="menu-card">
         <div class="menu-icon">📅</div>
         <div class="menu-title">每日簽到</div>
-        <div class="menu-desc">累積連續天數</div>
       </div>
 
-      <div class="menu-card" onclick="alert('你今天超越了 87% 的冒險者！')">
+      <div class="menu-card">
         <div class="menu-icon">🏆</div>
         <div class="menu-title">排行榜</div>
-        <div class="menu-desc">查看今日排名</div>
       </div>
+
     </div>
 
-    <div class="notice">
-      ⚡ 建議新增：裝備強化、技能樹、戰果分享卡。這些能讓使用者更有成長感。
-    </div>
   </div>
 </section>
 
+<!-- 地圖 -->
 <section id="mapScreen" class="screen app-bg">
   <div class="phone">
-    <div class="map-title">探險地圖</div>
-    <div class="map-subtitle">選擇目前節點，準備進入戰鬥</div>
+
+    <h1 style="font-size:32px;text-align:center;">探險地圖</h1>
 
     <div class="map">
       <div class="path-line"></div>
       <div id="mapNodes"></div>
     </div>
 
-    <div class="map-footer">
-      <button class="main-btn" id="startBattleBtn">進入關卡</button><br>
-      <button class="back-btn" id="backLobbyBtn">返回大廳</button>
+    <div style="text-align:center;margin-top:20px;">
+      <button class="main-btn" id="startBattleBtn">
+        進入關卡
+      </button>
     </div>
+
   </div>
 </section>
 
+<!-- 戰鬥 -->
 <section id="gameScreen" class="screen app-bg">
+
   <div class="game">
+
     <div class="top">
+
       <div class="user-left">
         <div class="avatar">⚔️</div>
+
         <div>
           <div id="playerName" class="name">勇者</div>
           <div class="level">LV.1 冒險者</div>
         </div>
       </div>
+
       <div id="stageText">STAGE 1</div>
+
+      <button id="backMapBtn" class="back-battle-btn">
+        ← 返回地圖
+      </button>
+
     </div>
 
     <div class="battle">
+
       <video id="video" autoplay playsinline muted></video>
+
       <canvas id="canvas"></canvas>
 
-      <div id="cameraStatus" class="status">正在開啟鏡頭...</div>
       <div id="monster" class="monster">👾</div>
+
       <div id="knight" class="knight">🤺</div>
 
       <div id="effect" class="effect"></div>
-      <div id="slash" class="slash"></div>
+
       <div id="floatText" class="float">HIT!</div>
 
-      <div class="guide">⚠️ 手機直立擺遠一點，拍到肩膀、膝蓋、腳踝</div>
     </div>
 
     <div class="panel">
+
       <div class="stats">
-        <div><span>SCORE</span><strong id="score">0</strong></div>
-        <div><span>攻擊能量</span><strong id="energy">0</strong></div>
-        <div><span>深蹲</span><strong id="squatCount">0</strong></div>
+
+        <div>
+          <div>SCORE</div>
+          <strong id="score">0</strong>
+        </div>
+
+        <div>
+          <div>ENERGY</div>
+          <strong id="energy">0</strong>
+        </div>
+
+        <div>
+          <div>SQUAT</div>
+          <strong id="squatCount">0</strong>
+        </div>
+
       </div>
 
-      <div id="combo" class="combo">COMBO x0</div>
-
-      <div class="hp-title">
-        <span id="enemyName">ENEMY HP</span>
-        <span id="hpText">100 / 100</span>
+      <div id="combo" class="combo">
+        COMBO x0
       </div>
 
       <div class="hp-bar">
         <div id="hpFill"></div>
       </div>
 
-      <div class="quest">DAILY QUEST：完成 30 次深蹲　🔥 STREAK：1 DAYS</div>
-      <div id="debug" class="debug">偵測狀態：等待骨架...</div>
     </div>
+
   </div>
+
 </section>
 
 <script>
@@ -507,32 +620,30 @@ let energy=0;
 let combo=0;
 let squatCount=0;
 let bossHp=100;
-let maxHp=100;
-let squatState="up";
-let lastAttackTime=0;
-let poseStarted=false;
 
 const screens=[
-  "homeScreen","loginScreen","lobbyScreen","mapScreen","gameScreen"
+  "homeScreen",
+  "loginScreen",
+  "lobbyScreen",
+  "mapScreen",
+  "gameScreen"
 ].map(id=>document.getElementById(id));
 
-const video=document.getElementById("video");
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-
-function show(targetId){
+function show(id){
   screens.forEach(s=>s.classList.remove("active"));
-  document.getElementById(targetId).classList.add("active");
+  document.getElementById(id).classList.add("active");
 }
 
-document.getElementById("toLoginBtn").onclick=()=>show("loginScreen");
+document.getElementById("toLoginBtn").onclick=()=>{
+  show("loginScreen");
+};
 
 document.getElementById("toLobbyBtn").onclick=()=>{
-  const name=document.getElementById("nameInput").value.trim();
-  if(!name){alert("請輸入勇者名稱");return;}
-  player=name;
+  player=document.getElementById("nameInput").value||"勇者";
+
   document.getElementById("lobbyName").textContent=player;
   document.getElementById("playerName").textContent=player;
+
   show("lobbyScreen");
 };
 
@@ -541,208 +652,39 @@ document.getElementById("goMapBtn").onclick=()=>{
   show("mapScreen");
 };
 
-document.getElementById("backLobbyBtn").onclick=()=>show("lobbyScreen");
-
 document.getElementById("startBattleBtn").onclick=()=>{
-  setupStage();
   show("gameScreen");
-  if(!poseStarted){
-    poseStarted=true;
-    startPose();
-  }
+};
+
+document.getElementById("backMapBtn").onclick=()=>{
+  show("mapScreen");
 };
 
 function renderMap(){
   const box=document.getElementById("mapNodes");
   box.innerHTML="";
+
   for(let i=1;i<=20;i++){
+
     const node=document.createElement("div");
+
     node.className="stage-node";
-    if(i%10===0)node.classList.add("elite");
-    if(i===stage)node.classList.add("current");
+
+    if(i%10===0){
+      node.classList.add("elite");
+    }
+
+    if(i===stage){
+      node.classList.add("current");
+    }
+
     node.textContent=i%10===0?"👑":i;
+
     node.style.top=(35+(i-1)*28)+"px";
     node.style.left=(i%2===0?235:105)+"px";
+
     box.appendChild(node);
   }
-}
-
-function setupStage(){
-  const isElite=stage%10===0;
-  maxHp=isElite?240:100+stage*8;
-  bossHp=maxHp;
-  document.getElementById("stageText").textContent="STAGE "+stage;
-  document.getElementById("monster").textContent=isElite?"👹":"👾";
-  document.getElementById("monster").classList.toggle("elite-mode",isElite);
-  document.getElementById("enemyName").textContent=isElite?"ELITE HP":"ENEMY HP";
-  updateUI();
-}
-
-async function startPose(){
-  const pose=new Pose({
-    locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/pose/"+file
-  });
-
-  pose.setOptions({
-    modelComplexity:1,
-    smoothLandmarks:true,
-    minDetectionConfidence:.45,
-    minTrackingConfidence:.45
-  });
-
-  pose.onResults(onResults);
-
-  const camera=new Camera(video,{
-    onFrame:async()=>{await pose.send({image:video});},
-    width:480,
-    height:640
-  });
-
-  camera.start();
-  document.getElementById("cameraStatus").textContent="鏡頭偵測中...";
-}
-
-function onResults(results){
-  canvas.width=video.videoWidth||480;
-  canvas.height=video.videoHeight||640;
-
-  ctx.save();
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.scale(-1,1);
-  ctx.translate(-canvas.width,0);
-
-  if(results.poseLandmarks){
-    drawConnectors(ctx,results.poseLandmarks,POSE_CONNECTIONS,{
-      color:"#00d9ff",
-      lineWidth:4
-    });
-    drawLandmarks(ctx,results.poseLandmarks,{
-      color:"#ffd400",
-      lineWidth:2
-    });
-    checkSquat(results.poseLandmarks);
-  }else{
-    document.getElementById("debug").textContent="偵測狀態：找不到全身，手機再放遠一點";
-  }
-
-  ctx.restore();
-}
-
-function checkSquat(lm){
-  const leftHip=lm[23],leftKnee=lm[25],leftAnkle=lm[27];
-  const rightHip=lm[24],rightKnee=lm[26],rightAnkle=lm[28];
-
-  const leftVisible=leftHip.visibility>.4&&leftKnee.visibility>.4&&leftAnkle.visibility>.4;
-  const rightVisible=rightHip.visibility>.4&&rightKnee.visibility>.4&&rightAnkle.visibility>.4;
-
-  if(!leftVisible&&!rightVisible){
-    document.getElementById("debug").textContent="偵測狀態：膝蓋或腳踝不清楚";
-    return;
-  }
-
-  let angle;
-  if(leftVisible&&rightVisible){
-    angle=Math.min(
-      getAngle(leftHip,leftKnee,leftAnkle),
-      getAngle(rightHip,rightKnee,rightAnkle)
-    );
-  }else if(leftVisible){
-    angle=getAngle(leftHip,leftKnee,leftAnkle);
-  }else{
-    angle=getAngle(rightHip,rightKnee,rightAnkle);
-  }
-
-  document.getElementById("debug").textContent=
-    "膝蓋角度："+Math.round(angle)+" / 狀態："+squatState;
-
-  if(squatState==="up"&&angle<140){
-    squatState="down";
-  }
-
-  if(squatState==="down"&&angle>155){
-    const now=Date.now();
-    if(now-lastAttackTime>700){
-      onSquatSuccess();
-      lastAttackTime=now;
-    }
-    squatState="up";
-  }
-}
-
-function getAngle(a,b,c){
-  const ab={x:a.x-b.x,y:a.y-b.y};
-  const cb={x:c.x-b.x,y:c.y-b.y};
-  const dot=ab.x*cb.x+ab.y*cb.y;
-  const abLen=Math.sqrt(ab.x*ab.x+ab.y*ab.y);
-  const cbLen=Math.sqrt(cb.x*cb.x+cb.y*cb.y);
-  let cosine=dot/(abLen*cbLen);
-  cosine=Math.min(1,Math.max(-1,cosine));
-  return Math.acos(cosine)*180/Math.PI;
-}
-
-function onSquatSuccess(){
-  score+=10;
-  energy+=1;
-  combo+=1;
-  squatCount+=1;
-
-  let damage=stage%10===0?10:16;
-
-  if(combo%5===0){
-    damage*=2;
-    document.getElementById("floatText").textContent="CRITICAL!";
-  }else{
-    document.getElementById("floatText").textContent="SLASH!";
-  }
-
-  bossHp-=damage;
-  if(bossHp<0)bossHp=0;
-
-  updateUI();
-  playEffect();
-
-  if(bossHp<=0){
-    setTimeout(clearStage,600);
-  }
-}
-
-function clearStage(){
-  alert("關卡通過！前往下一個地圖節點！");
-  stage+=1;
-  combo=0;
-  renderMap();
-  show("mapScreen");
-}
-
-function updateUI(){
-  document.getElementById("score").textContent=score;
-  document.getElementById("energy").textContent=energy;
-  document.getElementById("squatCount").textContent=squatCount;
-  document.getElementById("combo").textContent="COMBO x"+combo;
-  document.getElementById("hpText").textContent=bossHp+" / "+maxHp;
-  document.getElementById("hpFill").style.width=(bossHp/maxHp*100)+"%";
-}
-
-function playEffect(){
-  const monster=document.getElementById("monster");
-  const knight=document.getElementById("knight");
-  const effect=document.getElementById("effect");
-  const slash=document.getElementById("slash");
-  const floatText=document.getElementById("floatText");
-
-  monster.classList.remove("hit");
-  knight.classList.remove("attack");
-  effect.classList.remove("show");
-  slash.classList.remove("show");
-  floatText.classList.remove("show");
-
-  void monster.offsetWidth;
-
-  monster.classList.add("hit");
-  knight.classList.add("attack");
-  effect.classList.add("show");
-  slash.classList.add("show");
-  floatText.classList.add("show");
 }
 </script>
 
