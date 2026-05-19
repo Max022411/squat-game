@@ -3,689 +3,280 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-
 <title>深蹲打怪</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-
 <style>
-*{
-  box-sizing:border-box;
-}
-
-body{
-  margin:0;
-  background:#050918;
-  color:white;
-  font-family:"Microsoft JhengHei",Arial,sans-serif;
-}
-
-.screen{
-  display:none;
-  min-height:100vh;
-}
-
-.screen.active{
-  display:flex;
-}
-
-.center{
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  background:
-    radial-gradient(circle at 50% 25%,rgba(0,217,255,.22),transparent 28%),
-    radial-gradient(circle at 70% 70%,rgba(255,214,10,.12),transparent 25%),
-    linear-gradient(180deg,#050918,#02040d);
-}
-
-.logo{
-  width:86px;
-  height:86px;
-  margin:0 auto 26px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,#00d9ff,#3b82f6);
-  font-size:44px;
-  box-shadow:0 0 34px rgba(0,217,255,.6);
-}
-
-h1{
-  margin:0;
-  font-size:46px;
-  letter-spacing:8px;
-}
-
-.subtitle{
-  color:#00d9ff;
-  letter-spacing:5px;
-  margin:18px 0 54px;
-}
-
-button{
-  border:none;
-  cursor:pointer;
-}
-
-.main-btn{
-  width:240px;
-  height:66px;
-  border-radius:40px;
-  background:linear-gradient(135deg,#16c7f3,#3b82f6);
-  color:white;
-  font-size:22px;
-  font-weight:bold;
-  box-shadow:0 0 24px rgba(0,217,255,.35);
-}
-
-input{
-  width:88%;
-  max-width:420px;
-  height:60px;
-  border-radius:18px;
-  background:rgba(17,24,39,.95);
-  border:1px solid rgba(255,255,255,.25);
-  color:white;
-  text-align:center;
-  font-size:20px;
-  outline:none;
-  margin:30px 0 24px;
-}
-
-/* 共用背景 */
-.app-bg{
-  justify-content:center;
-  background:
-    radial-gradient(circle at 20% 10%,rgba(0,217,255,.18),transparent 30%),
-    radial-gradient(circle at 80% 80%,rgba(255,214,10,.12),transparent 26%),
-    linear-gradient(180deg,#050918,#07111f);
-}
-
-.phone{
-  width:100%;
-  max-width:430px;
-  padding:18px;
-}
-
-/* 大廳 */
-.top-user{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:16px;
-}
-
-.user-left{
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-
-.avatar{
-  width:46px;
-  height:46px;
-  border-radius:50%;
-  background:linear-gradient(135deg,#00d9ff,#3b82f6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
-}
-
-.name{
-  font-size:18px;
-  font-weight:bold;
-}
-
-.level{
-  font-size:12px;
-  color:#00d9ff;
-}
-
-.coin{
-  background:rgba(15,23,42,.9);
-  border:1px solid rgba(255,255,255,.12);
-  padding:9px 14px;
-  border-radius:18px;
-  color:#ffd400;
-  font-weight:bold;
-}
-
-.lobby-hero{
-  position:relative;
-  height:210px;
-  border-radius:32px;
-  padding:22px;
-  overflow:hidden;
-  background:
-    radial-gradient(circle at 72% 40%,rgba(0,217,255,.22),transparent 32%),
-    linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.88));
-  border:1px solid rgba(255,255,255,.13);
-}
-
-.lobby-hero h2{
-  margin:0;
-  font-size:30px;
-  color:#ffd400;
-}
-
-.hero-knight{
-  position:absolute;
-  right:24px;
-  bottom:18px;
-  font-size:96px;
-}
-
-.menu-grid{
-  margin-top:16px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-
-.menu-card{
-  height:118px;
-  border-radius:26px;
-  padding:16px;
-  background:
-    radial-gradient(circle at 80% 20%,rgba(0,217,255,.16),transparent 30%),
-    rgba(15,23,42,.92);
-  border:1px solid rgba(255,255,255,.12);
-}
-
-.menu-icon{
-  font-size:34px;
-  margin-bottom:8px;
-}
-
-.menu-title{
-  font-size:20px;
-  font-weight:bold;
-}
-
-.menu-desc{
-  font-size:12px;
-  color:#94a3b8;
-  margin-top:5px;
-}
-
-/* 地圖 */
-.map{
-  position:relative;
-  height:620px;
-  border-radius:32px;
-  background:
-    radial-gradient(circle at 50% 10%,rgba(0,217,255,.18),transparent 35%),
-    linear-gradient(180deg,rgba(15,23,42,.95),rgba(3,7,18,.95));
-  border:1px solid rgba(255,255,255,.14);
-  overflow:hidden;
-}
-
-.path-line{
-  position:absolute;
-  width:5px;
-  background:linear-gradient(#00d9ff,#ffd400,#ff3355);
-  opacity:.45;
-  left:50%;
-  top:42px;
-  bottom:42px;
-  transform:translateX(-50%);
-}
-
-.stage-node{
-  position:absolute;
-  width:58px;
-  height:58px;
-  border-radius:50%;
-  background:#111827;
-  border:3px solid #00d9ff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:bold;
-}
-
-.stage-node.elite{
-  width:76px;
-  height:76px;
-  border-color:#ff3355;
-  background:#3b0a20;
-}
-
-.stage-node.current{
-  border-color:#ffd400;
-}
-
-/* 戰鬥 */
-.game{
-  width:100%;
-  max-width:430px;
-  padding:14px;
-}
-
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:13px;
-}
-
-#stageText{
-  color:#ffd400;
-  font-size:24px;
-  font-weight:bold;
-}
-
-.back-battle-btn{
-  background:rgba(15,23,42,.9);
-  border:1px solid rgba(255,255,255,.12);
-  color:#cbd5e1;
-  padding:8px 14px;
-  border-radius:16px;
-  font-size:13px;
-}
-
-.battle{
-  position:relative;
-  height:540px;
-  border-radius:28px;
-  overflow:hidden;
-  background:#111827;
-  border:2px solid rgba(255,255,255,.13);
-}
-
-video,canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-video{
-  transform:scaleX(-1);
-}
-
-canvas{
-  z-index:2;
-}
-
-.monster{
-  position:absolute;
-  top:74px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:86px;
-  z-index:5;
-}
-
-.knight{
-  position:absolute;
-  right:26px;
-  bottom:92px;
-  font-size:62px;
-  z-index:6;
-}
-
-.effect{
-  position:absolute;
-  top:118px;
-  left:50%;
-  width:190px;
-  height:190px;
-  border-radius:50%;
-  background:radial-gradient(circle,#fff176,rgba(255,100,0,.55),transparent 70%);
-  opacity:0;
-  z-index:8;
-}
-
-.effect.show{
-  animation:boom .5s;
-}
-
-.float{
-  position:absolute;
-  top:106px;
-  left:50%;
-  z-index:9;
-  color:#ffd400;
-  font-size:34px;
-  font-weight:bold;
-  opacity:0;
-}
-
-.float.show{
-  animation:floatText .75s;
-}
-
-.panel{
-  margin-top:12px;
-  padding:18px;
-  border-radius:24px;
-  background:#10172a;
-}
-
-.stats{
-  display:flex;
-  justify-content:space-around;
-  text-align:center;
-}
-
-.stats strong{
-  color:#ffd400;
-  font-size:24px;
-}
-
-.hp-bar{
-  height:14px;
-  background:#1e293b;
-  border-radius:20px;
-  overflow:hidden;
-  margin-top:6px;
-}
-
-#hpFill{
-  height:100%;
-  width:100%;
-  background:linear-gradient(90deg,#4ade80,#00d4ff);
-}
-
-.combo{
-  text-align:center;
-  color:#ffd400;
-  font-size:26px;
-  font-weight:bold;
-  margin:8px 0;
-}
-
-@keyframes boom{
-  0%{
-    transform:translateX(-50%) scale(.3);
-    opacity:1;
-  }
-  100%{
-    transform:translateX(-50%) scale(2.2);
-    opacity:0;
-  }
-}
-
-@keyframes floatText{
-  0%{
-    transform:translate(-50%,20px);
-    opacity:0;
-  }
-  40%{
-    opacity:1;
-  }
-  100%{
-    transform:translate(-50%,-55px);
-    opacity:0;
-  }
-}
+*{box-sizing:border-box}
+body{margin:0;background:#050918;color:white;font-family:"Microsoft JhengHei",Arial,sans-serif}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex}
+.center{justify-content:center;align-items:center;text-align:center;background:radial-gradient(circle at 50% 25%,rgba(0,217,255,.25),transparent 30%),linear-gradient(#050918,#02040d)}
+.app-bg{justify-content:center;background:radial-gradient(circle at 20% 10%,rgba(0,217,255,.18),transparent 30%),linear-gradient(#050918,#07111f)}
+.phone{width:100%;max-width:430px;padding:18px}
+.logo{width:86px;height:86px;margin:0 auto 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#00d9ff,#3b82f6);font-size:44px;box-shadow:0 0 34px rgba(0,217,255,.6)}
+h1{margin:0;font-size:42px;letter-spacing:6px}
+.subtitle{color:#00d9ff;letter-spacing:4px;margin:18px 0 50px}
+button{border:none;cursor:pointer}
+.main-btn{width:230px;height:62px;border-radius:40px;background:linear-gradient(135deg,#16c7f3,#3b82f6);color:white;font-size:22px;font-weight:bold;box-shadow:0 0 24px rgba(0,217,255,.35)}
+.back-btn{margin-top:16px;background:rgba(15,23,42,.9);border:1px solid rgba(255,255,255,.14);color:#cbd5e1;padding:12px 22px;border-radius:20px}
+input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px solid rgba(255,255,255,.25);color:white;text-align:center;font-size:20px;margin:30px 0 24px}
+.top-user,.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.user-left{display:flex;gap:10px;align-items:center}
+.avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#00d9ff,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:24px}
+.name{font-size:18px;font-weight:bold}
+.level{font-size:12px;color:#00d9ff}
+.coin{background:rgba(15,23,42,.9);border:1px solid rgba(255,255,255,.12);padding:9px 14px;border-radius:18px;color:#ffd400;font-weight:bold}
+.lobby-hero{position:relative;height:210px;border-radius:32px;padding:22px;overflow:hidden;background:radial-gradient(circle at 72% 40%,rgba(0,217,255,.22),transparent 32%),linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.88));border:1px solid rgba(255,255,255,.13)}
+.lobby-hero h2{margin:0;font-size:30px;color:#ffd400}
+.hero-knight{position:absolute;right:24px;bottom:18px;font-size:96px}
+.menu-grid{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.menu-card,.feature-card{border-radius:26px;padding:16px;background:radial-gradient(circle at 80% 20%,rgba(0,217,255,.16),transparent 30%),rgba(15,23,42,.92);border:1px solid rgba(255,255,255,.12)}
+.menu-card{height:118px}
+.menu-icon{font-size:34px;margin-bottom:8px}
+.menu-title{font-size:20px;font-weight:bold}
+.menu-desc{font-size:12px;color:#94a3b8;margin-top:5px}
+.page-title{text-align:center;color:#ffd400;font-size:30px;font-weight:bold;margin:8px 0 18px}
+.feature-card{margin-bottom:14px;text-align:center}
+.feature-card .big{font-size:56px;margin-bottom:10px}
+.feature-card p{color:#cbd5e1;line-height:1.6}
+.map{position:relative;height:620px;border-radius:32px;background:linear-gradient(180deg,rgba(15,23,42,.95),rgba(3,7,18,.95));border:1px solid rgba(255,255,255,.14);overflow:hidden}
+.path-line{position:absolute;width:5px;background:linear-gradient(#00d9ff,#ffd400,#ff3355);opacity:.45;left:50%;top:42px;bottom:42px;transform:translateX(-50%)}
+.stage-node{position:absolute;width:58px;height:58px;border-radius:50%;background:#111827;border:3px solid #00d9ff;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.stage-node.elite{width:76px;height:76px;border-color:#ff3355;background:#3b0a20}
+.stage-node.current{border-color:#ffd400;box-shadow:0 0 28px rgba(255,212,0,.8)}
+.game{width:100%;max-width:430px;padding:14px}
+#stageText{color:#ffd400;font-size:22px;font-weight:bold}
+.battle{position:relative;height:520px;border-radius:28px;overflow:hidden;background:#111827;border:2px solid rgba(255,255,255,.13)}
+.monster{position:absolute;top:78px;left:50%;transform:translateX(-50%);font-size:88px}
+.knight{position:absolute;right:26px;bottom:92px;font-size:62px}
+.effect{position:absolute;top:120px;left:50%;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#fff176,rgba(255,100,0,.55),transparent 70%);opacity:0}
+.effect.show{animation:boom .5s}
+.panel{margin-top:12px;padding:18px;border-radius:24px;background:#10172a}
+.stats{display:flex;justify-content:space-around;text-align:center}
+.stats strong{color:#ffd400;font-size:24px}
+.combo{text-align:center;color:#ffd400;font-size:26px;font-weight:bold;margin:8px 0}
+.hp-bar{height:14px;background:#1e293b;border-radius:20px;overflow:hidden}
+#hpFill{height:100%;width:100%;background:linear-gradient(90deg,#4ade80,#00d4ff)}
+@keyframes boom{0%{transform:translateX(-50%) scale(.3);opacity:1}100%{transform:translateX(-50%) scale(2.2);opacity:0}}
 </style>
 </head>
 
 <body>
 
-<!-- 首頁 -->
 <section id="homeScreen" class="screen active center">
   <div>
     <div class="logo">⚔️</div>
     <h1>深蹲打怪</h1>
     <div class="subtitle">SQUAT HERO ADVENTURE</div>
-    <button class="main-btn" id="toLoginBtn">開始冒險</button>
+    <button class="main-btn" onclick="show('loginScreen')">開始冒險</button>
   </div>
 </section>
 
-<!-- 登入 -->
 <section id="loginScreen" class="screen center">
   <div>
     <div class="logo">🛡️</div>
     <h1>勇者登入</h1>
-
     <input id="nameInput" placeholder="輸入勇者名稱..." maxlength="12">
-
     <br>
-
-    <button class="main-btn" id="toLobbyBtn">出發！</button>
+    <button class="main-btn" onclick="login()">出發！</button>
   </div>
 </section>
 
-<!-- 大廳 -->
 <section id="lobbyScreen" class="screen app-bg">
   <div class="phone">
-
     <div class="top-user">
       <div class="user-left">
         <div class="avatar">⚔️</div>
-
         <div>
           <div id="lobbyName" class="name">勇者</div>
           <div class="level">LV.1 見習騎士</div>
         </div>
       </div>
-
       <div class="coin">🪙 1200</div>
     </div>
 
     <div class="lobby-hero">
       <h2>今日冒險</h2>
       <p>完成深蹲，累積攻擊能量。</p>
-
       <div class="hero-knight">🤺</div>
     </div>
 
     <div class="menu-grid">
-
-      <div class="menu-card" id="goMapBtn">
-        <div class="menu-icon">🗺️</div>
-        <div class="menu-title">關卡</div>
-        <div class="menu-desc">進入探險地圖</div>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-icon">🐾</div>
-        <div class="menu-title">寵物</div>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-icon">🛡️</div>
-        <div class="menu-title">角色</div>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-icon">🎁</div>
-        <div class="menu-title">抽獎</div>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-icon">📅</div>
-        <div class="menu-title">每日簽到</div>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-icon">🏆</div>
-        <div class="menu-title">排行榜</div>
-      </div>
-
+      <div class="menu-card" onclick="openMap()"><div class="menu-icon">🗺️</div><div class="menu-title">關卡</div><div class="menu-desc">探險地圖</div></div>
+      <div class="menu-card" onclick="show('petScreen')"><div class="menu-icon">🐾</div><div class="menu-title">寵物</div><div class="menu-desc">培養夥伴</div></div>
+      <div class="menu-card" onclick="show('roleScreen')"><div class="menu-icon">🛡️</div><div class="menu-title">角色</div><div class="menu-desc">騎士裝備</div></div>
+      <div class="menu-card" onclick="show('gachaScreen')"><div class="menu-icon">🎁</div><div class="menu-title">抽獎</div><div class="menu-desc">獲得獎勵</div></div>
+      <div class="menu-card" onclick="show('dailyScreen')"><div class="menu-icon">📅</div><div class="menu-title">每日簽到</div><div class="menu-desc">連續獎勵</div></div>
+      <div class="menu-card" onclick="show('rankScreen')"><div class="menu-icon">🏆</div><div class="menu-title">排行榜</div><div class="menu-desc">挑戰排名</div></div>
     </div>
-
   </div>
 </section>
 
-<!-- 地圖 -->
 <section id="mapScreen" class="screen app-bg">
   <div class="phone">
-
-    <h1 style="font-size:32px;text-align:center;">探險地圖</h1>
-
+    <div class="page-title">探險地圖</div>
     <div class="map">
       <div class="path-line"></div>
       <div id="mapNodes"></div>
     </div>
-
-    <div style="text-align:center;margin-top:20px;">
-      <button class="main-btn" id="startBattleBtn">
-        進入關卡
-      </button>
+    <div style="text-align:center;margin-top:20px">
+      <button class="main-btn" onclick="startBattle()">進入關卡</button><br>
+      <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
     </div>
-
   </div>
 </section>
 
-<!-- 戰鬥 -->
+<section id="petScreen" class="screen app-bg">
+  <div class="phone">
+    <div class="page-title">寵物</div>
+    <div class="feature-card"><div class="big">🐾</div><h2>光靈幼獸 Lv.1</h2><p>深蹲時會累積能量，未來可協助玩家追加攻擊。</p></div>
+    <div class="feature-card"><h3>升級需求</h3><p>消耗 300 健身幣提升寵物攻擊力。</p></div>
+    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+  </div>
+</section>
+
+<section id="roleScreen" class="screen app-bg">
+  <div class="phone">
+    <div class="page-title">角色</div>
+    <div class="feature-card"><div class="big">🤺</div><h2>見習騎士</h2><p>目前裝備：木劍、皮甲。之後可更換外觀與技能。</p></div>
+    <div class="feature-card"><h3>能力</h3><p>攻擊力 +10　能量恢復 +5%</p></div>
+    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+  </div>
+</section>
+
+<section id="gachaScreen" class="screen app-bg">
+  <div class="phone">
+    <div class="page-title">抽獎</div>
+    <div class="feature-card"><div class="big">🎁</div><h2>冒險補給箱</h2><p>可獲得寵物碎片、角色外觀、攻擊特效。</p></div>
+    <button class="main-btn" onclick="alert('抽到了：普通攻擊特效 ✨')">抽一次</button><br>
+    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+  </div>
+</section>
+
+<section id="dailyScreen" class="screen app-bg">
+  <div class="phone">
+    <div class="page-title">每日簽到</div>
+    <div class="feature-card"><div class="big">📅</div><h2>連續簽到 1 天</h2><p>今日獎勵：100 健身幣</p></div>
+    <button class="main-btn" onclick="alert('簽到成功！獲得 100 健身幣')">領取獎勵</button><br>
+    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+  </div>
+</section>
+
+<section id="rankScreen" class="screen app-bg">
+  <div class="phone">
+    <div class="page-title">排行榜</div>
+    <div class="feature-card"><h2>今日排行</h2><p>1. ShadowKnight - 320<br>2. MuscleHero - 280<br>3. YOU - 240</p></div>
+    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+  </div>
+</section>
+
 <section id="gameScreen" class="screen app-bg">
-
   <div class="game">
-
     <div class="top">
-
       <div class="user-left">
         <div class="avatar">⚔️</div>
-
         <div>
           <div id="playerName" class="name">勇者</div>
           <div class="level">LV.1 冒險者</div>
         </div>
       </div>
-
       <div id="stageText">STAGE 1</div>
-
-      <button id="backMapBtn" class="back-battle-btn">
-        ← 返回地圖
-      </button>
-
+      <button class="back-btn" style="margin:0;padding:8px 12px" onclick="show('mapScreen')">返回地圖</button>
     </div>
 
     <div class="battle">
-
-      <video id="video" autoplay playsinline muted></video>
-
-      <canvas id="canvas"></canvas>
-
       <div id="monster" class="monster">👾</div>
-
       <div id="knight" class="knight">🤺</div>
-
       <div id="effect" class="effect"></div>
-
-      <div id="floatText" class="float">HIT!</div>
-
     </div>
 
     <div class="panel">
-
       <div class="stats">
-
-        <div>
-          <div>SCORE</div>
-          <strong id="score">0</strong>
-        </div>
-
-        <div>
-          <div>ENERGY</div>
-          <strong id="energy">0</strong>
-        </div>
-
-        <div>
-          <div>SQUAT</div>
-          <strong id="squatCount">0</strong>
-        </div>
-
+        <div><div>SCORE</div><strong id="score">0</strong></div>
+        <div><div>ENERGY</div><strong id="energy">0</strong></div>
+        <div><div>SQUAT</div><strong id="squatCount">0</strong></div>
       </div>
-
-      <div id="combo" class="combo">
-        COMBO x0
-      </div>
-
-      <div class="hp-bar">
-        <div id="hpFill"></div>
-      </div>
-
+      <div id="combo" class="combo">COMBO x0</div>
+      <div class="hp-bar"><div id="hpFill"></div></div>
+      <p style="text-align:center;color:#94a3b8;font-size:13px">測試：按空白鍵 = 成功深蹲一次</p>
     </div>
-
   </div>
-
 </section>
 
 <script>
-let player="勇者";
-let stage=1;
-let score=0;
-let energy=0;
-let combo=0;
-let squatCount=0;
-let bossHp=100;
+let player="勇者",stage=1,score=0,energy=0,combo=0,squatCount=0,bossHp=100;
 
-const screens=[
-  "homeScreen",
-  "loginScreen",
-  "lobbyScreen",
-  "mapScreen",
-  "gameScreen"
-].map(id=>document.getElementById(id));
+const screenIds=[
+"homeScreen","loginScreen","lobbyScreen","mapScreen",
+"petScreen","roleScreen","gachaScreen","dailyScreen","rankScreen","gameScreen"
+];
 
 function show(id){
-  screens.forEach(s=>s.classList.remove("active"));
+  screenIds.forEach(s=>document.getElementById(s).classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-document.getElementById("toLoginBtn").onclick=()=>{
-  show("loginScreen");
-};
-
-document.getElementById("toLobbyBtn").onclick=()=>{
-  player=document.getElementById("nameInput").value||"勇者";
-
+function login(){
+  player=document.getElementById("nameInput").value.trim()||"勇者";
   document.getElementById("lobbyName").textContent=player;
   document.getElementById("playerName").textContent=player;
-
   show("lobbyScreen");
-};
+}
 
-document.getElementById("goMapBtn").onclick=()=>{
+function openMap(){
   renderMap();
   show("mapScreen");
-};
-
-document.getElementById("startBattleBtn").onclick=()=>{
-  show("gameScreen");
-};
-
-document.getElementById("backMapBtn").onclick=()=>{
-  show("mapScreen");
-};
+}
 
 function renderMap(){
   const box=document.getElementById("mapNodes");
   box.innerHTML="";
-
   for(let i=1;i<=20;i++){
-
     const node=document.createElement("div");
-
     node.className="stage-node";
-
-    if(i%10===0){
-      node.classList.add("elite");
-    }
-
-    if(i===stage){
-      node.classList.add("current");
-    }
-
+    if(i%10===0)node.classList.add("elite");
+    if(i===stage)node.classList.add("current");
     node.textContent=i%10===0?"👑":i;
-
     node.style.top=(35+(i-1)*28)+"px";
     node.style.left=(i%2===0?235:105)+"px";
-
     box.appendChild(node);
   }
 }
+
+function startBattle(){
+  document.getElementById("stageText").textContent="STAGE "+stage;
+  show("gameScreen");
+}
+
+function attack(){
+  score+=10;
+  energy++;
+  combo++;
+  squatCount++;
+  bossHp-=12;
+  if(bossHp<0){
+    bossHp=100;
+    stage++;
+    alert("關卡通過！");
+    renderMap();
+    show("mapScreen");
+  }
+  document.getElementById("score").textContent=score;
+  document.getElementById("energy").textContent=energy;
+  document.getElementById("squatCount").textContent=squatCount;
+  document.getElementById("combo").textContent="COMBO x"+combo;
+  document.getElementById("hpFill").style.width=bossHp+"%";
+  const effect=document.getElementById("effect");
+  effect.classList.remove("show");
+  void effect.offsetWidth;
+  effect.classList.add("show");
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"&&document.getElementById("gameScreen").classList.contains("active")){
+    attack();
+  }
+});
 </script>
 
 </body>
