@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>深蹲打怪</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>深蹲打怪 RPG</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -11,7 +15,7 @@ body{margin:0;background:#050918;color:white;font-family:"Microsoft JhengHei",Ar
 .screen{display:none;min-height:100vh}
 .screen.active{display:flex}
 .center{justify-content:center;align-items:center;text-align:center;background:radial-gradient(circle at 50% 25%,rgba(0,217,255,.25),transparent 30%),linear-gradient(#050918,#02040d)}
-.app-bg{justify-content:center;background:radial-gradient(circle at 20% 10%,rgba(0,217,255,.18),transparent 30%),linear-gradient(#050918,#07111f)}
+.app-bg{justify-content:center;background:radial-gradient(circle at 20% 10%,rgba(0,217,255,.18),transparent 30%),radial-gradient(circle at 80% 80%,rgba(255,214,10,.12),transparent 26%),linear-gradient(#050918,#07111f)}
 .phone{width:100%;max-width:430px;padding:18px}
 .logo{width:86px;height:86px;margin:0 auto 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#00d9ff,#3b82f6);font-size:44px;box-shadow:0 0 34px rgba(0,217,255,.6)}
 h1{margin:0;font-size:42px;letter-spacing:6px}
@@ -19,6 +23,7 @@ h1{margin:0;font-size:42px;letter-spacing:6px}
 button{border:none;cursor:pointer}
 .main-btn{width:230px;height:62px;border-radius:40px;background:linear-gradient(135deg,#16c7f3,#3b82f6);color:white;font-size:22px;font-weight:bold;box-shadow:0 0 24px rgba(0,217,255,.35)}
 .back-btn{margin-top:16px;background:rgba(15,23,42,.9);border:1px solid rgba(255,255,255,.14);color:#cbd5e1;padding:12px 22px;border-radius:20px}
+.small-btn{background:linear-gradient(135deg,#facc15,#f97316);color:#111827;font-weight:bold;padding:10px 16px;border-radius:999px}
 input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px solid rgba(255,255,255,.25);color:white;text-align:center;font-size:20px;margin:30px 0 24px}
 .top-user,.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .user-left{display:flex;gap:10px;align-items:center}
@@ -30,7 +35,7 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 .lobby-hero h2{margin:0;font-size:30px;color:#ffd400}
 .hero-knight{position:absolute;right:24px;bottom:18px;font-size:96px}
 .menu-grid{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.menu-card,.feature-card{border-radius:26px;padding:16px;background:radial-gradient(circle at 80% 20%,rgba(0,217,255,.16),transparent 30%),rgba(15,23,42,.92);border:1px solid rgba(255,255,255,.12)}
+.menu-card,.feature-card{border-radius:26px;padding:16px;background:radial-gradient(circle at 80% 20%,rgba(0,217,255,.16),transparent 30%),rgba(15,23,42,.92);border:1px solid rgba(255,255,255,.12);box-shadow:0 0 20px rgba(0,0,0,.25)}
 .menu-card{height:118px}
 .menu-icon{font-size:34px;margin-bottom:8px}
 .menu-title{font-size:20px;font-weight:bold}
@@ -39,6 +44,9 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 .feature-card{margin-bottom:14px;text-align:center}
 .feature-card .big{font-size:56px;margin-bottom:10px}
 .feature-card p{color:#cbd5e1;line-height:1.6}
+.card-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;font-size:12px;background:rgba(0,217,255,.15);color:#67e8f9}
+.rare{color:#a78bfa}.epic{color:#facc15}.legend{color:#fb7185}
 .map{position:relative;height:620px;border-radius:32px;background:linear-gradient(180deg,rgba(15,23,42,.95),rgba(3,7,18,.95));border:1px solid rgba(255,255,255,.14);overflow:hidden}
 .path-line{position:absolute;width:5px;background:linear-gradient(#00d9ff,#ffd400,#ff3355);opacity:.45;left:50%;top:42px;bottom:42px;transform:translateX(-50%)}
 .stage-node{position:absolute;width:58px;height:58px;border-radius:50%;background:#111827;border:3px solid #00d9ff;display:flex;align-items:center;justify-content:center;font-weight:bold}
@@ -47,17 +55,25 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 .game{width:100%;max-width:430px;padding:14px}
 #stageText{color:#ffd400;font-size:22px;font-weight:bold}
 .battle{position:relative;height:520px;border-radius:28px;overflow:hidden;background:#111827;border:2px solid rgba(255,255,255,.13)}
-.monster{position:absolute;top:78px;left:50%;transform:translateX(-50%);font-size:88px}
-.knight{position:absolute;right:26px;bottom:92px;font-size:62px}
-.effect{position:absolute;top:120px;left:50%;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#fff176,rgba(255,100,0,.55),transparent 70%);opacity:0}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+video{transform:scaleX(-1)}
+canvas{z-index:2}
+.monster{position:absolute;top:78px;left:50%;transform:translateX(-50%);font-size:88px;z-index:4}
+.knight{position:absolute;right:26px;bottom:92px;font-size:62px;z-index:5}
+.effect{position:absolute;top:120px;left:50%;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#fff176,rgba(255,100,0,.55),transparent 70%);opacity:0;z-index:6}
 .effect.show{animation:boom .5s}
+.float{position:absolute;top:105px;left:50%;z-index:7;color:#ffd400;font-size:34px;font-weight:bold;opacity:0;text-shadow:0 0 14px #ff6600}
+.float.show{animation:floatText .75s}
 .panel{margin-top:12px;padding:18px;border-radius:24px;background:#10172a}
 .stats{display:flex;justify-content:space-around;text-align:center}
 .stats strong{color:#ffd400;font-size:24px}
 .combo{text-align:center;color:#ffd400;font-size:26px;font-weight:bold;margin:8px 0}
+.hp-title{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
 .hp-bar{height:14px;background:#1e293b;border-radius:20px;overflow:hidden}
 #hpFill{height:100%;width:100%;background:linear-gradient(90deg,#4ade80,#00d4ff)}
+.debug{text-align:center;color:#94a3b8;font-size:12px;margin-top:8px}
 @keyframes boom{0%{transform:translateX(-50%) scale(.3);opacity:1}100%{transform:translateX(-50%) scale(2.2);opacity:0}}
+@keyframes floatText{0%{transform:translate(-50%,20px);opacity:0}40%{opacity:1}100%{transform:translate(-50%,-55px);opacity:0}}
 </style>
 </head>
 
@@ -89,25 +105,25 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
         <div class="avatar">⚔️</div>
         <div>
           <div id="lobbyName" class="name">勇者</div>
-          <div class="level">LV.1 見習騎士</div>
+          <div id="playerLevelText" class="level">LV.1 見習騎士</div>
         </div>
       </div>
-      <div class="coin">🪙 1200</div>
+      <div id="coinText" class="coin">🪙 1200</div>
     </div>
 
     <div class="lobby-hero">
       <h2>今日冒險</h2>
-      <p>完成深蹲，累積攻擊能量。</p>
+      <p>深蹲累積能量，培養寵物，突破地城。</p>
       <div class="hero-knight">🤺</div>
     </div>
 
     <div class="menu-grid">
       <div class="menu-card" onclick="openMap()"><div class="menu-icon">🗺️</div><div class="menu-title">關卡</div><div class="menu-desc">探險地圖</div></div>
-      <div class="menu-card" onclick="show('petScreen')"><div class="menu-icon">🐾</div><div class="menu-title">寵物</div><div class="menu-desc">培養夥伴</div></div>
-      <div class="menu-card" onclick="show('roleScreen')"><div class="menu-icon">🛡️</div><div class="menu-title">角色</div><div class="menu-desc">騎士裝備</div></div>
-      <div class="menu-card" onclick="show('gachaScreen')"><div class="menu-icon">🎁</div><div class="menu-title">抽獎</div><div class="menu-desc">獲得獎勵</div></div>
-      <div class="menu-card" onclick="show('dailyScreen')"><div class="menu-icon">📅</div><div class="menu-title">每日簽到</div><div class="menu-desc">連續獎勵</div></div>
-      <div class="menu-card" onclick="show('rankScreen')"><div class="menu-icon">🏆</div><div class="menu-title">排行榜</div><div class="menu-desc">挑戰排名</div></div>
+      <div class="menu-card" onclick="openPets()"><div class="menu-icon">🐾</div><div class="menu-title">寵物</div><div class="menu-desc">培養夥伴</div></div>
+      <div class="menu-card" onclick="openRole()"><div class="menu-icon">🛡️</div><div class="menu-title">角色</div><div class="menu-desc">騎士成長</div></div>
+      <div class="menu-card" onclick="openGacha()"><div class="menu-icon">🎁</div><div class="menu-title">抽獎</div><div class="menu-desc">獲得寵物</div></div>
+      <div class="menu-card" onclick="openDaily()"><div class="menu-icon">📅</div><div class="menu-title">每日簽到</div><div class="menu-desc">連續獎勵</div></div>
+      <div class="menu-card" onclick="openRank()"><div class="menu-icon">🏆</div><div class="menu-title">排行榜</div><div class="menu-desc">挑戰排名</div></div>
     </div>
   </div>
 </section>
@@ -115,10 +131,7 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 <section id="mapScreen" class="screen app-bg">
   <div class="phone">
     <div class="page-title">探險地圖</div>
-    <div class="map">
-      <div class="path-line"></div>
-      <div id="mapNodes"></div>
-    </div>
+    <div class="map"><div class="path-line"></div><div id="mapNodes"></div></div>
     <div style="text-align:center;margin-top:20px">
       <button class="main-btn" onclick="startBattle()">進入關卡</button><br>
       <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
@@ -129,8 +142,7 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 <section id="petScreen" class="screen app-bg">
   <div class="phone">
     <div class="page-title">寵物</div>
-    <div class="feature-card"><div class="big">🐾</div><h2>光靈幼獸 Lv.1</h2><p>深蹲時會累積能量，未來可協助玩家追加攻擊。</p></div>
-    <div class="feature-card"><h3>升級需求</h3><p>消耗 300 健身幣提升寵物攻擊力。</p></div>
+    <div id="petList"></div>
     <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
   </div>
 </section>
@@ -138,8 +150,12 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 <section id="roleScreen" class="screen app-bg">
   <div class="phone">
     <div class="page-title">角色</div>
-    <div class="feature-card"><div class="big">🤺</div><h2>見習騎士</h2><p>目前裝備：木劍、皮甲。之後可更換外觀與技能。</p></div>
-    <div class="feature-card"><h3>能力</h3><p>攻擊力 +10　能量恢復 +5%</p></div>
+    <div class="feature-card">
+      <div class="big">🤺</div>
+      <h2 id="roleTitle">見習騎士 Lv.1</h2>
+      <p id="roleDesc">攻擊力：10<br>升級可提升戰鬥傷害。</p>
+      <button class="small-btn" onclick="upgradeRole()">升級角色</button>
+    </div>
     <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
   </div>
 </section>
@@ -147,8 +163,13 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 <section id="gachaScreen" class="screen app-bg">
   <div class="phone">
     <div class="page-title">抽獎</div>
-    <div class="feature-card"><div class="big">🎁</div><h2>冒險補給箱</h2><p>可獲得寵物碎片、角色外觀、攻擊特效。</p></div>
-    <button class="main-btn" onclick="alert('抽到了：普通攻擊特效 ✨')">抽一次</button><br>
+    <div class="feature-card">
+      <div class="big">🎁</div>
+      <h2>冒險補給箱</h2>
+      <p>花費 300 健身幣抽一次。可獲得普通、稀有、史詩、傳說寵物。</p>
+      <button class="main-btn" onclick="drawGacha()">抽一次</button>
+      <p id="gachaResult"></p>
+    </div>
     <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
   </div>
 </section>
@@ -156,8 +177,8 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 <section id="dailyScreen" class="screen app-bg">
   <div class="phone">
     <div class="page-title">每日簽到</div>
-    <div class="feature-card"><div class="big">📅</div><h2>連續簽到 1 天</h2><p>今日獎勵：100 健身幣</p></div>
-    <button class="main-btn" onclick="alert('簽到成功！獲得 100 健身幣')">領取獎勵</button><br>
+    <div id="dailyList"></div>
+    <button class="main-btn" onclick="claimDaily()">領取今日獎勵</button><br>
     <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
   </div>
 </section>
@@ -165,7 +186,14 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
 <section id="rankScreen" class="screen app-bg">
   <div class="phone">
     <div class="page-title">排行榜</div>
-    <div class="feature-card"><h2>今日排行</h2><p>1. ShadowKnight - 320<br>2. MuscleHero - 280<br>3. YOU - 240</p></div>
+    <div class="feature-card">
+      <h2>今日深蹲排行</h2>
+      <p>1. ShadowKnight - 320<br>2. MuscleHero - 280<br>3. YOU - <span id="rankSquat">0</span></p>
+    </div>
+    <div class="feature-card">
+      <h2>目前進度</h2>
+      <p>最高關卡：<span id="rankStage">1</span><br>累積分數：<span id="rankScore">0</span></p>
+    </div>
     <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
   </div>
 </section>
@@ -185,9 +213,12 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
     </div>
 
     <div class="battle">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
       <div id="monster" class="monster">👾</div>
       <div id="knight" class="knight">🤺</div>
       <div id="effect" class="effect"></div>
+      <div id="floatText" class="float">HIT!</div>
     </div>
 
     <div class="panel">
@@ -197,45 +228,48 @@ input{width:88%;height:60px;border-radius:18px;background:#111827;border:1px sol
         <div><div>SQUAT</div><strong id="squatCount">0</strong></div>
       </div>
       <div id="combo" class="combo">COMBO x0</div>
+      <div class="hp-title"><span id="enemyName">ENEMY HP</span><span id="hpText">100 / 100</span></div>
       <div class="hp-bar"><div id="hpFill"></div></div>
-      <p style="text-align:center;color:#94a3b8;font-size:13px">測試：按空白鍵 = 成功深蹲一次</p>
+      <div id="debug" class="debug">手機會自動偵測深蹲；電腦可按空白鍵測試</div>
     </div>
   </div>
 </section>
 
 <script>
-let player="勇者",stage=1,score=0,energy=0,combo=0,squatCount=0,bossHp=100;
+const defaultData={
+  name:"勇者",coins:1200,stage:1,score:0,energy:0,combo:0,squat:0,
+  roleLevel:1,roleAttack:10,dailyDay:1,lastClaim:"",
+  pets:[
+    {id:1,name:"光靈幼獸",icon:"🐾",rarity:"稀有",level:1,attack:12,owned:true,active:true},
+    {id:2,name:"焰火狐",icon:"🔥",rarity:"史詩",level:1,attack:25,owned:false,active:false},
+    {id:3,name:"星辰貓",icon:"🌙",rarity:"傳說",level:1,attack:40,owned:false,active:false}
+  ]
+};
 
-const screenIds=[
-"homeScreen","loginScreen","lobbyScreen","mapScreen",
-"petScreen","roleScreen","gachaScreen","dailyScreen","rankScreen","gameScreen"
-];
+let data=JSON.parse(localStorage.getItem("squatRPG"))||defaultData;
+let bossHp=100,maxHp=100;
+let poseStarted=false,squatState="up",lastAttackTime=0;
 
-function show(id){
-  screenIds.forEach(s=>document.getElementById(s).classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+const screens=["homeScreen","loginScreen","lobbyScreen","mapScreen","petScreen","roleScreen","gachaScreen","dailyScreen","rankScreen","gameScreen"];
+
+function save(){localStorage.setItem("squatRPG",JSON.stringify(data));refreshTop();}
+function show(id){screens.forEach(s=>document.getElementById(s).classList.remove("active"));document.getElementById(id).classList.add("active");refreshTop();}
+function login(){data.name=document.getElementById("nameInput").value.trim()||"勇者";save();show("lobbyScreen");}
+function refreshTop(){
+  document.getElementById("lobbyName").textContent=data.name;
+  document.getElementById("playerName").textContent=data.name;
+  document.getElementById("coinText").textContent="🪙 "+data.coins;
+  document.getElementById("playerLevelText").textContent="LV."+data.roleLevel+" 見習騎士";
 }
 
-function login(){
-  player=document.getElementById("nameInput").value.trim()||"勇者";
-  document.getElementById("lobbyName").textContent=player;
-  document.getElementById("playerName").textContent=player;
-  show("lobbyScreen");
-}
-
-function openMap(){
-  renderMap();
-  show("mapScreen");
-}
-
+function openMap(){renderMap();show("mapScreen");}
 function renderMap(){
-  const box=document.getElementById("mapNodes");
-  box.innerHTML="";
+  const box=document.getElementById("mapNodes");box.innerHTML="";
   for(let i=1;i<=20;i++){
     const node=document.createElement("div");
     node.className="stage-node";
     if(i%10===0)node.classList.add("elite");
-    if(i===stage)node.classList.add("current");
+    if(i===data.stage)node.classList.add("current");
     node.textContent=i%10===0?"👑":i;
     node.style.top=(35+(i-1)*28)+"px";
     node.style.left=(i%2===0?235:105)+"px";
@@ -243,41 +277,188 @@ function renderMap(){
   }
 }
 
-function startBattle(){
-  document.getElementById("stageText").textContent="STAGE "+stage;
-  show("gameScreen");
+function openPets(){
+  const box=document.getElementById("petList");box.innerHTML="";
+  data.pets.forEach(p=>{
+    const div=document.createElement("div");
+    div.className="feature-card";
+    div.innerHTML=`
+      <div class="big">${p.icon}</div>
+      <h2>${p.name} <span class="badge ${p.rarity==='傳說'?'legend':p.rarity==='史詩'?'epic':'rare'}">${p.rarity}</span></h2>
+      <p>Lv.${p.level}<br>輔助攻擊：+${p.attack}<br>${p.owned?'已擁有':'尚未獲得'}</p>
+      <div class="card-row">
+        <button class="small-btn" onclick="setPet(${p.id})">${p.active?'出戰中':'設為出戰'}</button>
+        <button class="small-btn" onclick="upgradePet(${p.id})">升級</button>
+      </div>`;
+    box.appendChild(div);
+  });
+  show("petScreen");
 }
 
+function setPet(id){
+  const pet=data.pets.find(p=>p.id===id);
+  if(!pet.owned){alert("你尚未擁有這隻寵物");return;}
+  data.pets.forEach(p=>p.active=false);
+  pet.active=true;save();openPets();
+}
+
+function upgradePet(id){
+  const pet=data.pets.find(p=>p.id===id);
+  if(!pet.owned){alert("尚未擁有，無法升級");return;}
+  const cost=pet.level*200;
+  if(data.coins<cost){alert("健身幣不足，需要 "+cost);return;}
+  data.coins-=cost;pet.level++;pet.attack+=5;save();openPets();
+}
+
+function openRole(){
+  document.getElementById("roleTitle").textContent="見習騎士 Lv."+data.roleLevel;
+  document.getElementById("roleDesc").innerHTML="攻擊力："+data.roleAttack+"<br>升級費用："+(data.roleLevel*300)+" 健身幣";
+  show("roleScreen");
+}
+
+function upgradeRole(){
+  const cost=data.roleLevel*300;
+  if(data.coins<cost){alert("健身幣不足，需要 "+cost);return;}
+  data.coins-=cost;data.roleLevel++;data.roleAttack+=5;save();openRole();
+}
+
+function openGacha(){document.getElementById("gachaResult").textContent="";show("gachaScreen");}
+
+function drawGacha(){
+  if(data.coins<300){alert("健身幣不足");return;}
+  data.coins-=300;
+  const r=Math.random()*100;
+  let pet;
+  if(r<5)pet=data.pets[2];
+  else if(r<25)pet=data.pets[1];
+  else pet=data.pets[0];
+  pet.owned=true;
+  document.getElementById("gachaResult").innerHTML="獲得："+pet.icon+" "+pet.name+"（"+pet.rarity+"）";
+  save();
+}
+
+function openDaily(){
+  const rewards=[100,150,200,300,500,800,1500];
+  const box=document.getElementById("dailyList");box.innerHTML="";
+  rewards.forEach((r,i)=>{
+    box.innerHTML+=`<div class="feature-card"><h2>第 ${i+1} 天</h2><p>${i===6?"稀有寵物蛋":"健身幣 "+r}</p></div>`;
+  });
+  show("dailyScreen");
+}
+
+function today(){return new Date().toISOString().slice(0,10);}
+function claimDaily(){
+  if(data.lastClaim===today()){alert("今天已經領過了");return;}
+  const rewards=[100,150,200,300,500,800,1500];
+  const day=Math.min(data.dailyDay,7);
+  if(day===7){data.pets[1].owned=true;alert("獲得稀有寵物：焰火狐！");}
+  else{data.coins+=rewards[day-1];alert("獲得 "+rewards[day-1]+" 健身幣！");}
+  data.dailyDay=day===7?1:day+1;
+  data.lastClaim=today();
+  save();openDaily();
+}
+
+function openRank(){
+  document.getElementById("rankSquat").textContent=data.squat;
+  document.getElementById("rankStage").textContent=data.stage;
+  document.getElementById("rankScore").textContent=data.score;
+  show("rankScreen");
+}
+
+function startBattle(){
+  const elite=data.stage%10===0;
+  maxHp=elite?240:100+data.stage*10;
+  bossHp=maxHp;
+  document.getElementById("stageText").textContent="STAGE "+data.stage;
+  document.getElementById("monster").textContent=elite?"👹":"👾";
+  document.getElementById("enemyName").textContent=elite?"ELITE HP":"ENEMY HP";
+  updateBattleUI();
+  show("gameScreen");
+  if(!poseStarted){poseStarted=true;startPose();}
+}
+
+function activePet(){return data.pets.find(p=>p.active&&p.owned)||data.pets[0];}
+
 function attack(){
-  score+=10;
-  energy++;
-  combo++;
-  squatCount++;
-  bossHp-=12;
-  if(bossHp<0){
-    bossHp=100;
-    stage++;
-    alert("關卡通過！");
+  const pet=activePet();
+  const damage=data.roleAttack+pet.attack+(data.combo%5===4?30:0);
+  bossHp-=damage;
+  data.score+=10;data.energy++;data.combo++;data.squat++;data.coins+=5;
+  document.getElementById("floatText").textContent=data.combo%5===0?"CRITICAL!":"SLASH!";
+  playEffect();
+  if(bossHp<=0){
+    data.coins+=data.stage*20;
+    data.stage++;
+    data.combo=0;
+    save();
+    alert("關卡通過！獲得通關獎勵！");
     renderMap();
     show("mapScreen");
+    return;
   }
-  document.getElementById("score").textContent=score;
-  document.getElementById("energy").textContent=energy;
-  document.getElementById("squatCount").textContent=squatCount;
-  document.getElementById("combo").textContent="COMBO x"+combo;
-  document.getElementById("hpFill").style.width=bossHp+"%";
-  const effect=document.getElementById("effect");
-  effect.classList.remove("show");
-  void effect.offsetWidth;
-  effect.classList.add("show");
+  save();updateBattleUI();
+}
+
+function updateBattleUI(){
+  document.getElementById("score").textContent=data.score;
+  document.getElementById("energy").textContent=data.energy;
+  document.getElementById("squatCount").textContent=data.squat;
+  document.getElementById("combo").textContent="COMBO x"+data.combo;
+  document.getElementById("hpText").textContent=Math.max(0,bossHp)+" / "+maxHp;
+  document.getElementById("hpFill").style.width=Math.max(0,bossHp/maxHp*100)+"%";
+}
+
+function playEffect(){
+  const e=document.getElementById("effect"),f=document.getElementById("floatText");
+  e.classList.remove("show");f.classList.remove("show");
+  void e.offsetWidth;
+  e.classList.add("show");f.classList.add("show");
 }
 
 document.addEventListener("keydown",e=>{
-  if(e.code==="Space"&&document.getElementById("gameScreen").classList.contains("active")){
-    attack();
-  }
+  if(e.code==="Space"&&document.getElementById("gameScreen").classList.contains("active"))attack();
 });
-</script>
 
+async function startPose(){
+  const video=document.getElementById("video");
+  const canvas=document.getElementById("canvas");
+  const ctx=canvas.getContext("2d");
+  const pose=new Pose({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/pose/"+file});
+  pose.setOptions({modelComplexity:1,smoothLandmarks:true,minDetectionConfidence:.45,minTrackingConfidence:.45});
+  pose.onResults(results=>{
+    canvas.width=video.videoWidth||480;canvas.height=video.videoHeight||640;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(results.poseLandmarks){
+      drawConnectors(ctx,results.poseLandmarks,POSE_CONNECTIONS,{color:"#00d9ff",lineWidth:4});
+      drawLandmarks(ctx,results.poseLandmarks,{color:"#ffd400",lineWidth:2});
+      checkSquat(results.poseLandmarks);
+    }
+  });
+  const camera=new Camera(video,{onFrame:async()=>await pose.send({image:video}),width:480,height:640});
+  camera.start();
+}
+
+function checkSquat(lm){
+  const lh=lm[23],lk=lm[25],la=lm[27],rh=lm[24],rk=lm[26],ra=lm[28];
+  if(lk.visibility<.4||la.visibility<.4||rk.visibility<.4||ra.visibility<.4)return;
+  const angle=Math.min(getAngle(lh,lk,la),getAngle(rh,rk,ra));
+  document.getElementById("debug").textContent="膝蓋角度："+Math.round(angle)+" / 狀態："+squatState;
+  if(squatState==="up"&&angle<140)squatState="down";
+  if(squatState==="down"&&angle>155){
+    const now=Date.now();
+    if(now-lastAttackTime>700){attack();lastAttackTime=now;}
+    squatState="up";
+  }
+}
+
+function getAngle(a,b,c){
+  const ab={x:a.x-b.x,y:a.y-b.y},cb={x:c.x-b.x,y:c.y-b.y};
+  const dot=ab.x*cb.x+ab.y*cb.y;
+  const len=Math.sqrt(ab.x**2+ab.y**2)*Math.sqrt(cb.x**2+cb.y**2);
+  return Math.acos(Math.min(1,Math.max(-1,dot/len)))*180/Math.PI;
+}
+
+refreshTop();
+</script>
 </body>
 </html>
