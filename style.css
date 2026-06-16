@@ -336,7 +336,7 @@ video, canvas {
   object-fit: cover;
 }
 
-/* 為了讓鏡像操作直覺，視訊與骨架畫布皆進行翻轉 */
+/* 視訊與骨架同步翻轉鏡像 */
 video {
   transform: scaleX(-1);
 }
@@ -357,7 +357,6 @@ canvas {
   transition: transform 0.1s ease;
 }
 
-/* 遭受攻擊時震盪與閃爍 */
 .monster.hit {
   animation: monsterDamaged 0.2s ease-in-out;
 }
@@ -374,7 +373,7 @@ canvas {
   animation: petJump 0.35s ease-out;
 }
 
-/* 受擊光圈特效 */
+/* 特效 */
 .effect {
   position: absolute;
   top: 90px;
@@ -392,7 +391,6 @@ canvas {
   animation: boom .4s ease-out;
 }
 
-/* 傷害飄字浮空 */
 .float {
   position: absolute;
   top: 70px;
@@ -464,7 +462,6 @@ canvas {
   margin-top: 8px;
 }
 
-/* 動畫序列定義 */
 @keyframes monsterDamaged {
   0%, 100% { transform: translateX(-50%) scale(1); }
   20% { transform: translateX(-65%) scale(1.1) rotate(-5deg); filter: brightness(1.6); }
