@@ -16,7 +16,6 @@ let poseStarted = false, squatState = "up", lastAttackTime = 0;
 const screens = ["homeScreen", "loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "rankScreen", "gameScreen"];
 
 // ==================== 2. 網頁內建音效合成器 ====================
-// 免任何外部音效檔案，直接透過瀏覽器發聲
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playAudioEffect(type) {
@@ -27,30 +26,30 @@ function playAudioEffect(type) {
   osc.connect(gain);
   gain.connect(audioCtx.destination);
 
-  if (type === 'hit') { // 擊中音效 (頻率快速下滑)
+  if (type === 'hit') {
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(260, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.12);
     gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
     osc.start(); osc.stop(audioCtx.currentTime + 0.12);
-  } else if (type === 'crit') { // 暴擊音效 (高亢且帶兩段起伏)
+  } else if (type === 'crit') {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(450, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.2);
     gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
     osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-  } else if (type === 'down') { // 蹲下到位的提示滴答聲
+  } else if (type === 'down') {
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5 鍵音
+    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
     osc.start(); osc.stop(audioCtx.currentTime + 0.08);
   }
 }
 
-// ==================== 3. 核心基礎系統 (儲存、切換、登入) ====================
+// ==================== 3. 基礎切換控制 ====================
 function save() { 
   localStorage.setItem("squatRPG", JSON.stringify(data)); 
   refreshTop(); 
@@ -75,12 +74,11 @@ function refreshTop() {
   document.getElementById("playerLevelText").textContent = "LV." + data.roleLevel + " 見習騎士";
 }
 
-// 綁定輸入框 Enter 鍵
 document.getElementById("nameInput").addEventListener("keydown", function(e) {
   if (e.key === "Enter") login();
 });
 
-// ==================== 4. 系統模組 (地圖、寵物、角色、抽獎、簽到) ====================
+// ==================== 4. 系統模組 ====================
 function openMap() { renderMap(); show("mapScreen"); }
 
 function renderMap() {
@@ -186,7 +184,7 @@ function openRank() {
   show("rankScreen");
 }
 
-// ==================== 5. 戰鬥核心邏輯運作 ====================
+// ==================== 5. 戰鬥核心邏輯 ====================
 function activePet() { 
   return data.pets.find(p => p.active && p.owned) || data.pets[0]; 
 }
@@ -199,8 +197,6 @@ function startBattle() {
   document.getElementById("stageText").textContent = "STAGE " + data.stage;
   document.getElementById("monster").textContent = elite ? "👹" : "👾";
   document.getElementById("enemyName").textContent = elite ? "ELITE HP" : "ENEMY HP";
-  
-  // 讓戰鬥畫面顯示出戰寵物的 Emoji
   document.getElementById("knight").textContent = activePet().icon;
 
   updateBattleUI();
@@ -217,10 +213,8 @@ function attack() {
   bossHp -= damage;
   data.score += 10; data.energy++; data.combo++; data.squat++; data.coins += 5;
   
-  // 飄字回饋與音效
   document.getElementById("floatText").textContent = isCrit ? "CRITICAL!" : `-${damage} HP`;
   playAudioEffect(isCrit ? 'crit' : 'hit');
-  
   playEffectAnimation();
   
   if (bossHp <= 0) {
@@ -251,23 +245,20 @@ function playEffectAnimation() {
   const m = document.getElementById("monster");
   const k = document.getElementById("knight");
 
-  // 清除動畫狀態
   e.classList.remove("show"); f.classList.remove("show");
   m.classList.remove("hit"); k.classList.remove("petAttack");
   
-  void e.offsetWidth; // 觸發重繪 (Reflow)機制
+  void e.offsetWidth;
 
-  // 注入新動畫
   e.classList.add("show"); f.classList.add("show");
   m.classList.add("hit"); k.classList.add("petAttack");
 }
 
-// 支援電腦空白鍵偵測測試
 document.addEventListener("keydown", e => {
   if (e.code === "Space" && document.getElementById("gameScreen").classList.contains("active")) attack();
 });
 
-// ==================== 6. MediaPipe 視覺運算與骨架同步 ====================
+// ==================== 6. MediaPipe 骨架同步運算 ====================
 async function startPose() {
   const video = document.getElementById("video");
   const canvas = document.getElementById("canvas");
@@ -282,14 +273,11 @@ async function startPose() {
   });
   
   pose.onResults(results => {
-    // 關鍵優化：動態抓取元素實際在畫面上渲染的寬高（解決 object-fit: cover 造成的位移偏離）
     canvas.width = video.clientWidth || 480;
     canvas.height = video.clientHeight || 640;
-    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     if (results.poseLandmarks) {
-      // 繪製人體連線藍圖
       drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "#00d9ff", lineWidth: 4 });
       drawLandmarks(ctx, results.poseLandmarks, { color: "#ffd400", lineWidth: 2 });
       checkSquat(results.poseLandmarks);
@@ -305,23 +293,21 @@ async function startPose() {
 }
 
 function checkSquat(lm) {
-  const lh = lm[23], lk = lm[25], la = lm[27]; // 左側：臀、膝、踝
-  const rh = lm[24], rk = lm[26], ra = lm[28]; // 右側：臀、膝、踝
+  const lh = lm[23], lk = lm[25], la = lm[27];
+  const rh = lm[24], rk = lm[26], ra = lm[28];
   
   if (lk.visibility < .4 || la.visibility < .4 || rk.visibility < .4 || ra.visibility < .4) return;
   
-  // 取雙腳深度角度中蹲得比較低的作為基準
   const angle = Math.min(getAngle(lh, lk, la), getAngle(rh, rk, ra));
   document.getElementById("debug").textContent = "膝蓋角度：" + Math.round(angle) + " / 狀態：" + squatState;
   
-  // 動作狀態機判定
-  if (squatState === "up" && angle < 135) { // 角度閾值優化收緊
+  if (squatState === "up" && angle < 135) {
     squatState = "down";
-    playAudioEffect('down'); // 播放蹲下提示音
+    playAudioEffect('down');
   }
   if (squatState === "down" && angle > 155) {
     const now = Date.now();
-    if (now - lastAttackTime > 750) { // 預防短時間二重判定節流
+    if (now - lastAttackTime > 750) {
       attack();
       lastAttackTime = now;
     }
@@ -329,7 +315,6 @@ function checkSquat(lm) {
   }
 }
 
-// 幾何向量：計算三特徵點夾角
 function getAngle(a, b, c) {
   const ab = { x: a.x - b.x, y: a.y - b.y }, cb = { x: c.x - b.x, y: c.y - b.y };
   const dot = ab.x * cb.x + ab.y * cb.y;
@@ -337,5 +322,4 @@ function getAngle(a, b, c) {
   return Math.acos(Math.min(1, Math.max(-1, dot / len))) * 180 / Math.PI;
 }
 
-// 初始刷新大廳勇者名
 refreshTop();
