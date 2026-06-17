@@ -48,13 +48,23 @@ function playSound(type) {
 
 const screens = ["homeScreen", "loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "rankScreen", "gameScreen"];
 
-// 核心修正：利用 DOMContentLoaded 確保 DOM 樹完全建置才開始綁定按鈕監聽器
+// 核心修正：確保網頁一載入，首頁的按鈕點擊功能立刻生效
 window.addEventListener("DOMContentLoaded", () => {
+  // 1. 首頁「開始冒險」按鈕點擊
+  const toLoginBtn = document.getElementById("toLoginBtn");
+  if (toLoginBtn) {
+    toLoginBtn.addEventListener("click", () => {
+      showScreen("loginScreen");
+    });
+  }
+
+  // 2. 登入頁「建立角色」按鈕點擊
   const startBtn = document.getElementById("startBtn");
   if (startBtn) {
     startBtn.addEventListener("click", startGame);
   }
   
+  // 3. 欄位輸入 Enter 鍵
   const nameInput = document.getElementById("nameInput");
   if (nameInput) {
     nameInput.addEventListener("keydown", (e) => {
