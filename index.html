@@ -11,174 +11,173 @@
   
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<section id="homeScreen" class="screen active center">
-  <div>
-    <div class="logo">⚔️</div>
-    <h1>深蹲打怪</h1>
-    <div class="subtitle">SQUAT HERO ADVENTURE</div>
-    <button class="main-btn" onclick="showLogin()">開始冒險</button>
-  </div>
-</section>
+  <section id="homeScreen" class="screen active center">
+    <div>
+      <div class="logo">⚔️</div>
+      <h1>深蹲打怪</h1>
+      <div class="subtitle">SQUAT HERO ADVENTURE</div>
+      <button class="main-btn" onclick="showScreen('loginScreen')">開始冒險</button>
+    </div>
+  </section>
 
-<section id="loginScreen" class="screen center">
-  <div>
-    <div class="logo">🛡️</div>
-    <h1>勇者登入</h1>
-    <input id="nameInput" placeholder="輸入勇者名稱..." maxlength="12">
-    <br>
-    <button id="startBtn" class="main-btn">出發！</button>
-  </div>
-</section>
+  <section id="loginScreen" class="screen center">
+    <div>
+      <div class="logo">🛡️</div>
+      <h1>勇者登入</h1>
+      <input id="nameInput" placeholder="輸入勇者名稱..." maxlength="12">
+      <br>
+      <button id="startBtn" class="main-btn">出發！</button>
+    </div>
+  </section>
 
-<section id="lobbyScreen" class="screen app-bg">
-  <div class="phone">
-    <div class="top-user">
-      <div class="user-left">
-        <div class="avatar">⚔️</div>
-        <div>
-          <div id="lobbyName" class="name">勇者</div>
-          <div id="playerLevelText" class="level">LV.1 見習騎士</div>
+  <section id="lobbyScreen" class="screen app-bg">
+    <div class="phone">
+      <div class="top-user">
+        <div class="user-left">
+          <div class="avatar">⚔️</div>
+          <div>
+            <div id="lobbyName" class="name">勇者</div>
+            <div id="playerLevelText" class="level">LV.1 見習騎士</div>
+          </div>
         </div>
+        <div id="coinText" class="coin">🪙 1200</div>
       </div>
-      <div id="coinText" class="coin">🪙 1200</div>
-    </div>
 
-    <div class="lobby-hero">
-      <h2>今日冒險</h2>
-      <p>深蹲累積能量，培養寵物，突破地城。</p>
-      <div class="hero-knight">🤺</div>
-    </div>
-
-    <div class="menu-grid">
-      <div class="menu-card" onclick="openMap()"><div class="menu-icon">🗺️</div><div class="menu-title">關卡</div><div class="menu-desc">探險地圖</div></div>
-      <div class="menu-card" onclick="openPets()"><div class="menu-icon">🐾</div><div class="menu-title">寵物</div><div class="menu-desc">培養夥伴</div></div>
-      <div class="menu-card" onclick="openRole()"><div class="menu-icon">🛡️</div><div class="menu-title">角色</div><div class="menu-desc">騎士成長</div></div>
-      <div class="menu-card" onclick="openGacha()"><div class="menu-icon">🎁</div><div class="menu-title">抽獎</div><div class="menu-desc">獲得寵物</div></div>
-      <div class="menu-card" onclick="openDaily()"><div class="menu-icon">📅</div><div class="menu-title">每日簽到</div><div class="menu-desc">連續獎勵</div></div>
-      <div class="menu-card" onclick="openRank()"><div class="menu-icon">🏆</div><div class="menu-title">排行榜</div><div class="menu-desc">挑戰排名</div></div>
-    </div>
-  </div>
-</section>
-
-<section id="mapScreen" class="screen app-bg">
-  <div class="phone">
-    <div class="page-title">探險地圖</div>
-    <div class="map"><div class="path-line"></div><div id="mapNodes"></div></div>
-    <div style="text-align:center;margin-top:20px">
-      <button class="main-btn" onclick="startBattle()">進入關卡</button><br>
-      <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
-    </div>
-  </div>
-</section>
-
-<section id="petScreen" class="screen app-bg">
-  <div class="phone">
-    <div class="page-title">寵物</div>
-    <div id="petList"></div>
-    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
-  </div>
-</section>
-
-<section id="roleScreen" class="screen app-bg">
-  <div class="phone">
-    <div class="page-title">角色</div>
-    <div class="feature-card">
-      <div class="big">🤺</div>
-      <h2 id="roleTitle">見習騎士 Lv.1</h2>
-      <p id="roleDesc">攻擊力：10<br>升級可提升戰鬥傷害。</p>
-      <button class="small-btn" onclick="upgradeRole()">升級角色</button>
-    </div>
-    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
-  </div>
-</section>
-
-<section id="gachaScreen" class="screen app-bg">
-  <div class="phone">
-    <div class="page-title">抽獎</div>
-    <div class="feature-card">
-      <div class="big">🎁</div>
-      <h2>冒險補給箱</h2>
-      <p>花費 300 健身幣抽一次。可獲得普通、稀有、史詩、傳說寵物。</p>
-      <button class="main-btn" onclick="drawGacha()">抽一次</button>
-      <p id="gachaResult"></p>
-    </div>
-    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
-  </div>
-</section>
-
-<section id="dailyScreen" class="screen app-bg">
-  <div class="phone">
-    <div class="page-title">每日簽到</div>
-    <div id="dailyList"></div>
-    <button class="main-btn" onclick="claimDaily()">領取今日獎勵</button><br>
-    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
-  </div>
-</section>
-
-<section id="rankScreen" class="screen app-bg">
-  <div class="phone">
-    <div class="page-title">排行榜</div>
-    <div class="feature-card">
-      <h2>今日深蹲排行</h2>
-      <p>1. ShadowKnight - 320<br>2. MuscleHero - 280<br>3. YOU - <span id="rankSquat">0</span></p>
-    </div>
-    <div class="feature-card">
-      <h2>目前進度</h2>
-      <p>最高關卡：<span id="rankStage">1</span><br>累積分數：<span id="rankScore">0</span></p>
-    </div>
-    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
-  </div>
-</section>
-
-<section id="gameScreen" class="screen app-bg">
-  <div class="game">
-    <div class="top">
-      <div class="user-left">
-        <div class="avatar">⚔️</div>
-        <div>
-          <div id="playerName" class="name">勇者</div>
-          <div class="level">LV.1 冒險者</div>
+      <div class="walk-panel">
+        <div class="walk-title">🏃‍♂️ 走路賺健身幣狀態</div>
+        <div class="walk-stats">
+          <div>累計距離: <span id="lobbyWalkDist">0.00</span> km</div>
+          <div>當前時速: <span id="lobbyWalkSpeed">0.0</span> km/h</div>
         </div>
+        <div id="lobbyWalkMsg" class="walk-msg">GPS 啟動中...</div>
       </div>
-      <div id="stageText">STAGE 1</div>
-      <button class="back-btn" style="margin:0;padding:8px 12px" onclick="switchScreen('mapScreen')">返回地圖</button>
-    </div>
 
-    <div class="battle">
-      <video id="webcam" autoplay playsinline muted></video>
-      <canvas id="canvas"></canvas>
-      <div id="boss" class="monster">👾</div>
-      <div id="pet" class="knight">🤺</div>
-      <div id="hitEffect" class="effect"></div>
-      <div id="floatingText" class="float">HIT!</div>
-    </div>
-
-    <div class="panel">
-      <div class="stats">
-        <div><div>SCORE</div><strong id="score">0</strong></div>
-        <div><div>ENERGY</div><strong id="energy">0</strong></div>
-        <div><div>SQUAT</div><strong id="squatCount">0</strong></div>
+      <div class="lobby-hero">
+        <h2>今日冒險</h2>
+        <p>深蹲累積能量，培養寵物，突破地城。</p>
+        <div class="hero-knight">🤺</div>
       </div>
-      <div id="combo" class="combo">COMBO x0</div>
-      <div class="hp-title"><span id="cameraStatus">ENEMY HP</span><span id="hpText">100 / 100</span></div>
-      <div class="hp-bar"><div id="hpFill"></div></div>
-      <div id="debug" class="debug">手機會自動偵測深蹲；電腦可按空白鍵測試</div>
-    </div>
-  </div>
-</section>
 
-<script src="main.js"></script>
-<script>
-  // 畫面切換輔助函式
-  const allScreens = ["homeScreen", "loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "rankScreen", "gameScreen"];
-  function switchScreen(id) {
-    allScreens.forEach(s => document.getElementById(s).classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-  }
-  function showLogin() { switchScreen("loginScreen"); }
-</script>
+      <div class="menu-grid">
+        <div class="menu-card" onclick="openMap()"><div class="menu-icon">🗺️</div><div class="menu-title">關卡</div><div class="menu-desc">探險地圖</div></div>
+        <div class="menu-card" onclick="openPets()"><div class="menu-icon">🐾</div><div class="menu-title">寵物</div><div class="menu-desc">培養夥伴</div></div>
+        <div class="menu-card" onclick="openRole()"><div class="menu-icon">🛡️</div><div class="menu-title">角色</div><div class="menu-desc">騎士成長</div></div>
+        <div class="menu-card" onclick="openGacha()"><div class="menu-icon">🎁</div><div class="menu-title">抽獎</div><div class="menu-desc">獲得寵物</div></div>
+        <div class="menu-card" onclick="openDaily()"><div class="menu-icon">📅</div><div class="menu-title">每日簽到</div><div class="menu-desc">連續獎勵</div></div>
+        <div class="menu-card" onclick="openRank()"><div class="menu-icon">🏆</div><div class="menu-title">排行榜</div><div class="menu-desc">挑戰排名</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="mapScreen" class="screen app-bg">
+    <div class="phone">
+      <div class="page-title">探險地圖</div>
+      <div class="map"><div class="path-line"></div><div id="mapNodes"></div></div>
+      <div style="text-align:center;margin-top:20px">
+        <button class="main-btn" onclick="startBattle()">進入關卡</button><br>
+        <button class="back-btn" onclick="showScreen('lobbyScreen')">返回大廳</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="petScreen" class="screen app-bg">
+    <div class="phone">
+      <div class="page-title">寵物</div>
+      <div id="petList"></div>
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回大廳</button>
+    </div>
+  </section>
+
+  <section id="roleScreen" class="screen app-bg">
+    <div class="phone">
+      <div class="page-title">角色</div>
+      <div class="feature-card">
+        <div class="big">🤺</div>
+        <h2 id="roleTitle">見習騎士 Lv.1</h2>
+        <p id="roleDesc">攻擊力：10<br>升級可提升戰鬥傷害。</p>
+        <button class="small-btn" onclick="upgradeRole()">升級角色</button>
+      </div>
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回大廳</button>
+    </div>
+  </section>
+
+  <section id="gachaScreen" class="screen app-bg">
+    <div class="phone">
+      <div class="page-title">抽獎</div>
+      <div class="feature-card">
+        <div class="big">🎁</div>
+        <h2>冒險補給箱</h2>
+        <p>花費 300 健身幣抽一次。可獲得普通、稀有、史詩、傳說寵物。</p>
+        <button class="main-btn" onclick="drawGacha()">抽一次</button>
+        <p id="gachaResult"></p>
+      </div>
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回大廳</button>
+    </div>
+  </section>
+
+  <section id="dailyScreen" class="screen app-bg">
+    <div class="phone">
+      <div class="page-title">每日簽到</div>
+      <div id="dailyList"></div>
+      <button class="main-btn" onclick="claimDaily()">領取今日獎勵</button><br>
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回大廳</button>
+    </div>
+  </section>
+
+  <section id="rankScreen" class="screen app-bg">
+    <div class="phone">
+      <div class="page-title">排行榜</div>
+      <div class="feature-card">
+        <h2>今日深蹲排行</h2>
+        <p>1. ShadowKnight - 320<br>2. MuscleHero - 280<br>3. YOU - <span id="rankSquat">0</span></p>
+      </div>
+      <div class="feature-card">
+        <h2>目前進度</h2>
+        <p>最高關卡：<span id="rankStage">1</span><br>累累積分數：<span id="rankScore">0</span></p>
+      </div>
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回大廳</button>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="screen app-bg">
+    <div class="game">
+      <div class="top">
+        <div class="user-left">
+          <div class="avatar">⚔️</div>
+          <div>
+            <div id="playerName" class="name">勇者</div>
+            <div class="level">LV.1 冒險者</div>
+          </div>
+        </div>
+        <div id="stageText">STAGE 1</div>
+        <button class="back-btn" style="margin:0;padding:8px 12px" onclick="showScreen('mapScreen')">返回地圖</button>
+      </div>
+
+      <div class="battle">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
+        <div id="boss" class="monster">👾</div>
+        <div id="pet" class="knight">🤺</div>
+        <div id="hitEffect" class="effect"></div>
+        <div id="floatingText" class="float">HIT!</div>
+      </div>
+
+      <div class="panel">
+        <div class="stats">
+          <div><div>SCORE</div><strong id="score">0</strong></div>
+          <div><div>ENERGY</div><strong id="energy">0</strong></div>
+          <div><div>SQUAT</div><strong id="squatCount">0</strong></div>
+        </div>
+        <div id="combo" class="combo">COMBO x0</div>
+        <div class="hp-title"><span id="cameraStatus">ENEMY HP</span><span id="hpText">100 / 100</span></div>
+        <div class="hp-bar"><div id="hpFill"></div></div>
+        <div id="debug" class="debug">請將手機直立放好，後退至全身入鏡進行深蹲</div>
+      </div>
+    </div>
+  </section>
+
+  <script src="main.js"></script>
 </body>
 </html>
