@@ -18,7 +18,7 @@
       <div class="logo">⚔️</div>
       <h1>深蹲打怪</h1>
       <div class="subtitle">SQUAT HERO ADVANCED</div>
-      <button class="main-btn btn-glow" onclick="showScreen('loginScreen')">開始冒險</button>
+      <button id="toLoginBtn" class="main-btn btn-glow">開始冒險</button>
     </div>
   </section>
 
@@ -164,3 +164,39 @@
         <div id="stageText">地城 STAGE 1</div>
         <button class="back-btn" style="margin:0;padding:6px 12px;font-size:12px;" onclick="showScreen('mapScreen')">撤退</button>
       </div>
+
+      <div class="battle">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
+        
+        <div id="boss" class="monster">👾</div>
+        <div id="pet" class="knight">🤺</div>
+        
+        <div id="hitEffect" class="effect"></div>
+        <div id="floatingText" class="float">HIT!</div>
+        <div id="slashLine" class="slash-line"></div>
+      </div>
+
+      <div class="panel">
+        <div class="stats">
+          <div><div class="lbl">戰役積分</div><strong id="score">0</strong></div>
+          <div><div class="lbl">深蹲能量</div><strong id="energy">0</strong></div>
+          <div><div class="lbl">深蹲計數</div><strong id="squatCount">0</strong></div>
+        </div>
+        
+        <div id="combo" class="combo">COMBO x0</div>
+        
+        <div class="hp-title">
+          <span id="cameraStatus" class="camera-indicator">🛡️ 領主血條</span>
+          <span id="hpText" class="hp-num">100 / 100</span>
+        </div>
+        <div class="hp-bar"><div id="hpFill"></div></div>
+        
+        <div id="debug" class="debug">請將手機擺好，退後使全身體感入鏡...</div>
+      </div>
+    </div>
+  </section>
+
+  <script src="main.js"></script>
+</body>
+</html>
