@@ -19,7 +19,7 @@
     <div class="logo">⚔️</div>
     <h1>深蹲打怪</h1>
     <div class="subtitle">SQUAT HERO ADVENTURE</div>
-    <button class="main-btn" onclick="show('loginScreen')">開始冒險</button>
+    <button class="main-btn" onclick="showLogin()">開始冒險</button>
   </div>
 </section>
 
@@ -29,7 +29,7 @@
     <h1>勇者登入</h1>
     <input id="nameInput" placeholder="輸入勇者名稱..." maxlength="12">
     <br>
-    <button class="main-btn" onclick="login()">出發！</button>
+    <button id="startBtn" class="main-btn">出發！</button>
   </div>
 </section>
 
@@ -69,7 +69,7 @@
     <div class="map"><div class="path-line"></div><div id="mapNodes"></div></div>
     <div style="text-align:center;margin-top:20px">
       <button class="main-btn" onclick="startBattle()">進入關卡</button><br>
-      <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+      <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
     </div>
   </div>
 </section>
@@ -78,7 +78,7 @@
   <div class="phone">
     <div class="page-title">寵物</div>
     <div id="petList"></div>
-    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
   </div>
 </section>
 
@@ -91,7 +91,7 @@
       <p id="roleDesc">攻擊力：10<br>升級可提升戰鬥傷害。</p>
       <button class="small-btn" onclick="upgradeRole()">升級角色</button>
     </div>
-    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
   </div>
 </section>
 
@@ -105,7 +105,7 @@
       <button class="main-btn" onclick="drawGacha()">抽一次</button>
       <p id="gachaResult"></p>
     </div>
-    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
   </div>
 </section>
 
@@ -114,7 +114,7 @@
     <div class="page-title">每日簽到</div>
     <div id="dailyList"></div>
     <button class="main-btn" onclick="claimDaily()">領取今日獎勵</button><br>
-    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
   </div>
 </section>
 
@@ -129,7 +129,7 @@
       <h2>目前進度</h2>
       <p>最高關卡：<span id="rankStage">1</span><br>累積分數：<span id="rankScore">0</span></p>
     </div>
-    <button class="back-btn" onclick="show('lobbyScreen')">返回大廳</button>
+    <button class="back-btn" onclick="switchScreen('lobbyScreen')">返回大廳</button>
   </div>
 </section>
 
@@ -144,16 +144,16 @@
         </div>
       </div>
       <div id="stageText">STAGE 1</div>
-      <button class="back-btn" style="margin:0;padding:8px 12px" onclick="show('mapScreen')">返回地圖</button>
+      <button class="back-btn" style="margin:0;padding:8px 12px" onclick="switchScreen('mapScreen')">返回地圖</button>
     </div>
 
     <div class="battle">
-      <video id="video" autoplay playsinline muted></video>
+      <video id="webcam" autoplay playsinline muted></video>
       <canvas id="canvas"></canvas>
-      <div id="monster" class="monster">👾</div>
-      <div id="knight" class="knight">🤺</div>
-      <div id="effect" class="effect"></div>
-      <div id="floatText" class="float">HIT!</div>
+      <div id="boss" class="monster">👾</div>
+      <div id="pet" class="knight">🤺</div>
+      <div id="hitEffect" class="effect"></div>
+      <div id="floatingText" class="float">HIT!</div>
     </div>
 
     <div class="panel">
@@ -163,7 +163,7 @@
         <div><div>SQUAT</div><strong id="squatCount">0</strong></div>
       </div>
       <div id="combo" class="combo">COMBO x0</div>
-      <div class="hp-title"><span id="enemyName">ENEMY HP</span><span id="hpText">100 / 100</span></div>
+      <div class="hp-title"><span id="cameraStatus">ENEMY HP</span><span id="hpText">100 / 100</span></div>
       <div class="hp-bar"><div id="hpFill"></div></div>
       <div id="debug" class="debug">手機會自動偵測深蹲；電腦可按空白鍵測試</div>
     </div>
@@ -171,5 +171,14 @@
 </section>
 
 <script src="main.js"></script>
+<script>
+  // 畫面切換輔助函式
+  const allScreens = ["homeScreen", "loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "rankScreen", "gameScreen"];
+  function switchScreen(id) {
+    allScreens.forEach(s => document.getElementById(s).classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+  function showLogin() { switchScreen("loginScreen"); }
+</script>
 </body>
 </html>
