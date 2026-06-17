@@ -9,21 +9,24 @@ body {
   color: #f8fafc;
   font-family: -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
   user-select: none;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
+/* 核心防遮擋：未開啟的畫面完全隱藏且不接收點擊 */
 .screen {
-  display: none;
+  display: none !important;
+  pointer-events: none;
   min-height: 100vh;
   width: 100vw;
 }
 
+/* 當有 active 類別時才正常顯示並允許點擊 */
 .screen.active {
-  display: flex;
+  display: flex !important;
+  pointer-events: auto !important;
   flex-direction: column;
 }
 
-/* 漸層背景與精緻磨砂質感 */
 .center {
   justify-content: center;
   align-items: center;
@@ -43,7 +46,6 @@ body {
   padding: 20px;
 }
 
-/* 霓虹 Logo 質感 */
 .logo {
   width: 90px;
   height: 90px;
@@ -55,6 +57,11 @@ body {
   background: linear-gradient(135deg, #38bdf8, #2563eb);
   font-size: 48px;
   box-shadow: 0 0 35px rgba(56, 189, 248, 0.5), inset 0 0 15px rgba(255,255,255,0.3);
+}
+
+.logo-small {
+  font-size: 40px;
+  margin-bottom: 12px;
 }
 
 h1 {
@@ -76,18 +83,18 @@ h1 {
   opacity: 0.8;
 }
 
-/* 按鈕美化 */
 .main-btn {
   width: 100%;
   max-width: 280px;
   height: 56px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #0ea5e9, #2563eb);
-  color: #ffffff;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb) !important;
+  color: #ffffff !important;
   font-size: 18px;
   font-weight: bold;
   box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4);
   border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
 }
 
 .btn-glow {
@@ -102,6 +109,7 @@ h1 {
   padding: 10px 24px;
   border-radius: 12px;
   font-size: 14px;
+  cursor: pointer;
 }
 
 .small-btn {
@@ -111,6 +119,7 @@ h1 {
   padding: 8px 16px;
   border-radius: 10px;
   font-size: 13px;
+  cursor: pointer;
 }
 
 input {
@@ -128,12 +137,6 @@ input {
   backdrop-filter: blur(8px);
 }
 
-input:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-}
-
-/* 頂部勇者資料列 */
 .top-user, .top {
   display: flex;
   justify-content: space-between;
@@ -164,10 +167,8 @@ input:focus {
   color: #eab308;
   font-weight: bold;
   font-size: 14px;
-  backdrop-filter: blur(6px);
 }
 
-/* 走路賺錢高級面板 */
 .walk-panel {
   background: rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(56, 189, 248, 0.25);
@@ -175,6 +176,7 @@ input:focus {
   padding: 14px;
   margin-bottom: 16px;
   backdrop-filter: blur(10px);
+  width: 100%;
 }
 
 .walk-title { font-size: 13px; color: #38bdf8; font-weight: bold; margin-bottom: 8px; }
@@ -184,10 +186,9 @@ input:focus {
 .walk-msg.ok { color: #4ade80; }
 .walk-msg.warn { color: #f87171; }
 
-/* 大廳英雄看板 */
 .lobby-hero {
   position: relative;
-  height: 150px;
+  height: 130px;
   border-radius: 24px;
   padding: 20px;
   overflow: hidden;
@@ -196,17 +197,18 @@ input:focus {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .hero-info h2 { margin: 0; font-size: 24px; color: #eab308; }
 .hero-info p { margin: 6px 0 0; font-size: 13px; color: #94a3b8; }
 .hero-knight { position: absolute; right: 20px; font-size: 70px; opacity: 0.85; }
 
-/* 九宮格大廳菜單 */
 .menu-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  width: 100%;
 }
 
 .menu-card, .feature-card {
@@ -217,20 +219,22 @@ input:focus {
   backdrop-filter: blur(8px);
 }
 
-.menu-card { height: 110px; cursor: pointer; transition: transform 0.2s; }
+.menu-card { height: 110px; cursor: pointer; }
 .menu-icon { font-size: 28px; margin-bottom: 4px; }
 .menu-title { font-size: 16px; font-weight: bold; color: #fff; }
 .menu-desc { font-size: 11px; color: #64748b; margin-top: 2px; }
 
-/* 地圖樣式 */
+.page-title { font-size: 24px; font-weight: bold; color: #eab308; text-align: center; margin-bottom: 16px; }
+
 .map {
   position: relative;
-  height: 480px;
+  height: 420px;
   border-radius: 24px;
   background: #090d16;
   border: 1px solid rgba(255, 255, 255, 0.08);
   overflow-y: auto;
   padding: 20px 0;
+  width: 100%;
 }
 
 .path-line {
@@ -262,7 +266,6 @@ input:focus {
 .stage-node.elite { border-color: #ef4444; background: #450a0a; }
 .stage-node.current { border-color: #eab308; box-shadow: 0 0 20px #eab308; }
 
-/* 皇家鐵匠鋪與細節商店 */
 .shop-item-card {
   display: flex;
   align-items: center;
@@ -272,6 +275,7 @@ input:focus {
   padding: 12px;
   margin-bottom: 10px;
   justify-content: space-between;
+  width: 100%;
 }
 
 .shop-item-left { display: flex; align-items: center; gap: 12px; }
@@ -279,34 +283,30 @@ input:focus {
 .shop-item-name { font-weight: bold; color: #fff; font-size: 15px; }
 .shop-item-stat { font-size: 12px; color: #38bdf8; }
 
-/* 高級體感戰鬥交鋒區 */
 .game { width: 100%; max-width: 430px; padding: 12px; margin: 0 auto; }
 .battle {
   position: relative;
-  height: 380px;
+  height: 340px;
   border-radius: 24px;
   overflow: hidden;
   background: #0b0f19;
   border: 2px solid rgba(56, 189, 248, 0.2);
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
 }
 
 video, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 video { transform: scaleX(-1); }
 canvas { z-index: 2; transform: scaleX(-1); }
 
-/* 深度戰鬥角色定位動畫 */
 .monster {
   position: absolute;
-  top: 60px;
+  top: 50px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 80px;
+  font-size: 76px;
   z-index: 4;
   transition: transform 0.1s ease, filter 0.1s;
 }
 
-/* 遭受攻擊時震飛閃紅光 */
 .monster.hurt-anim {
   animation: monsterKnockback 0.25s ease-out forwards;
   filter: brightness(2) drop-shadow(0 0 15px #ef4444);
@@ -315,21 +315,19 @@ canvas { z-index: 2; transform: scaleX(-1); }
 .knight {
   position: absolute;
   right: 40px;
-  bottom: 30px;
-  font-size: 55px;
+  bottom: 25px;
+  font-size: 50px;
   z-index: 5;
   transition: transform 0.15s ease-out;
 }
 
-/* 騎士前衝砍擊動畫 */
 .knight.attack-anim {
   animation: knightDash 0.3s ease-out forwards;
 }
 
-/* 光之斬擊線特效 */
 .slash-line {
   position: absolute;
-  top: 110px;
+  top: 100px;
   left: 15%;
   width: 70%;
   height: 6px;
@@ -340,17 +338,14 @@ canvas { z-index: 2; transform: scaleX(-1); }
   transform: rotate(-15deg) scaleX(0);
 }
 
-.slash-line.show {
-  animation: slashFlash 0.25s ease-out;
-}
+.slash-line.show { animation: slashFlash 0.25s ease-out; }
 
-/* 魔法爆炸圈 */
 .effect {
   position: absolute;
-  top: 90px;
+  top: 80px;
   left: 50%;
-  width: 140px;
-  height: 140px;
+  width: 130px;
+  height: 130px;
   opacity: 0;
   z-index: 7;
   background: radial-gradient(circle, #fff, #ca8a04 40%, transparent 70%);
@@ -359,14 +354,13 @@ canvas { z-index: 2; transform: scaleX(-1); }
 }
 .effect.show { animation: burst 0.3s ease-out; }
 
-/* 浮空傷害字體 */
 .float {
   position: absolute;
-  top: 80px;
+  top: 70px;
   left: 50%;
   z-index: 8;
   color: #f43f5e;
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 900;
   opacity: 0;
   text-shadow: 0 0 8px #000;
@@ -374,22 +368,20 @@ canvas { z-index: 2; transform: scaleX(-1); }
 }
 .float.show { animation: dmgFloat 0.6s ease-out forwards; }
 
-/* 下方血條面板 */
 .panel { margin-top: 12px; padding: 14px; border-radius: 20px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.05); }
 .stats { display: flex; justify-content: space-around; }
 .lbl { font-size: 11px; color: #64748b; margin-bottom: 2px; }
 .stats strong { color: #eab308; font-size: 20px; font-family: monospace; }
-.combo { text-align: center; color: #f43f5e; font-size: 22px; font-weight: 900; margin: 6px 0; text-shadow: 0 0 10px rgba(244,63,94,0.3); }
+.combo { text-align: center; color: #f43f5e; font-size: 22px; font-weight: 900; margin: 6px 0; }
 .hp-title { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
 .hp-bar { height: 12px; background: #1e293b; border-radius: 6px; overflow: hidden; }
 #hpFill { height: 100%; width: 100%; background: linear-gradient(90deg, #ef4444, #f43f5e); transition: width 0.2s ease-out; }
 .debug { text-align: center; color: #64748b; font-size: 11px; margin-top: 6px; }
 
-/* 動畫細節庫 */
 @keyframes pulseGlow { 0%, 100% { box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4); } 50% { box-shadow: 0 4px 25px rgba(14, 165, 233, 0.7); } }
 @keyframes knightDash {
   0% { transform: translate(0, 0); }
-  30% { transform: translate(-110px, -60px) scale(1.2); }
+  30% { transform: translate(-100px, -50px) scale(1.2); }
   100% { transform: translate(0, 0); }
 }
 @keyframes monsterKnockback {
