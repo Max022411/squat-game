@@ -160,6 +160,39 @@ input:focus {
   font-weight: bold;
 }
 
+/* 走路賺錢面板 */
+.walk-panel {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 20px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.1);
+}
+
+.walk-title {
+  font-size: 14px;
+  color: #00d9ff;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.walk-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+.walk-msg {
+  font-size: 12px;
+  margin-top: 6px;
+  text-align: center;
+  color: #a8a29e;
+}
+
+.walk-msg.ok { color: #4ade80; }
+.walk-msg.warn { color: #f87171; font-weight: bold; }
+
 .lobby-hero {
   position: relative;
   height: 210px;
@@ -318,7 +351,6 @@ input:focus {
   font-weight: bold;
 }
 
-/* 戰鬥核心容器 */
 .battle {
   position: relative;
   height: 480px;
@@ -336,7 +368,6 @@ video, canvas {
   object-fit: cover;
 }
 
-/* 視訊與骨架畫布鏡像同步 */
 video {
   transform: scaleX(-1);
 }
@@ -346,7 +377,6 @@ canvas {
   transform: scaleX(-1);
 }
 
-/* 怪物與角色 */
 .monster {
   position: absolute;
   top: 60px;
@@ -357,8 +387,7 @@ canvas {
   transition: transform 0.1s ease;
 }
 
-/* 怪物受擊動畫 */
-.monster.show {
+.monster.hit {
   animation: bossHit 0.2s ease-in-out;
 }
 
@@ -370,39 +399,43 @@ canvas {
   z-index: 5;
 }
 
-/* 受擊爆炸特效 */
+.knight.petAttack {
+  animation: petJump 0.35s ease-out;
+}
+
 .effect {
   position: absolute;
   top: 105px;
-  right: 90px;
+  left: 50%;
   width: 190px;
   height: 190px;
   border-radius: 50%;
   opacity: 0;
   z-index: 7;
   background: radial-gradient(circle, #fff176, rgba(255, 100, 0, 0.55), transparent 70%);
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
 .effect.show {
-  animation: explosion 0.5s;
+  animation: explosion 0.5s forwards;
 }
 
-/* 傷害浮空字體 */
 .float {
   position: absolute;
   top: 120px;
-  right: 120px;
+  left: 50%;
   z-index: 8;
   color: #ffd400;
   font-size: 36px;
   font-weight: bold;
   opacity: 0;
   text-shadow: 0 0 14px #ff6600;
+  transform: translateX(-50%);
 }
 
 .float.show {
-  animation: floatText 0.75s;
+  animation: floatText 0.75s forwards;
 }
 
 .panel {
@@ -460,22 +493,26 @@ canvas {
   margin-top: 8px;
 }
 
-/* 動畫序列定義 */
 @keyframes bossHit {
   0% { transform: translateX(-50%) scale(1); }
-  25% { transform: translateX(-60%) scale(1.12); filter: brightness(2); }
-  50% { transform: translateX(-40%) scale(1.12); filter: brightness(2); }
+  25% { transform: translateX(-62%) scale(1.1); filter: brightness(1.8); }
+  70% { transform: translateX(-38%) scale(1.1); filter: brightness(1.8); }
   100% { transform: translateX(-50%) scale(1); }
 }
 
+@keyframes petJump {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-40px, -50px) scale(1.15); }
+}
+
 @keyframes explosion {
-  0% { transform: scale(0.4); opacity: 0; }
-  50% { opacity: 1; }
-  100% { transform: scale(1.4); opacity: 0; }
+  0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateX(-50%) scale(1.4); opacity: 0; }
 }
 
 @keyframes floatText {
-  0% { transform: translateY(24px) scale(0.6); opacity: 0; }
-  25% { opacity: 1; transform: translateY(0) scale(1.1); }
-  100% { transform: translateY(-48px) scale(1); opacity: 0; }
+  0% { transform: translate(-50%, 25px) scale(0.7); opacity: 0; }
+  30% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+  100% { transform: translate(-50%, -50px) scale(1); opacity: 0; }
 }
