@@ -9,6 +9,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
   
+  <script src="main.js" defer></script>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -63,9 +65,9 @@
       </div>
 
       <div class="menu-grid">
-        <div class="menu-card" onclick="openMap()"><div class="menu-icon">🗺️</div><div class="menu-title">征戰地圖</div><div class="menu-desc">直擊魔王地城</div></div>
-        <div class="menu-card" onclick="openPets()"><div class="menu-icon">🐾</div><div class="menu-title">戰寵聖殿</div><div class="menu-desc">召喚培養夥伴</div></div>
         <div class="menu-card" onclick="openRole()"><div class="menu-icon">⚒️</div><div class="menu-title">皇家鐵匠鋪</div><div class="menu-desc">購買精緻神裝</div></div>
+        <div class="menu-card" onclick="openPets()"><div class="menu-icon">🐾</div><div class="menu-title">戰寵聖殿</div><div class="menu-desc">召喚培養夥伴</div></div>
+        <div class="menu-card" onclick="openMap()"><div class="menu-icon">🗺️</div><div class="menu-title">征戰地圖</div><div class="menu-desc">直擊魔王地城</div></div>
         <div class="menu-card" onclick="openGacha()"><div class="menu-icon">🎁</div><div class="menu-title">幸運寶箱</div><div class="menu-desc">抽取傳說寵物</div></div>
         <div class="menu-card" onclick="openDaily()"><div class="menu-icon">📅</div><div class="menu-title">每日補給</div><div class="menu-desc">簽到領健身幣</div></div>
         <div class="menu-card" onclick="openRank()"><div class="menu-icon">🏆</div><div class="menu-title">英靈殿</div><div class="menu-desc">挑戰全服排行</div></div>
@@ -196,7 +198,5 @@
       </div>
     </div>
   </section>
-
-  <script src="main.js"></script>
 </body>
 </html>
