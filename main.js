@@ -48,9 +48,8 @@ function playSound(type) {
 
 const screens = ["homeScreen", "loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "rankScreen", "gameScreen"];
 
-// 核心修正：確保網頁一載入，首頁的按鈕點擊功能立刻生效
+// 核心綁定區
 window.addEventListener("DOMContentLoaded", () => {
-  // 1. 首頁「開始冒險」按鈕點擊
   const toLoginBtn = document.getElementById("toLoginBtn");
   if (toLoginBtn) {
     toLoginBtn.addEventListener("click", () => {
@@ -58,13 +57,11 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 2. 登入頁「建立角色」按鈕點擊
   const startBtn = document.getElementById("startBtn");
   if (startBtn) {
     startBtn.addEventListener("click", startGame);
   }
   
-  // 3. 欄位輸入 Enter 鍵
   const nameInput = document.getElementById("nameInput");
   if (nameInput) {
     nameInput.addEventListener("keydown", (e) => {
@@ -72,7 +69,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 預載首次 UI
   refreshTop();
 });
 
@@ -126,7 +122,7 @@ function initMobileGps() {
     const msgEl = document.getElementById("lobbyWalkMsg");
 
     if (currentSpeedKmh > SPEED_LIMIT_KMH) {
-      if(msgEl) { msgEl.textContent = "⚠️ 速度過快！(捷運/開車中) 遠征獎勵暫停"; msgEl.className = "walk-msg warn"; }
+      if(msgEl) { msgEl.textContent = "⚠️ 速度過快！遠征獎勵暫停"; msgEl.className = "walk-msg warn"; }
       lastPosition = coords; return;
     }
 
@@ -134,18 +130,16 @@ function initMobileGps() {
       const distMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
       if (distMeters > 2 && distMeters < 100) {
         data.walkDistance += (distMeters / 1000);
-        
         const boots = data.shop ? data.shop.find(i => i.id === "boots") : null;
         const bonusMultiplier = boots ? (1 + boots.level * 0.15) : 1;
         const baseCoins = Math.floor(distMeters / 10) * 5;
-        
         if (baseCoins > 0) {
           data.coins += Math.floor(baseCoins * bonusMultiplier);
         }
         save();
       }
     }
-    if(msgEl) { msgEl.textContent = "🟢 軍隊穩健推進中，正在獲取行軍資產！"; msgEl.className = "walk-msg ok"; }
+    if(msgEl) { msgEl.textContent = "🟢 軍隊穩健推進中..."; msgEl.className = "walk-msg ok"; }
     lastPosition = coords;
   }, null, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 }
@@ -195,7 +189,7 @@ function renderShop() {
 
 function buyShopItem(id) {
   const item = data.shop.find(i => i.id === id);
-  if (data.coins < item.cost) { alert("皇家鐵匠告知：您的健身幣餘額不足以進行鍛造！"); return; }
+  if (data.coins < item.cost) { alert("健身幣餘額不足！"); return; }
   data.coins -= item.cost;
   item.level++;
   item.cost = Math.floor(item.cost * 1.5);
@@ -216,7 +210,6 @@ function startBattle() {
 function onSquatSuccess() {
   const pet = activePet();
   const isCrit = (data.combo > 0 && data.combo % 4 === 0);
-  
   const weapon = data.shop ? data.shop.find(i => i.id === "weapon") : null;
   const weaponBonus = weapon ? (weapon.level * weapon.baseStat) : 0;
   
@@ -224,13 +217,11 @@ function onSquatSuccess() {
   bossHp = Math.max(0, bossHp - dmg);
 
   data.score += 15; data.energy += 1; data.combo += 1; data.squat += 1;
-  
   const shield = data.shop ? data.shop.find(i => i.id === "shield") : null;
   const coinBonus = shield ? Math.floor(5 * (1 + shield.level * 0.2)) : 5;
   data.coins += coinBonus;
 
   playSound(isCrit ? "crit" : "slash");
-
   const flt = document.getElementById("floatingText");
   if(flt) flt.textContent = isCrit ? "💥 CRITICAL -" + dmg : "⚔️ -" + dmg;
 
@@ -238,19 +229,17 @@ function onSquatSuccess() {
 
   if (bossHp <= 0) {
     setTimeout(() => {
-      alert(`🎉 凱旋歸來！成功攻克關卡，獲得額外領主寶藏！`);
+      alert(`🎉 凱旋歸來！成功攻克關卡！`);
       data.coins += data.stage * 25; data.stage++; data.combo = 0; save(); openMap();
     }, 600);
   }
 }
 
+// 其餘功能皆保持原本邏輯
 function triggerVfx() {
-  const b = document.getElementById("boss");
-  const p = document.getElementById("pet");
-  const e = document.getElementById("hitEffect");
-  const f = document.getElementById("floatingText");
+  const b = document.getElementById("boss"); const p = document.getElementById("pet");
+  const e = document.getElementById("hitEffect"); const f = document.getElementById("floatingText");
   const s = document.getElementById("slashLine");
-
   if(!b || !p || !e || !f || !s) return;
   b.classList.remove("hurt-anim"); p.classList.remove("attack-anim"); e.classList.remove("show"); f.classList.remove("show"); s.classList.remove("show");
   void b.offsetWidth;
@@ -266,7 +255,6 @@ function updateBattleUI() {
   if(document.getElementById("hpFill")) document.getElementById("hpFill").style.width = ((bossHp / maxBossHp) * 100) + "%";
 }
 
-// ==================== 5. 其餘常規系統 (地圖/寵物/抽獎) ====================
 function openMap() { renderMap(); showScreen("mapScreen"); }
 function renderMap() {
   const box = document.getElementById("mapNodes"); if(!box) return; box.innerHTML = "";
@@ -278,11 +266,12 @@ function renderMap() {
     node.style.top = (30 + (i - 1) * 32) + "px"; node.style.left = (i % 2 === 0 ? 240 : 90) + "px"; box.appendChild(node);
   }
 }
+
 function openPets() {
   const box = document.getElementById("petList"); if(!box) return; box.innerHTML = "";
   data.pets.forEach(p => {
     const div = document.createElement("div"); div.className = "feature-card";
-    div.innerHTML = `<div class="big">${p.icon}</div><h2>${p.name} <span class="badge ${p.rarity==='傳說'?'legend':'rare'}">${p.rarity}</span></h2>
+    div.innerHTML = `<div class="big">${p.icon}</div><h2>${p.name} <span>${p.rarity}</span></h2>
       <p>Lv.${p.level} | 助攻力: +${p.attack}<br>${p.owned ? '已服役中' : '封印中'}</p>
       <div class="card-row"><button class="small-btn" onclick="setPet(${p.id})">${p.active ? '戰鬥出征中' : '配置出戰'}</button>
       <button class="small-btn" onclick="upgradePet(${p.id})">魔力升級</button></div>`;
@@ -299,26 +288,29 @@ function upgradePet(id) {
   const cost = pet.level * 200; if (data.coins < cost) { alert("健身幣不夠！"); return; }
   data.coins -= cost; pet.level++; pet.attack += 6; save(); openPets();
 }
+
 function openGacha() { document.getElementById("gachaResult").textContent = ""; showScreen("gachaScreen"); }
 function drawGacha() {
   if (data.coins < 300) { alert("健身幣不足開箱！"); return; }
   data.coins -= 300; const r = Math.random() * 100;
   let pet = (r < 8) ? data.pets[2] : (r < 32 ? data.pets[1] : data.pets[0]); pet.owned = true;
-  document.getElementById("gachaResult").innerHTML = `🔮 寶箱覺醒成功！獲得戰寵：${pet.icon} ${pet.name} (${pet.rarity})`; save();
+  document.getElementById("gachaResult").innerHTML = `🔮 獲得戰寵：${pet.icon} ${pet.name}`; save();
 }
+
 function openDaily() {
   const box = document.getElementById("dailyList"); if(!box) return; box.innerHTML = "";
   for(let i=0; i<7; i++) {
-    box.innerHTML += `<div class="feature-card" style="padding:10px"><h4>第 ${i + 1} 天</h4><p style="font-size:12px">🪙 ${(i+1)*120}</p></div>`;
+    box.innerHTML += `<div class="feature-card" style="padding:10px"><h4>第 ${i + 1} 天</h4><p>🪙 ${(i+1)*120}</p></div>`;
   }
   showScreen("dailyScreen");
 }
 function claimDaily() {
   const dStr = new Date().toISOString().slice(0, 10);
-  if (data.lastClaim === dStr) { alert("今日物資已簽到領取過囉！"); return; }
-  data.coins += (data.dailyDay * 120); alert(`簽到成功！獲得 ${data.dailyDay * 120} 健身幣！`);
+  if (data.lastClaim === dStr) { alert("今日已簽到過囉！"); return; }
+  data.coins += (data.dailyDay * 120); alert(`簽到成功！`);
   data.dailyDay = data.dailyDay === 7 ? 1 : data.dailyDay + 1; data.lastClaim = dStr; save(); openDaily();
 }
+
 function openRank() {
   document.getElementById("rankSquat").textContent = data.squat + " 下";
   document.getElementById("rankStage").textContent = data.stage;
@@ -327,7 +319,7 @@ function openRank() {
 }
 function activePet() { return data.pets.find(p => p.active && p.owned) || data.pets[0]; }
 
-// ==================== 6. MediaPipe 手機關節點偵測 ====================
+// MediaPipe 鏡頭設定
 async function startCameraAndPose() {
   const video = document.getElementById("webcam"); const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d"); const statusText = document.getElementById("cameraStatus");
@@ -359,7 +351,7 @@ function checkLiveSquat(lm) {
   if (lk.visibility < 0.4 || la.visibility < 0.4 || rk.visibility < 0.4 || ra.visibility < 0.4) return;
 
   const minAngle = Math.min(calcAngle(lh, lk, la), calcAngle(rh, rk, ra));
-  if(document.getElementById("debug")) document.getElementById("debug").textContent = "體感關節角度：" + Math.round(minAngle) + "° | 狀態：" + squatState.toUpperCase();
+  if(document.getElementById("debug")) document.getElementById("debug").textContent = "膝蓋角度：" + Math.round(minAngle) + "°";
 
   if (squatState === "up" && minAngle < 130) squatState = "down";
   if (squatState === "down" && minAngle > 155) {
