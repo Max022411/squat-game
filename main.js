@@ -27,7 +27,6 @@ let bossHp = 100; let maxBossHp = 100;
 let poseStarted = false; let squatState = "up"; let lastAttackTime = 0;
 let lastPosition = null; 
 
-// 修正：移動速度門檻設定
 const MIN_SPEED_KMH = 3.0;  // 必須大於等於 3 公里/小時才列入計算
 const MAX_SPEED_KMH = 15.0; // 超過 15 公里/小時判定為交通工具不列入
 
@@ -100,23 +99,21 @@ function refreshTop() {
   }
 }
 
-// ==================== 2. GPS 遠征系統 (修正：低於3公里過濾) ====================
+// ==================== 2. GPS 遠征系統 ====================
 function initMobileGps() {
   if (!navigator.geolocation) return;
   navigator.geolocation.watchPosition((position) => {
     const coords = position.coords; const speedMps = coords.speed;
     let currentSpeedKmh = (speedMps !== null && speedMps >= 0) ? speedMps * 3.6 : 0;
     
-    // 如果原生速度抓不到，透過時間與經緯度手動估算速度
     if ((speedMps === null || currentSpeedKmh === 0) && lastPosition) {
       const dMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
-      currentSpeedKmh = dMeters * 3.6; // 簡化估算
+      currentSpeedKmh = dMeters * 3.6;
     }
 
     if (document.getElementById("lobbyWalkSpeed")) document.getElementById("lobbyWalkSpeed").textContent = currentSpeedKmh.toFixed(1);
     const msgEl = document.getElementById("lobbyWalkMsg");
     
-    // 修正：判斷時速是否在 3 到 15 公里之間
     if (currentSpeedKmh < MIN_SPEED_KMH) {
       if(msgEl) { msgEl.textContent = "💤 原地休憩中 (時速小於 3km/h 不計距離)"; msgEl.className = "walk-msg"; }
       lastPosition = coords; return;
@@ -178,10 +175,9 @@ function buyShopItem(id) {
   data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
 }
 
-// ==================== 4. 戰鬥核心 (修正：進入下一關機制) ====================
+// ==================== 4. 戰鬥核心 ====================
 function startBattle() {
   const isElite = data.stage % 10 === 0;
-  // 依關卡動態增加難度血量
   maxBossHp = isElite ? (150 + data.stage * 20) : (80 + data.stage * 15); 
   bossHp = maxBossHp;
   
@@ -220,15 +216,14 @@ function onSquatSuccess() {
 
   triggerVfx(); updateBattleUI(); save();
 
-  // 修正：當怪物血量歸零時，順暢儲存並自動解鎖、刷新至下一關地圖
   if (bossHp <= 0) {
     setTimeout(() => {
       alert(`🎉 成功擊殺 STAGE ${data.stage} 怪物！`);
       data.coins += data.stage * 40; 
-      data.stage++; // 晉級下一關
+      data.stage++; 
       data.combo = 0; 
       save(); 
-      openMap(); // 自動返回地圖畫面並渲染最新關卡
+      openMap(); 
     }, 600);
   }
 }
@@ -302,6 +297,7 @@ function drawGacha() {
   document.getElementById("gachaResult").innerHTML = `🔮 聖物覺醒！獲得：${pet.icon} 【${pet.name}】(${pet.rarity})`; save();
 }
 
+// ==================== 地圖系統 (修正：補上點擊進入當前關卡戰鬥事件) ====================
 function openMap() { renderMap(); showScreen("mapScreen"); }
 function renderMap() {
   const box = document.getElementById("mapNodes"); if(!box) return; box.innerHTML = "";
@@ -309,13 +305,32 @@ function renderMap() {
     const node = document.createElement("div"); node.className = "stage-node";
     if (i % 10 === 0) node.classList.add("elite"); 
     
-    // 修正點：高亮目前最新解鎖的關卡
-    if (i === data.stage) node.classList.add("current");
+    if (i === data.stage) {
+      node.classList.add("current");
+    } else if (i < data.stage) {
+      node.classList.add("cleared"); // 已通關標記
+    } else {
+      node.classList.add("locked"); // 未解鎖標記
+    }
     
     node.textContent = i % 10 === 0 ? "👹" : i;
-    node.style.top = (30 + (i - 1) * 32) + "px"; node.style.left = (i % 2 === 0 ? 240 : 90) + "px"; box.appendChild(node);
+    node.style.top = (30 + (i - 1) * 32) + "px"; node.style.left = (i % 2 === 0 ? 240 : 90) + "px"; 
+    
+    // 🔥 修正核心：點擊關卡節點觸發戰鬥
+    node.addEventListener("click", () => {
+      if (i === data.stage) {
+        startBattle(); // 只有當前解鎖的最新關卡能點擊進入
+      } else if (i < data.stage) {
+        alert("這關你已經完美淨化囉！請挑戰最新的當前關卡！");
+      } else {
+        alert("前置地下城尚未突破，無法前進！");
+      }
+    });
+
+    box.appendChild(node);
   }
 }
+
 function openDaily() {
   const box = document.getElementById("dailyList"); if(!box) return; box.innerHTML = "";
   for(let i=0; i<7; i++) { box.innerHTML += `<div class="feature-card" style="padding:10px"><h4>第 ${i + 1} 天</h4><p>🪙 ${(i+1)*120}</p></div>`; }
