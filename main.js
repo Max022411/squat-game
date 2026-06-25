@@ -2,7 +2,6 @@
 const defaultData = {
   name: "勇者", coins: 1200, stage: 1, score: 0, energy: 0, combo: 0, squat: 0,
   roleLevel: 1, roleAttack: 10, dailyDay: 1, lastClaim: "", walkDistance: 0.0,
-  // 3倍擴充商店：包含 9 件威力驚人的頂級道具
   shop: [
     { id: "weapon_1", name: "鏽鐵短劍", icon: "🗡️", level: 1, baseStat: 3, cost: 100, desc: "新手必備的基礎短劍" },
     { id: "weapon_2", name: "王者之劍", icon: "⚔️", level: 0, baseStat: 8, cost: 250, desc: "大幅強化深蹲揮斬威力" },
@@ -14,7 +13,6 @@ const defaultData = {
     { id: "boots_2", name: "泰坦戰靴", icon: "👟", level: 0, baseStat: 5, cost: 350, desc: "提升遠征走路的代幣回饋" },
     { id: "boots_3", name: "光速神鞋", icon: "✨", level: 0, baseStat: 14, cost: 900, desc: "踏光而行，走路獲得雙倍代幣" }
   ],
-  // 擴充至 5 隻戰寵
   pets: [
     { id: 1, name: "光靈幼獸", icon: "🐾", rarity: "稀有", level: 1, attack: 12, owned: true, active: true },
     { id: 2, name: "焰火狐", icon: "🔥", rarity: "史詩", level: 1, attack: 25, owned: false, active: false },
@@ -129,7 +127,7 @@ function calcDistanceMeters(lat1, lon1, lat2, lon2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); 
 }
 
-// ==================== 3. 皇家鐵匠鋪 (武器店面) ====================
+// ==================== 3. 皇家鐵匠鋪 (商店) ====================
 function openRole() {
   document.getElementById("roleTitle").textContent = "殿堂騎士階級 Lv." + data.roleLevel;
   document.getElementById("roleDesc").innerHTML = "基礎攻擊力：" + data.roleAttack;
@@ -162,18 +160,20 @@ function buyShopItem(id) {
   data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
 }
 
-// ==================== 4. 戰鬥核心 (修正寵物與角色隱形問題) ====================
+// ==================== 4. 戰鬥交鋒特寫核心修正 ====================
 function startBattle() {
   const isElite = data.stage % 10 === 0;
   maxBossHp = isElite ? 250 : 100 + data.stage * 12; bossHp = maxBossHp;
   document.getElementById("stageText").textContent = isElite ? "👑 領主魔王戰" : "地城 STAGE " + data.stage;
-  document.getElementById("boss").innerHTML = (isElite ? "👹" : "👾") + ` <span class="actor-label">魔王</span>`;
+  document.getElementById("boss").textContent = isElite ? "👹" : "👾";
   
-  // 修正：明確將當前出戰的寵物造型和名字渲染到戰鬥畫面上
+  // 大重構修正：將當前出戰寵物的 icon 渲染在左側戰寵欄位，名字顯示在下方的標籤
   const currentPet = activePet();
-  const petEl = document.getElementById("battlePet");
-  if (petEl) {
-    petEl.innerHTML = `${currentPet.icon} <span id="battlePetName" class="actor-label">${currentPet.name}</span>`;
+  const petIconEl = document.getElementById("battlePet");
+  const petLabelEl = document.getElementById("battlePetLabel");
+  if (petIconEl && petLabelEl) {
+    petIconEl.textContent = currentPet.icon;
+    petLabelEl.textContent = currentPet.name + " (助攻)";
   }
 
   updateBattleUI(); showScreen("gameScreen");
@@ -208,17 +208,26 @@ function onSquatSuccess() {
   }
 }
 
+// 修正：動態套用至「整個玩家小隊」與「整個魔王陣地」，產生跨圖層交鋒動效
 function triggerVfx() {
-  const b = document.getElementById("boss"); const p = document.getElementById("playerKnight");
-  const pet = document.getElementById("battlePet"); const e = document.getElementById("hitEffect");
-  const f = document.getElementById("floatingText"); const s = document.getElementById("slashLine");
+  const partySide = document.getElementById("playerParty");
+  const bossSide = document.getElementById("enemyBossSide");
+  const e = document.getElementById("hitEffect");
+  const f = document.getElementById("floatingText");
+  const s = document.getElementById("slashLine");
 
-  if(!b || !p || !e || !f || !s) return;
-  b.classList.remove("hurt-anim"); p.classList.remove("attack-anim"); if(pet) pet.classList.remove("attack-anim");
+  if(!partySide || !bossSide || !e || !f || !s) return;
+  
+  // 清除動畫快取
+  partySide.classList.remove("attack-anim");
+  bossSide.classList.remove("hurt-anim");
   e.classList.remove("show"); f.classList.remove("show"); s.classList.remove("show");
   
-  void b.offsetWidth;
-  b.classList.add("hurt-anim"); p.classList.add("attack-anim"); if(pet) pet.classList.add("attack-anim");
+  void bossSide.offsetWidth; // 強制重繪
+  
+  // 啟動華麗打擊
+  partySide.classList.add("attack-anim");
+  bossSide.classList.add("hurt-anim");
   e.classList.add("show"); f.classList.add("show"); s.classList.add("show");
 }
 
@@ -231,7 +240,7 @@ function updateBattleUI() {
   if(document.getElementById("hpFill")) document.getElementById("hpFill").style.width = ((bossHp / maxBossHp) * 100) + "%";
 }
 
-// ==================== 5. 戰寵與抽獎 (包含5隻寵物) ====================
+// ==================== 5. 戰寵與抽獎 ====================
 function openPets() {
   const box = document.getElementById("petList"); if(!box) return; box.innerHTML = "";
   if(!data.pets || data.pets.length < 5) data.pets = defaultData.pets;
@@ -262,10 +271,10 @@ function drawGacha() {
   data.coins -= 300; if(!data.pets || data.pets.length < 5) data.pets = defaultData.pets;
   const r = Math.random() * 100;
   let pet = data.pets[0];
-  if (r < 5) pet = data.pets[4]; // 神話級混沌巨龍
-  else if (r < 15) pet = data.pets[3]; // 雷霆泰迪
-  else if (r < 35) pet = data.pets[2]; // 星辰貓
-  else if (r < 65) pet = data.pets[1]; // 焰火狐
+  if (r < 5) pet = data.pets[4];
+  else if (r < 15) pet = data.pets[3];
+  else if (r < 35) pet = data.pets[2];
+  else if (r < 65) pet = data.pets[1];
   
   pet.owned = true;
   document.getElementById("gachaResult").innerHTML = `🔮 聖物覺醒！獲得：${pet.icon} 【${pet.name}】(${pet.rarity})`; save();
