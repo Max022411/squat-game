@@ -27,7 +27,7 @@ let bossHp = 100; let maxBossHp = 100;
 let currentBattleStage = 1; 
 let poseStarted = false; let squatState = "up"; let lastAttackTime = 0;
 let lastPosition = null; 
-let isSettling = false; // 🔥 新增：防止過關重複結算導致當機的鎖定狀態
+let isSettling = false; 
 
 const MIN_SPEED_KMH = 3.0;  
 const MAX_SPEED_KMH = 15.0; 
@@ -59,7 +59,6 @@ window.addEventListener("DOMContentLoaded", () => {
   if (toLoginBtn) toLoginBtn.addEventListener("click", () => { showScreen("loginScreen"); });
 
   const startBtn = document.getElementById("startBtn");
-  // 🔥 修正：從大廳直接點擊出征時，強制帶入當前進度的關卡，防止 undefined 變成無限血量
   if (startBtn) startBtn.addEventListener("click", () => { startBattle(data.stage || 1); });
   
   const nameInput = document.getElementById("nameInput");
@@ -178,18 +177,16 @@ function buyShopItem(id) {
   data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
 }
 
-// ==================== 4. 戰鬥核心 (徹底解決防呆與當機問題) ====================
+// ==================== 4. 戰鬥核心 (徹底解決過關全黑問題) ====================
 function startBattle(stageNum) {
-  // 🔥 強制防呆：如果傳進來空值或 NaN，自動導回當前最大的進度
   if (!stageNum || isNaN(stageNum)) {
     stageNum = data.stage || 1;
   }
   
-  isSettling = false; // 重設結算狀態鎖
+  isSettling = false; 
   currentBattleStage = parseInt(stageNum); 
   const isElite = currentBattleStage % 10 === 0;
   
-  // 絕對數值計算，不可能再出現無限血量 (NaN)
   maxBossHp = isElite ? (150 + currentBattleStage * 20) : (80 + currentBattleStage * 15); 
   bossHp = maxBossHp;
   
@@ -206,11 +203,13 @@ function startBattle(stageNum) {
 
   updateBattleUI(); 
   showScreen("gameScreen");
-  if (!poseStarted) { poseStarted = true; startCameraAndPose(); }
+  
+  // 🔥 關鍵修正：每次進戰鬥畫面，都強制重啟相機與偵測，絕對不能偷懶跳過！
+  startCameraAndPose();
 }
 
 function onSquatSuccess() {
-  if (isSettling) return; // 🔥 如果正在結算中，直接攔截，不允許重複扣血與觸發
+  if (isSettling) return; 
 
   const pet = activePet();
   const isCrit = (data.combo > 0 && data.combo % 4 === 0);
@@ -231,9 +230,8 @@ function onSquatSuccess() {
 
   triggerVfx(); updateBattleUI(); save();
 
-  // 🔥 修正當機點：血量歸零時，立刻上鎖，並且「先切換畫面再渲染地圖」，確保瀏覽器不卡死
   if (bossHp <= 0) {
-    isSettling = true; // 上鎖
+    isSettling = true; 
     setTimeout(() => {
       alert(`🎉 成功擊殺 STAGE ${currentBattleStage} 怪物！`);
       data.coins += currentBattleStage * 40; 
@@ -244,10 +242,9 @@ function onSquatSuccess() {
       data.combo = 0; 
       save(); 
       
-      // 先切換出戰鬥畫面，避免 MediaPipe 更新時與地圖渲染衝突
       showScreen("mapScreen"); 
       setTimeout(() => {
-        renderMap(); // 安全重繪大地圖
+        renderMap(); 
       }, 100);
     }, 400);
   }
@@ -279,7 +276,6 @@ function updateBattleUI() {
   if(document.getElementById("squatCount")) document.getElementById("squatCount").textContent = data.squat;
   if(document.getElementById("combo")) document.getElementById("combo").textContent = "COMBO x" + data.combo;
   
-  // 防止顯示為 NaN / NaN
   const displayHp = isNaN(bossHp) ? 100 : bossHp;
   const displayMax = isNaN(maxBossHp) ? 100 : maxBossHp;
   
@@ -373,6 +369,13 @@ function activePet() { if(!data.pets) return defaultData.pets[0]; return data.pe
 
 // ==================== 6. MediaPipe 體感 AI ====================
 async function startCameraAndPose() {
+  // 🔥 如果相機實體已經在運作，我們只需要更新畫面顯示狀態，不用重新 new 浪費資源
+  if (poseStarted) {
+    const statusText = document.getElementById("cameraStatus");
+    if(statusText) statusText.textContent = "🛡️ 領主血條";
+    return; 
+  }
+
   const video = document.getElementById("webcam"); const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d"); const statusText = document.getElementById("cameraStatus");
   const pose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file });
@@ -387,7 +390,9 @@ async function startCameraAndPose() {
   });
   try {
     const camera = new Camera(video, { onFrame: async () => { await pose.send({ image: video }); }, width: 480, height: 640 });
-    await camera.start(); if(statusText) statusText.textContent = "🛡️ 領主血條";
+    await camera.start(); 
+    poseStarted = true; // 標記成功啟動
+    if(statusText) statusText.textContent = "🛡️ 領主血條";
   } catch (err) { if(statusText) statusText.textContent = "相機不可用"; }
 }
 function checkLiveSquat(lm) {
