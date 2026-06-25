@@ -25,7 +25,11 @@ const defaultData = {
 let data = JSON.parse(localStorage.getItem("squatRPG")) || defaultData;
 let bossHp = 100; let maxBossHp = 100;
 let poseStarted = false; let squatState = "up"; let lastAttackTime = 0;
-let lastPosition = null; const SPEED_LIMIT_KMH = 15.0;
+let lastPosition = null; 
+
+// 修正：移動速度門檻設定
+const MIN_SPEED_KMH = 3.0;  // 必須大於等於 3 公里/小時才列入計算
+const MAX_SPEED_KMH = 15.0; // 超過 15 公里/小時判定為交通工具不列入
 
 let audioCtx = null;
 function playSound(type) {
@@ -72,7 +76,7 @@ function showScreen(id) {
   screens.forEach(s => { 
     const el = document.getElementById(s); if(el) el.classList.remove("active"); 
   });
-  const target = document.getElementById(id); if(target) target.classList.add("active");
+  const target = document.getElementById(id); if(target) target.add ? target.classList.add("active") : target.className += " active";
   refreshTop();
 }
 
@@ -96,18 +100,32 @@ function refreshTop() {
   }
 }
 
-// ==================== 2. GPS 遠征系統 ====================
+// ==================== 2. GPS 遠征系統 (修正：低於3公里過濾) ====================
 function initMobileGps() {
   if (!navigator.geolocation) return;
   navigator.geolocation.watchPosition((position) => {
     const coords = position.coords; const speedMps = coords.speed;
     let currentSpeedKmh = (speedMps !== null && speedMps >= 0) ? speedMps * 3.6 : 0;
+    
+    // 如果原生速度抓不到，透過時間與經緯度手動估算速度
+    if ((speedMps === null || currentSpeedKmh === 0) && lastPosition) {
+      const dMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
+      currentSpeedKmh = dMeters * 3.6; // 簡化估算
+    }
+
     if (document.getElementById("lobbyWalkSpeed")) document.getElementById("lobbyWalkSpeed").textContent = currentSpeedKmh.toFixed(1);
     const msgEl = document.getElementById("lobbyWalkMsg");
-    if (currentSpeedKmh > SPEED_LIMIT_KMH) {
-      if(msgEl) { msgEl.textContent = "⚠️ 速度過快！遠征獎暫停"; msgEl.className = "walk-msg warn"; }
+    
+    // 修正：判斷時速是否在 3 到 15 公里之間
+    if (currentSpeedKmh < MIN_SPEED_KMH) {
+      if(msgEl) { msgEl.textContent = "💤 原地休憩中 (時速小於 3km/h 不計距離)"; msgEl.className = "walk-msg"; }
       lastPosition = coords; return;
     }
+    if (currentSpeedKmh > MAX_SPEED_KMH) {
+      if(msgEl) { msgEl.textContent = "⚠️ 速度過快！行軍遠征暫停計算"; msgEl.className = "walk-msg warn"; }
+      lastPosition = coords; return;
+    }
+    
     if (lastPosition) {
       const distMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
       if (distMeters > 2 && distMeters < 100) {
@@ -115,7 +133,7 @@ function initMobileGps() {
         data.coins += Math.floor(distMeters / 10) * 5; save();
       }
     }
-    if(msgEl) { msgEl.textContent = "🟢 軍隊穩健推進中..."; msgEl.className = "walk-msg ok"; }
+    if(msgEl) { msgEl.textContent = "🟢 聖騎士全速行軍中！"; msgEl.className = "walk-msg ok"; }
     lastPosition = coords;
   }, null, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 }
@@ -160,14 +178,16 @@ function buyShopItem(id) {
   data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
 }
 
-// ==================== 4. 戰鬥交鋒特寫核心修正 ====================
+// ==================== 4. 戰鬥核心 (修正：進入下一關機制) ====================
 function startBattle() {
   const isElite = data.stage % 10 === 0;
-  maxBossHp = isElite ? 250 : 100 + data.stage * 12; bossHp = maxBossHp;
+  // 依關卡動態增加難度血量
+  maxBossHp = isElite ? (150 + data.stage * 20) : (80 + data.stage * 15); 
+  bossHp = maxBossHp;
+  
   document.getElementById("stageText").textContent = isElite ? "👑 領主魔王戰" : "地城 STAGE " + data.stage;
   document.getElementById("boss").textContent = isElite ? "👹" : "👾";
   
-  // 大重構修正：將當前出戰寵物的 icon 渲染在左側戰寵欄位，名字顯示在下方的標籤
   const currentPet = activePet();
   const petIconEl = document.getElementById("battlePet");
   const petLabelEl = document.getElementById("battlePetLabel");
@@ -200,15 +220,19 @@ function onSquatSuccess() {
 
   triggerVfx(); updateBattleUI(); save();
 
+  // 修正：當怪物血量歸零時，順暢儲存並自動解鎖、刷新至下一關地圖
   if (bossHp <= 0) {
     setTimeout(() => {
-      alert(`🎉 成功擊殺地城怪物！`);
-      data.coins += data.stage * 30; data.stage++; data.combo = 0; save(); openMap();
+      alert(`🎉 成功擊殺 STAGE ${data.stage} 怪物！`);
+      data.coins += data.stage * 40; 
+      data.stage++; // 晉級下一關
+      data.combo = 0; 
+      save(); 
+      openMap(); // 自動返回地圖畫面並渲染最新關卡
     }, 600);
   }
 }
 
-// 修正：動態套用至「整個玩家小隊」與「整個魔王陣地」，產生跨圖層交鋒動效
 function triggerVfx() {
   const partySide = document.getElementById("playerParty");
   const bossSide = document.getElementById("enemyBossSide");
@@ -218,14 +242,12 @@ function triggerVfx() {
 
   if(!partySide || !bossSide || !e || !f || !s) return;
   
-  // 清除動畫快取
   partySide.classList.remove("attack-anim");
   bossSide.classList.remove("hurt-anim");
   e.classList.remove("show"); f.classList.remove("show"); s.classList.remove("show");
   
-  void bossSide.offsetWidth; // 強制重繪
+  void bossSide.offsetWidth; 
   
-  // 啟動華麗打擊
   partySide.classList.add("attack-anim");
   bossSide.classList.add("hurt-anim");
   e.classList.add("show"); f.classList.add("show"); s.classList.add("show");
@@ -285,7 +307,11 @@ function renderMap() {
   const box = document.getElementById("mapNodes"); if(!box) return; box.innerHTML = "";
   for (let i = 1; i <= 20; i++) {
     const node = document.createElement("div"); node.className = "stage-node";
-    if (i % 10 === 0) node.classList.add("elite"); if (i === data.stage) node.classList.add("current");
+    if (i % 10 === 0) node.classList.add("elite"); 
+    
+    // 修正點：高亮目前最新解鎖的關卡
+    if (i === data.stage) node.classList.add("current");
+    
     node.textContent = i % 10 === 0 ? "👹" : i;
     node.style.top = (30 + (i - 1) * 32) + "px"; node.style.left = (i % 2 === 0 ? 240 : 90) + "px"; box.appendChild(node);
   }
