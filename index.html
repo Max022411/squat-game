@@ -105,7 +105,7 @@
       </div>
 
       <h3 class="section-subtitle">⚔️ 神兵利器販售 (3倍擴充)</h3>
-      <div id="shopItems" class="scroll-box" style="max-height: 400px; overflow-y: auto;"></div>
+      <div id="shopItems" class="scroll-box" style="max-height: 380px; overflow-y: auto;"></div>
 
       <button class="back-btn" onclick="showScreen('lobbyScreen')">返回主城大廳</button>
     </div>
@@ -166,9 +166,17 @@
         <canvas id="canvas"></canvas>
         
         <div class="battle-actors">
-          <div id="playerKnight" class="knight-sprite">🤺 <span class="actor-label">騎士</span></div>
-          <div id="battlePet" class="pet-sprite">🐾 <span id="battlePetName" class="actor-label">戰寵</span></div>
-          <div id="boss" class="monster">👾 <span class="actor-label">魔王</span></div>
+          <div id="playerParty" class="party-side">
+            <div id="battlePet" class="pet-sprite">🐾</div>
+            <span id="battlePetLabel" class="actor-label">戰寵</span>
+            <div class="knight-sprite">🤺</div>
+            <span class="actor-label">勇者騎士</span>
+          </div>
+          
+          <div id="enemyBossSide" class="monster-side">
+            <div id="boss" class="monster">👾</div>
+            <span id="bossLabel" class="actor-label">領主魔王</span>
+          </div>
         </div>
         
         <div id="hitEffect" class="effect"></div>
