@@ -29,7 +29,6 @@ let squatState = "up"; let lastAttackTime = 0;
 let lastPosition = null; 
 let isSettling = false; 
 
-// 🔥 將 MediaPipe 與 Camera 變數宣告在全域，方便跨關卡重複利用串流
 let globalPose = null;
 let globalCamera = null;
 
@@ -62,8 +61,26 @@ window.addEventListener("DOMContentLoaded", () => {
   const toLoginBtn = document.getElementById("toLoginBtn");
   if (toLoginBtn) toLoginBtn.addEventListener("click", () => { showScreen("loginScreen"); });
 
+  // 🔥 修正事件綁定：確認你的 HTML 中「輸入完名字進入大廳」的按鈕 ID
+  // 這裡假設 login 畫面的按鈕叫「loginGameBtn」，而大廳的出征按鈕叫「startBtn」
+  // 為了安全起見，如果 startBtn 是大廳出征鈕，我們讓它導向 startBattle
   const startBtn = document.getElementById("startBtn");
-  if (startBtn) startBtn.addEventListener("click", () => { startBattle(data.stage || 1); });
+  if (startBtn) {
+    startBtn.addEventListener("click", () => { startBattle(data.stage || 1); });
+  }
+
+  // 如果你有另一個登入按鈕（例如叫 loginGameBtn），請對應綁定完名字後進入大廳
+  const loginGameBtn = document.getElementById("loginGameBtn");
+  if (loginGameBtn) {
+    loginGameBtn.addEventListener("click", startGame);
+  } else {
+    // 防呆：如果 HTML 沒有分開兩個 ID，而是共用 startBtn，那表示 startBtn 應該是登入按鈕
+    // 我們重新調整：輸入完名字 -> 執行 startGame (去大廳)
+    if (startBtn && !document.getElementById("loginGameBtn")) {
+      startBtn.removeEventListener("click", () => { startBattle(data.stage || 1); });
+      startBtn.addEventListener("click", startGame); 
+    }
+  }
   
   const nameInput = document.getElementById("nameInput");
   if (nameInput) {
@@ -85,11 +102,15 @@ function showScreen(id) {
   refreshTop();
 }
 
+// 🔥 修正：打完名字按開始，絕對只進大廳畫面，不偷跑進戰鬥！
 function startGame() {
   const nameInput = document.getElementById("nameInput");
   const name = nameInput ? nameInput.value.trim() : "";
   if (name === "") { alert("請先輸入勇者名稱"); return; }
-  data.name = name; save(); showScreen("lobbyScreen"); initMobileGps();
+  data.name = name; 
+  save(); 
+  showScreen("lobbyScreen"); // 前往大廳
+  initMobileGps();
 }
 
 function refreshTop() {
@@ -208,7 +229,6 @@ function startBattle(stageNum) {
   updateBattleUI(); 
   showScreen("gameScreen");
   
-  // 🔥 核心修正：進入戰鬥時，直接調用啟動函數，內部會強力確保相機運作
   startCameraAndPose();
 }
 
@@ -378,7 +398,6 @@ async function startCameraAndPose() {
   const ctx = canvas.getContext("2d"); 
   const statusText = document.getElementById("cameraStatus");
 
-  // 1. 如果偵測器（Pose）還未初始化，建立一次全域單例
   if (!globalPose) {
     globalPose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file });
     globalPose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.45, minTrackingConfidence: 0.45 });
@@ -392,7 +411,6 @@ async function startCameraAndPose() {
     });
   }
 
-  // 2. 如果相機實體（Camera）未建立，建立之
   if (!globalCamera) {
     globalCamera = new Camera(video, { 
       onFrame: async () => { if(globalPose) await globalPose.send({ image: video }); }, 
@@ -401,7 +419,6 @@ async function startCameraAndPose() {
     });
   }
 
-  // 🔥 終極核心爆點：無論如何，每次進來都要強制執行一次 start() 來喚醒視訊串流！
   try {
     if(statusText) statusText.textContent = "📷 正在召喚聖光鏡頭...";
     await globalCamera.start(); 
