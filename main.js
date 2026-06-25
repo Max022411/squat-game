@@ -25,9 +25,13 @@ const defaultData = {
 let data = JSON.parse(localStorage.getItem("squatRPG")) || defaultData;
 let bossHp = 100; let maxBossHp = 100;
 let currentBattleStage = 1; 
-let poseStarted = false; let squatState = "up"; let lastAttackTime = 0;
+let squatState = "up"; let lastAttackTime = 0;
 let lastPosition = null; 
 let isSettling = false; 
+
+// 🔥 將 MediaPipe 與 Camera 變數宣告在全域，方便跨關卡重複利用串流
+let globalPose = null;
+let globalCamera = null;
 
 const MIN_SPEED_KMH = 3.0;  
 const MAX_SPEED_KMH = 15.0; 
@@ -177,7 +181,7 @@ function buyShopItem(id) {
   data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
 }
 
-// ==================== 4. 戰鬥核心 (徹底解決過關全黑問題) ====================
+// ==================== 4. 戰鬥核心 ====================
 function startBattle(stageNum) {
   if (!stageNum || isNaN(stageNum)) {
     stageNum = data.stage || 1;
@@ -204,7 +208,7 @@ function startBattle(stageNum) {
   updateBattleUI(); 
   showScreen("gameScreen");
   
-  // 🔥 關鍵修正：每次進戰鬥畫面，都強制重啟相機與偵測，絕對不能偷懶跳過！
+  // 🔥 核心修正：進入戰鬥時，直接調用啟動函數，內部會強力確保相機運作
   startCameraAndPose();
 }
 
@@ -369,32 +373,45 @@ function activePet() { if(!data.pets) return defaultData.pets[0]; return data.pe
 
 // ==================== 6. MediaPipe 體感 AI ====================
 async function startCameraAndPose() {
-  // 🔥 如果相機實體已經在運作，我們只需要更新畫面顯示狀態，不用重新 new 浪費資源
-  if (poseStarted) {
-    const statusText = document.getElementById("cameraStatus");
-    if(statusText) statusText.textContent = "🛡️ 領主血條";
-    return; 
+  const video = document.getElementById("webcam"); 
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d"); 
+  const statusText = document.getElementById("cameraStatus");
+
+  // 1. 如果偵測器（Pose）還未初始化，建立一次全域單例
+  if (!globalPose) {
+    globalPose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file });
+    globalPose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.45, minTrackingConfidence: 0.45 });
+    globalPose.onResults((results) => {
+      canvas.width = video.videoWidth || 480; canvas.height = video.videoHeight || 640; ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (results.poseLandmarks) {
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "#38bdf8", lineWidth: 3 });
+        drawLandmarks(ctx, results.poseLandmarks, { color: "#ca8a04", lineWidth: 1.5 });
+        checkLiveSquat(results.poseLandmarks);
+      }
+    });
   }
 
-  const video = document.getElementById("webcam"); const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d"); const statusText = document.getElementById("cameraStatus");
-  const pose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file });
-  pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.45, minTrackingConfidence: 0.45 });
-  pose.onResults((results) => {
-    canvas.width = video.videoWidth || 480; canvas.height = video.videoHeight || 640; ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (results.poseLandmarks) {
-      drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "#38bdf8", lineWidth: 3 });
-      drawLandmarks(ctx, results.poseLandmarks, { color: "#ca8a04", lineWidth: 1.5 });
-      checkLiveSquat(results.poseLandmarks);
-    }
-  });
+  // 2. 如果相機實體（Camera）未建立，建立之
+  if (!globalCamera) {
+    globalCamera = new Camera(video, { 
+      onFrame: async () => { if(globalPose) await globalPose.send({ image: video }); }, 
+      width: 480, 
+      height: 640 
+    });
+  }
+
+  // 🔥 終極核心爆點：無論如何，每次進來都要強制執行一次 start() 來喚醒視訊串流！
   try {
-    const camera = new Camera(video, { onFrame: async () => { await pose.send({ image: video }); }, width: 480, height: 640 });
-    await camera.start(); 
-    poseStarted = true; // 標記成功啟動
+    if(statusText) statusText.textContent = "📷 正在召喚聖光鏡頭...";
+    await globalCamera.start(); 
     if(statusText) statusText.textContent = "🛡️ 領主血條";
-  } catch (err) { if(statusText) statusText.textContent = "相機不可用"; }
+  } catch (err) { 
+    if(statusText) statusText.textContent = "相機啟動失敗或權限被拒絕"; 
+    console.error(err);
+  }
 }
+
 function checkLiveSquat(lm) {
   const lh = lm[23], lk = lm[25], la = lm[27], rh = lm[24], rk = lm[26], ra = lm[28];
   if (lk.visibility < 0.4 || la.visibility < 0.4 || rk.visibility < 0.4 || ra.visibility < 0.4) return;
