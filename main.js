@@ -24,11 +24,12 @@ const defaultData = {
 
 let data = JSON.parse(localStorage.getItem("squatRPG")) || defaultData;
 let bossHp = 100; let maxBossHp = 100;
+let currentBattleStage = 1; // 🔥 新增：當前正在戰鬥的關卡別名，解耦 data.stage
 let poseStarted = false; let squatState = "up"; let lastAttackTime = 0;
 let lastPosition = null; 
 
-const MIN_SPEED_KMH = 3.0;  // 必須大於等於 3 公里/小時才列入計算
-const MAX_SPEED_KMH = 15.0; // 超過 15 公里/小時判定為交通工具不列入
+const MIN_SPEED_KMH = 3.0;  
+const MAX_SPEED_KMH = 15.0; 
 
 let audioCtx = null;
 function playSound(type) {
@@ -175,13 +176,16 @@ function buyShopItem(id) {
   data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
 }
 
-// ==================== 4. 戰鬥核心 ====================
-function startBattle() {
-  const isElite = data.stage % 10 === 0;
-  maxBossHp = isElite ? (150 + data.stage * 20) : (80 + data.stage * 15); 
+// ==================== 4. 戰鬥核心 (修正：支援指定關卡與重複挑戰) ====================
+function startBattle(stageNum) {
+  currentBattleStage = stageNum; // 設定目前挑戰的關卡數
+  const isElite = currentBattleStage % 10 === 0;
+  
+  // 依據點擊的關卡動態計算血量
+  maxBossHp = isElite ? (150 + currentBattleStage * 20) : (80 + currentBattleStage * 15); 
   bossHp = maxBossHp;
   
-  document.getElementById("stageText").textContent = isElite ? "👑 領主魔王戰" : "地城 STAGE " + data.stage;
+  document.getElementById("stageText").textContent = isElite ? "👑 領主魔王戰" : "地城 STAGE " + currentBattleStage;
   document.getElementById("boss").textContent = isElite ? "👹" : "👾";
   
   const currentPet = activePet();
@@ -218,12 +222,16 @@ function onSquatSuccess() {
 
   if (bossHp <= 0) {
     setTimeout(() => {
-      alert(`🎉 成功擊殺 STAGE ${data.stage} 怪物！`);
-      data.coins += data.stage * 40; 
-      data.stage++; 
+      alert(`🎉 成功擊殺 STAGE ${currentBattleStage} 怪物！`);
+      data.coins += currentBattleStage * 40; 
+      
+      // 🔥 修正：只有當通關關卡等於最新進度時，最高關卡進度才會往後推進
+      if (currentBattleStage === data.stage) {
+        data.stage++; 
+      }
       data.combo = 0; 
       save(); 
-      openMap(); 
+      openMap(); // 重新整理地圖並更新各節點事件
     }, 600);
   }
 }
@@ -297,10 +305,12 @@ function drawGacha() {
   document.getElementById("gachaResult").innerHTML = `🔮 聖物覺醒！獲得：${pet.icon} 【${pet.name}】(${pet.rarity})`; save();
 }
 
-// ==================== 地圖系統 (修正：補上點擊進入當前關卡戰鬥事件) ====================
+// ==================== 地圖系統 (終極修正：開放歷史關卡、動態綁定事件) ====================
 function openMap() { renderMap(); showScreen("mapScreen"); }
 function renderMap() {
   const box = document.getElementById("mapNodes"); if(!box) return; box.innerHTML = "";
+  if (!data.stage) data.stage = 1;
+
   for (let i = 1; i <= 20; i++) {
     const node = document.createElement("div"); node.className = "stage-node";
     if (i % 10 === 0) node.classList.add("elite"); 
@@ -308,22 +318,20 @@ function renderMap() {
     if (i === data.stage) {
       node.classList.add("current");
     } else if (i < data.stage) {
-      node.classList.add("cleared"); // 已通關標記
+      node.classList.add("cleared"); // 已通關
     } else {
-      node.classList.add("locked"); // 未解鎖標記
+      node.classList.add("locked"); // 未解鎖
     }
     
     node.textContent = i % 10 === 0 ? "👹" : i;
     node.style.top = (30 + (i - 1) * 32) + "px"; node.style.left = (i % 2 === 0 ? 240 : 90) + "px"; 
     
-    // 🔥 修正核心：點擊關卡節點觸發戰鬥
+    // 🔥 終極核心修正：只要小於等於當前最大關卡，通通可以點擊進去玩
     node.addEventListener("click", () => {
-      if (i === data.stage) {
-        startBattle(); // 只有當前解鎖的最新關卡能點擊進入
-      } else if (i < data.stage) {
-        alert("這關你已經完美淨化囉！請挑戰最新的當前關卡！");
+      if (i <= data.stage) {
+        startBattle(i); // 傳入點擊的關卡數字，開啟對應的戰鬥！
       } else {
-        alert("前置地下城尚未突破，無法前進！");
+        alert(`前置地下城 STAGE ${data.stage} 尚未突破，無法越級挑戰！`);
       }
     });
 
