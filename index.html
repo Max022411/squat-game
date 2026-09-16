@@ -44,7 +44,7 @@
         <button type="button" onclick="openPets()">🐾 戰寵夥伴</button>
         <button type="button" onclick="openGacha()">🔮 聖物寶箱</button>
         <button type="button" onclick="openDaily()">📅 每日簽到</button>
-        <button type="button" onclick="openBodyTracker()">📊 體態紀錄</button>
+        <button type="button" onclick="openBodyTracker()">📊 體態紀錄與照片</button>
       </nav>
     </section>
 
@@ -90,7 +90,7 @@
       <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
     </section>
 
-    <!-- 8. 新增：體態紀錄畫面 -->
+    <!-- 8. 體態紀錄畫面（含拍照與 AI 建議） -->
     <section id="bodyTrackerScreen" class="screen">
       <h2>📊 體態紀錄日記</h2>
       <div class="panel">
@@ -98,7 +98,13 @@
           <input type="number" id="weightInput" placeholder="體重 (kg)" step="0.1" style="width: 50%; padding: 8px; border-radius: 8px; border: none; text-align: center;">
           <input type="number" id="fatInput" placeholder="體脂率 (%)" step="0.1" style="width: 50%; padding: 8px; border-radius: 8px; border: none; text-align: center;">
         </div>
-        <button type="button" onclick="addBodyRecord()" class="action-btn">➕ 新增今日紀錄</button>
+
+        <div style="margin-bottom: 8px; text-align: center;">
+          <label style="display: block; font-size: 0.85rem; color: #ccc; margin-bottom: 4px;">📸 上傳/拍攝體態照片：</label>
+          <input type="file" id="photoInput" accept="image/*" capture="environment" style="width: 100%; color: white;">
+        </div>
+
+        <button type="button" onclick="addBodyRecord()" class="action-btn">➕ 新增紀錄並分析</button>
       </div>
       
       <div class="panel scroll-panel" id="bodyRecordList"></div>
@@ -145,7 +151,7 @@
     const defaultData = {
       name: "勇者", coins: 1200, stage: 1, score: 0, energy: 0, combo: 0, squat: 0,
       roleLevel: 1, roleAttack: 10, dailyDay: 1, lastClaim: "", walkDistance: 0.0,
-      bodyRecords: [], // 新增體態紀錄陣列
+      bodyRecords: [],
       shop: [
         { id: "weapon_1", name: "鏽鐵短劍", icon: "🗡️", level: 1, baseStat: 3, cost: 100, desc: "新手必備基礎短劍" },
         { id: "weapon_2", name: "王者之劍", icon: "⚔️", level: 0, baseStat: 8, cost: 250, desc: "大幅強化揮斬威力" },
@@ -215,34 +221,71 @@
       }
     }
 
-    // --- 體態紀錄功能邏輯 ---
+    // --- 體態紀錄與 AI 建議邏輯 ---
     function openBodyTracker() {
       renderBodyRecords();
       showScreen("bodyTrackerScreen");
     }
 
+    function generateAdvisorTips(weight, fat) {
+      let advice = [];
+      
+      if (!isNaN(fat) && fat > 0) {
+        if (fat > 25) {
+          advice.push("💡 體脂稍高：建議多進行深蹲訓練與有氧遠征行軍，加快脂肪燃燒！");
+        } else if (fat >= 15 && fat <= 25) {
+          advice.push("✨ 體脂相當標準：維持目前強度，並多補充高蛋白質食物以增強肌肉量！");
+        } else {
+          advice.push("🔥 精壯體態：體脂維持得非常好！可透過皇家鐵匠鋪提升武器階級挑戰更高級地下城。");
+        }
+      } else {
+        advice.push("🎯 建議每日持續記錄體重與體脂，能更精準追蹤身體轉變！");
+      }
+
+      advice.push("🏋️ 深蹲小叮嚀：下蹲時注意膝蓋不內扣，臀部向後坐，維護下肢關節健康。");
+      return advice.join("<br>");
+    }
+
     function addBodyRecord() {
       const weight = parseFloat(document.getElementById("weightInput").value);
       const fat = parseFloat(document.getElementById("fatInput").value);
+      const photoInput = document.getElementById("photoInput");
 
       if (isNaN(weight) || weight <= 0) {
         alert("請輸入有效的體重數字！");
         return;
       }
 
+      const advice = generateAdvisorTips(weight, fat);
       const dateStr = new Date().toLocaleDateString('zh-TW');
-      const newRecord = {
-        date: dateStr,
-        weight: weight,
-        fat: isNaN(fat) ? null : fat
+
+      const saveRecord = (photoData) => {
+        const newRecord = {
+          date: dateStr,
+          weight: weight,
+          fat: isNaN(fat) ? null : fat,
+          photo: photoData || null,
+          advice: advice
+        };
+
+        data.bodyRecords.unshift(newRecord);
+        save();
+        renderBodyRecords();
+
+        document.getElementById("weightInput").value = "";
+        document.getElementById("fatInput").value = "";
+        document.getElementById("photoInput").value = "";
       };
 
-      data.bodyRecords.unshift(newRecord); // 最新的排在前面
-      save();
-      renderBodyRecords();
-
-      document.getElementById("weightInput").value = "";
-      document.getElementById("fatInput").value = "";
+      if (photoInput.files && photoInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          saveRecord(e.target.result);
+        };
+        reader.readAsDataURL(photoInput.files[0]);
+      } else {
+        saveRecord(null);
+      }
     }
 
     function renderBodyRecords() {
@@ -258,13 +301,22 @@
       data.bodyRecords.forEach((rec, index) => {
         const item = document.createElement("div");
         item.className = "feature-card";
+        item.style.flexDirection = "column";
+        item.style.alignItems = "flex-start";
+
         const fatText = rec.fat ? ` | 體脂：${rec.fat}%` : "";
+        let photoHtml = rec.photo ? `<img src="${rec.photo}" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin: 8px 0;">` : "";
+
         item.innerHTML = `
-          <div>
+          <div style="display:flex; justify-shadow:space-between; width:100%; align-items:center;">
             <strong>📅 ${rec.date}</strong>
-            <div style="font-size:0.85rem; color:#8f94fb; margin-top:2px;">體重：${rec.weight} kg ${fatText}</div>
+            <button class="small-btn" onclick="deleteBodyRecord(${index})" style="background:#ff416c; border:none;">刪除</button>
           </div>
-          <button class="small-btn" onclick="deleteBodyRecord(${index})" style="background:#ff416c; border:none;">刪除</button>
+          <div style="font-size:0.85rem; color:#38bdf8; margin-top:4px;">⚖️ 體重：${rec.weight} kg ${fatText}</div>
+          ${photoHtml}
+          <div style="font-size:0.8rem; color:#e2e8f0; background:rgba(255,255,255,0.1); padding:8px; border-radius:6px; margin-top:6px; width:100%;">
+            ${rec.advice || "無建議"}
+          </div>
         `;
         listContainer.appendChild(item);
       });
