@@ -6,13 +6,14 @@
   <title>AI 體感深蹲 RPG 遠征</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- MediaPipe API -->
+  <!-- MediaPipe AI 姿態辨識套件 -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
+  <!-- 主容器 -->
   <main class="app-container">
 
     <!-- 1. 登入畫面 -->
@@ -21,7 +22,7 @@
         <h1>⚔️ 聖殿騎士：深蹲遠征</h1>
         <div class="panel">
           <input type="text" id="nameInput" value="勇者" placeholder="請輸入勇者名稱">
-          <button id="startBtn" onclick="startGame()">進入勇者大廳</button>
+          <button id="startBtn" type="button" onclick="startGame()">進入勇者大廳</button>
         </div>
       </div>
     </section>
@@ -39,11 +40,11 @@
       </header>
 
       <nav class="nav-menu">
-        <button onclick="openMap()">🗺️ 選擇關卡</button>
-        <button onclick="openRole()">⚒️ 皇家鐵匠鋪</button>
-        <button onclick="openPets()">🐾 戰寵夥伴</button>
-        <button onclick="openGacha()">🔮 聖物寶箱</button>
-        <button onclick="openDaily()">📅 每日簽到</button>
+        <button type="button" onclick="openMap()">🗺️ 選擇關卡</button>
+        <button type="button" onclick="openRole()">⚒️ 皇家鐵匠鋪</button>
+        <button type="button" onclick="openPets()">🐾 戰寵夥伴</button>
+        <button type="button" onclick="openGacha()">🔮 聖物寶箱</button>
+        <button type="button" onclick="openDaily()">📅 每日簽到</button>
       </nav>
     </section>
 
@@ -51,23 +52,23 @@
     <section id="mapScreen" class="screen">
       <h2>🗺️ 地下城遠征</h2>
       <div class="panel scroll-panel" id="mapNodes"></div>
-      <button onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
+      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
     </section>
 
     <!-- 4. 鐵匠鋪裝備畫面 -->
     <section id="roleScreen" class="screen">
       <h2 id="roleTitle">殿堂騎士階級</h2>
       <p id="roleDesc" class="sub-text"></p>
-      <button onclick="upgradeRole()" class="action-btn">⬆️ 升級騎士階級</button>
+      <button type="button" onclick="upgradeRole()" class="action-btn">⬆️ 升級騎士階級</button>
       <div class="panel scroll-panel" id="shopItems"></div>
-      <button onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
+      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
     </section>
 
     <!-- 5. 戰寵畫面 -->
     <section id="petScreen" class="screen">
       <h2>🐾 戰寵夥伴</h2>
       <div class="panel scroll-panel" id="petList"></div>
-      <button onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
+      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
     </section>
 
     <!-- 6. 抽卡畫面 -->
@@ -75,18 +76,18 @@
       <h2>🔮 聖物寶箱</h2>
       <div class="panel center-box">
         <p>消耗 300 🪙 解鎖隨機戰寵夥伴！</p>
-        <button onclick="drawGacha()">🎲 祈願開箱 (300🪙)</button>
+        <button type="button" onclick="drawGacha()">🎲 祈願開箱 (300🪙)</button>
         <div id="gachaResult" class="gacha-res"></div>
       </div>
-      <button onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
+      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
     </section>
 
     <!-- 7. 每日簽到畫面 -->
     <section id="dailyScreen" class="screen">
       <h2>📅 每日簽到</h2>
       <div class="panel scroll-panel" id="dailyList"></div>
-      <button onclick="claimDaily()" class="action-btn">🎁 領取本日獎勵</button>
-      <button onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
+      <button type="button" onclick="claimDaily()" class="action-btn">🎁 領取本日獎勵</button>
+      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
     </section>
 
     <!-- 8. 體感戰鬥畫面 -->
@@ -120,7 +121,7 @@
         </div>
       </div>
 
-      <button onclick="showScreen('mapScreen')" class="retreat-btn">🏳️ 撤退返回</button>
+      <button type="button" onclick="showScreen('mapScreen')" class="retreat-btn">🏳️ 撤退返回</button>
     </section>
 
   </main>
