@@ -1,369 +1,414 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+
+<html lang="zh-Hant">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 體感深蹲 RPG 遠征</title>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+  <title>深蹲打怪 RPG - 終極進化版</title>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
   
-  <!-- 載入 MediaPipe 姿態辨識庫 -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
-  <style>
-    /* ==========================================
-       1. 全域樣式與高級視覺基底 (CSS Reset & Base)
-       ========================================== */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body, html {
-      width: 100%;
-      height: 100%;
-      background-color: #0d0d1a;
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      overflow-x: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+  <script src="main.js" defer></script>
 
-    /* 滿版應用程式主要容器 */
-    .app-container {
-      width: 100%;
-      max-width: 500px;
-      height: 100vh;
-      background: #121225;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-      display: flex;
-      flex-direction: column;
-    }
+  <link rel="stylesheet" href="style.css">
 
-    /* 畫面切換控制 */
-    .screen {
-      display: none;
-      width: 100%;
-      height: 100%;
-      padding: 20px;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      overflow-y: auto;
-    }
-    .screen.active { display: flex; }
-
-    /* ==========================================
-       2. 高級 UI 元件：毛玻璃面板與科技感按鈕
-       ========================================== */
-    .panel {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 243, 255, 0.2);
-      border-radius: 16px;
-      padding: 15px;
-      margin-bottom: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    h1, h2, h3 {
-      text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
-      color: #fff;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    button {
-      width: 100%;
-      background: linear-gradient(135deg, #4e54c8, #8f94fb);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #ffffff;
-      font-size: 1rem;
-      font-weight: bold;
-      padding: 12px 20px;
-      border-radius: 25px;
-      cursor: pointer;
-      margin: 6px 0;
-      box-shadow: 0 0 12px rgba(78, 84, 200, 0.5);
-      transition: all 0.2s ease-in-out;
-    }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 20px rgba(143, 148, 251, 0.8);
-    }
-
-    /* ==========================================
-       3. 視訊與 Canvas 畫面上拉排列 (避免跑版)
-       ========================================== */
-    .game-view-container {
-      position: relative;
-      width: 100%;
-      flex: 1;
-      max-height: 520px;
-      background: #000;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 2px solid rgba(0, 243, 255, 0.4);
-    }
-    video, canvas {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1); /* 鏡像翻轉 */
-    }
-    .hud-overlay {
-      position: absolute;
-      top: 10px; left: 10px; right: 10px;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .hp-bar {
-      width: 100%;
-      height: 18px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 9px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.4);
-    }
-    .hp-fill {
-      height: 100%;
-      width: 100%;
-      background: linear-gradient(90deg, #ff416c, #ff4b2b);
-      transition: width 0.3s ease;
-    }
-    
-    /* 地圖關卡節點 */
-    .map-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      width: 100%;
-      margin: 10px 0;
-    }
-  </style>
 </head>
+
 <body>
 
-  <div class="app-container">
 
-    <!-- 1. 登入畫面 -->
-    <div id="loginScreen" class="screen active">
-      <div style="margin: auto 0; width: 100%;">
-        <h1>⚔️ 聖殿騎士：深蹲遠征</h1>
-        <div class="panel">
-          <input type="text" id="nameInput" value="勇者" style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 1rem; margin-bottom: 10px; text-align: center;">
-          <button id="startBtn">進入勇者大廳</button>
-        </div>
-      </div>
+
+  <section id="homeScreen" class="screen active center">
+
+    <div class="home-container">
+
+      <div class="logo">⚔️</div>
+
+      <h1>深蹲打怪</h1>
+
+      <div class="subtitle">SQUAT HERO ADVANCED</div>
+
+      <button id="toLoginBtn" class="main-btn btn-glow">開始冒險</button>
+
     </div>
 
-    <!-- 2. 大廳畫面 -->
-    <div id="lobbyScreen" class="screen">
-      <h2>🏰 勇者大廳</h2>
-      <div class="panel">
-        <p style="font-size: 1.2rem; margin-bottom: 5px;"><strong id="lobbyName">勇者</strong></p>
-        <p><span id="coinText">🪙 0</span> | <span id="playerLevelText">LV.1 聖殿騎士</span></p>
-        <p style="margin-top: 8px; font-size: 0.9rem; color: #8f94fb;">🚶 遠征累積：<span id="lobbyWalkDist">0.00</span> km</p>
-      </div>
+  </section>
 
-      <div style="width: 100%;">
-        <button onclick="openMap()">🗺️ 選擇遠征關卡</button>
-        <button onclick="alert('鐵匠鋪功能整合中！')">⚒️ 皇家鐵匠鋪</button>
-        <button onclick="alert('戰寵系統整合中！')">🐾 戰寵夥伴</button>
-      </div>
+
+
+  <section id="loginScreen" class="screen center">
+
+    <div class="login-card">
+
+      <div class="logo-small">🛡️</div>
+
+      <h2>勇者，請留名</h2>
+
+      <input id="nameInput" placeholder="輸入勇者名稱..." maxlength="12">
+
+      <br>
+
+      <button id="startBtn" class="main-btn">建立角色</button>
+
     </div>
 
-    <!-- 3. 地圖畫面 -->
-    <div id="mapScreen" class="screen">
-      <h2>🗺️ 地下城遠征</h2>
-      <div class="panel" style="flex: 1; overflow-y: auto;">
-        <div id="mapNodes" class="map-grid"></div>
-      </div>
-      <button onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
-    </div>
+  </section>
 
-    <!-- 4. 遊戲體感戰鬥畫面 -->
-    <div id="gameScreen" class="screen">
-      <h3 id="stageText">地城 STAGE 1</h3>
-      
-      <div class="game-view-container">
-        <video id="webcam" playsinline></video>
-        <canvas id="canvas"></canvas>
-        
-        <div class="hud-overlay">
-          <div id="cameraStatus" style="background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">📷 鏡頭連線中...</div>
-          <div class="hp-bar" style="margin-top: 8px;"><div id="hpFill" class="hp-fill"></div></div>
-          <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; text-shadow: 0 0 4px #000;">
-            <span id="hpText">100 / 100</span>
-            <span id="combo" style="color: #ffca28;">COMBO x0</span>
+
+
+  <section id="lobbyScreen" class="screen app-bg">
+
+    <div class="phone">
+
+      <div class="top-user">
+
+        <div class="user-left">
+
+          <div class="avatar">⚔️</div>
+
+          <div>
+
+            <div id="lobbyName" class="name">勇者</div>
+
+            <div id="playerLevelText" class="level">LV.1 見習騎士</div>
+
           </div>
-          <div id="debug" style="font-size: 0.85rem; color: #4fc3f7; margin-top: 5px; text-shadow: 0 0 4px #000;">膝蓋角度：--°</div>
+
         </div>
+
+        <div id="coinText" class="coin">🪙 1200</div>
+
       </div>
 
-      <button onclick="showScreen('mapScreen')" style="margin-top: 10px;">🏳️ 撤退返回</button>
+
+
+      <div class="walk-panel">
+
+        <div class="walk-title">🏃‍♂️ 聖騎士路跑行軍系統</div>
+
+        <div class="walk-stats">
+
+          <div>累計遠征: <span id="lobbyWalkDist" class="highlight">0.00</span> km</div>
+
+          <div>移動時速: <span id="lobbyWalkSpeed" class="highlight">0.0</span> km/h</div>
+
+        </div>
+
+        <div id="lobbyWalkMsg" class="walk-msg">GPS 定位模組準備中...</div>
+
+      </div>
+
+
+
+      <div class="lobby-hero">
+
+        <div class="hero-info">
+
+          <h2>冒險戰役</h2>
+
+          <p>燃燒深蹲之魂，鍛造絕世神裝！</p>
+
+        </div>
+
+        <div class="hero-knight">🤺</div>
+
+      </div>
+
+
+
+      <div class="menu-grid">
+
+        <div class="menu-card" onclick="openRole()"><div class="menu-icon">⚒️</div><div class="menu-title">皇家鐵匠鋪</div><div class="menu-desc">購買精緻神裝</div></div>
+
+        <div class="menu-card" onclick="openPets()"><div class="menu-icon">🐾</div><div class="menu-title">戰寵聖殿</div><div class="menu-desc">召喚培養夥伴</div></div>
+
+        <div class="menu-card" onclick="openMap()"><div class="menu-icon">🗺️</div><div class="menu-title">征戰地圖</div><div class="menu-desc">直擊魔王地城</div></div>
+
+        <div class="menu-card" onclick="openGacha()"><div class="menu-icon">🎁</div><div class="menu-title">幸運寶箱</div><div class="menu-desc">抽取傳說寵物</div></div>
+
+        <div class="menu-card" onclick="openDaily()"><div class="menu-icon">📅</div><div class="menu-title">每日補給</div><div class="menu-desc">簽到領健身幣</div></div>
+
+        <div class="menu-card" onclick="openRank()"><div class="menu-icon">🏆</div><div class="menu-title">英靈殿</div><div class="menu-desc">挑戰全服排行</div></div>
+
+      </div>
+
     </div>
 
-  </div>
+  </section>
 
-  <script>
-    // ==================== 1. 資料與 UI 控制邏輯 ====================
-    const defaultData = {
-      name: "勇者", coins: 1200, stage: 1, combo: 0,
-      roleLevel: 1, roleAttack: 15, walkDistance: 0.0
-    };
 
-    let data = JSON.parse(localStorage.getItem("squatRPG")) || defaultData;
-    let bossHp = 100, maxBossHp = 100, currentStage = 1;
-    let squatState = "up", lastAttackTime = 0, isSettling = false;
-    let globalPose = null, globalCamera = null;
-    let smoothedLandmarks = null;
-    const SMOOTHING_ALPHA = 0.25; // EMA 平滑濾波係數
 
-    const screens = ["loginScreen", "lobbyScreen", "mapScreen", "gameScreen"];
+  <section id="mapScreen" class="screen app-bg">
 
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("startBtn").addEventListener("click", () => {
-        const val = document.getElementById("nameInput").value.trim();
-        if(val) data.name = val;
-        save();
-        showScreen("lobbyScreen");
-      });
-      refreshTop();
-    });
+    <div class="phone">
 
-    function save() { localStorage.setItem("squatRPG", JSON.stringify(data)); refreshTop(); }
-    
-    function showScreen(id) {
-      screens.forEach(s => { document.getElementById(s).classList.remove("active"); });
-      document.getElementById(id).classList.add("active");
-      refreshTop();
-    }
+      <div class="page-title">遠征戰役地圖</div>
 
-    function refreshTop() {
-      document.getElementById("lobbyName").textContent = data.name;
-      document.getElementById("coinText").textContent = "🪙 " + data.coins;
-      document.getElementById("playerLevelText").textContent = "LV." + data.roleLevel + " 聖殿騎士";
-      document.getElementById("lobbyWalkDist").textContent = Number(data.walkDistance).toFixed(2);
-    }
+      <div class="map"><div class="path-line"></div><div id="mapNodes"></div></div>
 
-    // ==================== 2. MediaPipe 體感與防抖動演算法 ====================
-    async function startCameraAndPose() {
-      const video = document.getElementById("webcam");
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
+      <div style="text-align:center;margin-top:20px">
 
-      if (!globalPose) {
-        globalPose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file });
-        globalPose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+        <button class="main-btn btn-glow" onclick="startBattle()">進入當前地城</button><br>
+
+        <button class="back-btn" onclick="showScreen('lobbyScreen')">返回主城大廳</button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <section id="petScreen" class="screen app-bg">
+
+    <div class="phone">
+
+      <div class="page-title">戰寵聖殿</div>
+
+      <div id="petList" class="scroll-box"></div>
+
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回主城大廳</button>
+
+    </div>
+
+  </section>
+
+
+
+  <section id="roleScreen" class="screen app-bg">
+
+    <div class="phone">
+
+      <div class="page-title">皇家鐵匠鋪</div>
+
+      
+
+      <div class="feature-card role-main-card">
+
+        <div class="role-avatar-big">🤺</div>
+
+        <h2 id="roleTitle">見習騎士 Lv.1</h2>
+
+        <p id="roleDesc">基礎攻擊力：10</p>
+
+        <button class="small-btn upgrade-btn" onclick="upgradeRole()">花費 300 🪙 提升階級</button>
+
+      </div>
+
+
+
+      <h3 class="section-subtitle">⚔️ 神兵利器販售 (3倍擴充)</h3>
+
+      <div id="shopItems" class="scroll-box" style="max-height: 380px; overflow-y: auto;"></div>
+
+
+
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回主城大廳</button>
+
+    </div>
+
+  </section>
+
+
+
+  <section id="gachaScreen" class="screen app-bg">
+
+    <div class="phone">
+
+      <div class="page-title">幸運守護聖物</div>
+
+      <div class="feature-card gacha-card">
+
+        <div class="big-gift">🎁</div>
+
+        <h2>遠古魔寵寶箱</h2>
+
+        <p class="gacha-hint">每次開啟需消耗 <span style="color:#ffd400;font-weight:bold">300 健身幣</span>。<br>有機會覺醒極稀有神話級『混沌巨龍』！</p>
+
+        <button class="main-btn btn-gacha" onclick="drawGacha()">破譯寶箱</button>
+
+        <div id="gachaResult" class="gacha-popup-text"></div>
+
+      </div>
+
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回主城大廳</button>
+
+    </div>
+
+  </section>
+
+
+
+  <section id="dailyScreen" class="screen app-bg">
+
+    <div class="phone">
+
+      <div class="page-title">每日騎士補給</div>
+
+      <div id="dailyList" class="daily-grid"></div>
+
+      <button class="main-btn btn-glow" style="margin-top:15px;" onclick="claimDaily()">領取今日物資</button><br>
+
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回主城大廳</button>
+
+    </div>
+
+  </section>
+
+
+
+  <section id="rankScreen" class="screen app-bg">
+
+    <div class="phone">
+
+      <div class="page-title">榮譽英靈殿</div>
+
+      <div class="feature-card rank-card">
+
+        <h2>🏆 本日深蹲之王</h2>
+
+        <div class="rank-item"><span>🥇 1. ShadowKnight</span><strong>320 下</strong></div>
+
+        <div class="rank-item"><span>🥈 2. MuscleHero</span><strong>280 下</strong></div>
+
+        <div class="rank-item current-player"><span>🥉 3. (YOU)</span><strong id="rankSquat">0 下</strong></div>
+
+      </div>
+
+      <button class="back-btn" onclick="showScreen('lobbyScreen')">返回主城大廳</button>
+
+    </div>
+
+  </section>
+
+
+
+  <section id="gameScreen" class="screen app-bg">
+
+    <div class="game">
+
+      <div class="top">
+
+        <div class="user-left">
+
+          <div class="avatar">🤺</div>
+
+          <div>
+
+            <div id="playerName" class="name">勇者</div>
+
+            <div id="battleWeaponText" class="level" style="color:#ffd400">裝備: 鏽鐵劍</div>
+
+          </div>
+
+        </div>
+
+        <div id="stageText">地城 STAGE 1</div>
+
+        <button class="back-btn" style="margin:0;padding:6px 12px;font-size:12px;" onclick="showScreen('mapScreen')">撤退</button>
+
+      </div>
+
+
+
+      <div class="battle">
+
+        <video id="webcam" autoplay playsinline muted></video>
+
+        <canvas id="canvas"></canvas>
+
         
-        globalPose.onResults((results) => {
-          canvas.width = video.videoWidth || 480; 
-          canvas.height = video.videoHeight || 640; 
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          if (results.poseLandmarks) {
-            // 套用 EMA 濾波平滑
-            const filtered = applyEmaSmoothing(results.poseLandmarks);
-            drawConnectors(ctx, filtered, POSE_CONNECTIONS, { color: "#38bdf8", lineWidth: 3 });
-            drawLandmarks(ctx, filtered, { color: "#ca8a04", lineWidth: 1.5 });
-            checkLiveSquat(filtered);
-          }
-        });
-      }
+        <div class="battle-actors">
 
-      if (!globalCamera) {
-        globalCamera = new Camera(video, {
-          onFrame: async () => { if(globalPose) await globalPose.send({ image: video }); },
-          width: 480, height: 640
-        });
-      }
-      await globalCamera.start();
-      document.getElementById("cameraStatus").textContent = "🛡️ 領主戰進行中";
-    }
+          <div id="playerParty" class="party-side">
 
-    function applyEmaSmoothing(raw) {
-      if (!smoothedLandmarks || smoothedLandmarks.length !== raw.length) {
-        smoothedLandmarks = raw.map(lm => ({ ...lm }));
-        return smoothedLandmarks;
-      }
-      for (let i = 0; i < raw.length; i++) {
-        smoothedLandmarks[i].x += SMOOTHING_ALPHA * (raw[i].x - smoothedLandmarks[i].x);
-        smoothedLandmarks[i].y += SMOOTHING_ALPHA * (raw[i].y - smoothedLandmarks[i].y);
-        smoothedLandmarks[i].z += SMOOTHING_ALPHA * (raw[i].z - smoothedLandmarks[i].z);
-        smoothedLandmarks[i].visibility = raw[i].visibility;
-      }
-      return smoothedLandmarks;
-    }
+            <div id="battlePet" class="pet-sprite">🐾</div>
 
-    function checkLiveSquat(lm) {
-      const lh = lm[23], lk = lm[25], la = lm[27], rh = lm[24], rk = lm[26], ra = lm[28];
-      if (lk.visibility < 0.5 || la.visibility < 0.5 || rk.visibility < 0.5 || ra.visibility < 0.5) return;
+            <span id="battlePetLabel" class="actor-label">戰寵</span>
 
-      const minAngle = Math.min(calcAngle(lh, lk, la), calcAngle(rh, rk, ra));
-      document.getElementById("debug").textContent = `膝蓋角度：${Math.round(minAngle)}° | 狀態：${squatState === 'up' ? '站立' : '深蹲中'}`;
+            <div class="knight-sprite">🤺</div>
 
-      if (squatState === "up" && minAngle < 125) squatState = "down";
-      if (squatState === "down" && minAngle > 160) {
-        const now = Date.now();
-        if (now - lastAttackTime > 800) { onSquatSuccess(); lastAttackTime = now; }
-        squatState = "up";
-      }
-    }
+            <span class="actor-label">勇者騎士</span>
 
-    function calcAngle(a, b, c) {
-      const ab = { x: a.x - b.x, y: a.y - b.y }, cb = { x: c.x - b.x, y: c.y - b.y };
-      const dot = ab.x * cb.x + ab.y * cb.y;
-      const len = Math.sqrt(ab.x**2 + ab.y**2) * Math.sqrt(cb.x**2 + cb.y**2);
-      return len === 0 ? 180 : Math.acos(Math.min(1, Math.max(-1, dot / len))) * 180 / Math.PI;
-    }
+          </div>
 
-    // ==================== 3. 戰鬥邏輯 ====================
-    function startBattle(stage) {
-      isSettling = false; currentStage = stage;
-      maxBossHp = 80 + stage * 20; bossHp = maxBossHp;
-      document.getElementById("stageText").textContent = `地城 STAGE ${stage}`;
-      updateBattleUI();
-      showScreen("gameScreen");
-      startCameraAndPose();
-    }
+          
 
-    function onSquatSuccess() {
-      if (isSettling) return;
-      const dmg = data.roleAttack;
-      bossHp = Math.max(0, bossHp - dmg);
-      data.combo++; data.coins += 5;
-      updateBattleUI(); save();
+          <div id="enemyBossSide" class="monster-side">
 
-      if (bossHp <= 0) {
-        isSettling = true;
-        setTimeout(() => {
-          alert(`🎉 通關 STAGE ${currentStage}！`);
-          if (currentStage === data.stage) data.stage++;
-          data.combo = 0; save(); showScreen("mapScreen");
-        }, 300);
-      }
-    }
+            <div id="boss" class="monster">👾</div>
 
-    function updateBattleUI() {
-      document.getElementById("hpText").textContent = `${bossHp} / ${maxBossHp}`;
-      document.getElementById("hpFill").style.width = `${(bossHp / maxBossHp) * 100}%`;
-      document.getElementById("combo").textContent = `COMBO x${data.combo}`;
-    }
+            <span id="bossLabel" class="actor-label">領主魔王</span>
 
-    function openMap() {
-      const box = document.getElementById("mapNodes"); box.innerHTML = "";
-      for(let i = 1; i <= 10; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = `Stage ${i} ${i <= data.stage ? '🔓' : '🔒'}`;
-        btn.onclick = () => { if(i <= data.stage) startBattle(i); };
-        box.appendChild(btn);
-      }
-      showScreen("mapScreen");
-    }
-  </script>
+          </div>
+
+        </div>
+
+        
+
+        <div id="hitEffect" class="effect"></div>
+
+        <div id="floatingText" class="float">HIT!</div>
+
+        <div id="slashLine" class="slash-line"></div>
+
+      </div>
+
+
+
+      <div class="panel">
+
+        <div class="stats">
+
+          <div><div class="lbl">戰役積分</div><strong id="score">0</strong></div>
+
+          <div><div class="lbl">深蹲能量</div><strong id="energy">0</strong></div>
+
+          <div><div class="lbl">深蹲計數</div><strong id="squatCount">0</strong></div>
+
+        </div>
+
+        
+
+        <div id="combo" class="combo">COMBO x0</div>
+
+        
+
+        <div class="hp-title">
+
+          <span id="cameraStatus" class="camera-indicator">🛡️ 領主血條</span>
+
+          <span id="hpText" class="hp-num">100 / 100</span>
+
+        </div>
+
+        <div class="hp-bar"><div id="hpFill"></div></div>
+
+        
+
+        <div id="debug" class="debug">請將手機擺好，退後使全身體感入鏡...</div>
+
+      </div>
+
+    </div>
+
+  </section>
+
 </body>
-</html>
+
+</html> 
+
