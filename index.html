@@ -6,14 +6,14 @@
   <title>AI 體感深蹲 RPG 遠征</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- 載入 MediaPipe 姿態辨識庫 -->
+  <!-- MediaPipe AI 姿態辨識套件 -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
-  <!-- 主要應用程式容器 -->
+  <!-- 主容器 -->
   <main class="app-container">
 
     <!-- 1. 登入畫面 -->
@@ -22,7 +22,7 @@
         <h1>⚔️ 聖殿騎士：深蹲遠征</h1>
         <div class="panel">
           <input type="text" id="nameInput" value="勇者" placeholder="請輸入勇者名稱">
-          <button id="startBtn">進入勇者大廳</button>
+          <button id="startBtn" onclick="startGame()">進入勇者大廳</button>
         </div>
       </div>
     </section>
@@ -90,7 +90,7 @@
       <button onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
     </section>
 
-    <!-- 8. 體感戰鬥畫面 (Main Canvas & Video) -->
+    <!-- 8. 體感戰鬥畫面 -->
     <section id="gameScreen" class="screen">
       <header class="game-header">
         <h3 id="stageText">STAGE 1</h3>
