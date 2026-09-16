@@ -1,138 +1,79 @@
-// ==================== 1. 全域資料與細態基礎設定 ====================
+// ==================== 1. 全域資料與初始化 ====================
 const defaultData = {
   name: "勇者", coins: 1200, stage: 1, score: 0, energy: 0, combo: 0, squat: 0,
   roleLevel: 1, roleAttack: 10, dailyDay: 1, lastClaim: "", walkDistance: 0.0,
   shop: [
-    { id: "weapon_1", name: "鏽鐵短劍", icon: "🗡️", level: 1, baseStat: 3, cost: 100, desc: "新手必備的基礎短劍" },
-    { id: "weapon_2", name: "王者之劍", icon: "⚔️", level: 0, baseStat: 8, cost: 250, desc: "大幅強化深蹲揮斬威力" },
-    { id: "weapon_3", name: "龍牙巨劍", icon: "🐉", level: 0, baseStat: 18, cost: 600, desc: "巨龍骨牙打造的終極利刃" },
-    { id: "shield_1", name: "木製圓盾", icon: "🪵", level: 0, baseStat: 2, cost: 120, desc: "略微提升關卡防護力" },
-    { id: "shield_2", name: "聖光光盾", icon: "🛡️", level: 0, baseStat: 6, cost: 400, desc: "通關獲得額外代幣加成" },
-    { id: "shield_3", name: "宙斯神盾", icon: "⚡", level: 0, baseStat: 15, cost: 850, desc: "雷霆環繞的神之庇護盾" },
-    { id: "boots_1", name: "皮製長靴", icon: "🥾", level: 0, baseStat: 2, cost: 150, desc: "稍微優化行軍走路收益" },
-    { id: "boots_2", name: "泰坦戰靴", icon: "👟", level: 0, baseStat: 5, cost: 350, desc: "提升遠征走路的代幣回饋" },
-    { id: "boots_3", name: "光速神鞋", icon: "✨", level: 0, baseStat: 14, cost: 900, desc: "踏光而行，走路獲得雙倍代幣" }
+    { id: "weapon_1", name: "鏽鐵短劍", icon: "🗡️", level: 1, baseStat: 3, cost: 100, desc: "新手必備基礎短劍" },
+    { id: "weapon_2", name: "王者之劍", icon: "⚔️", level: 0, baseStat: 8, cost: 250, desc: "大幅強化揮斬威力" },
+    { id: "weapon_3", name: "龍牙巨劍", icon: "🐉", level: 0, baseStat: 18, cost: 600, desc: "龍骨打造終極利刃" },
+    { id: "shield_1", name: "木製圓盾", icon: "🪵", level: 0, baseStat: 2, cost: 120, desc: "稍微提升防禦力" },
+    { id: "shield_2", name: "聖光光盾", icon: "🛡️", level: 0, baseStat: 6, cost: 400, desc: "獲得額外代幣加成" },
+    { id: "boots_1", name: "皮製長靴", icon: "🥾", level: 0, baseStat: 2, cost: 150, desc: "優化走路收益" }
   ],
   pets: [
     { id: 1, name: "光靈幼獸", icon: "🐾", rarity: "稀有", level: 1, attack: 12, owned: true, active: true },
     { id: 2, name: "焰火狐", icon: "🔥", rarity: "史詩", level: 1, attack: 25, owned: false, active: false },
-    { id: 3, name: "星辰貓", icon: "🌙", rarity: "傳說", level: 1, attack: 45, owned: false, active: false },
-    { id: 4, name: "雷霆泰迪", icon: "🧸", rarity: "傳說", level: 1, attack: 60, owned: false, active: false },
-    { id: 5, name: "混沌巨龍", icon: "🐉", rarity: "神話", level: 1, attack: 100, owned: false, active: false }
+    { id: 3, name: "星辰貓", icon: "🌙", rarity: "傳說", level: 1, attack: 45, owned: false, active: false }
   ]
 };
 
 let data = JSON.parse(localStorage.getItem("squatRPG")) || defaultData;
-let bossHp = 100; let maxBossHp = 100;
-let currentBattleStage = 1; 
-let squatState = "up"; let lastAttackTime = 0;
-let lastPosition = null; 
-let isSettling = false; 
+let bossHp = 100, maxBossHp = 100, currentBattleStage = 1;
+let squatState = "up", lastAttackTime = 0, lastPosition = null, isSettling = false;
+let globalPose = null, globalCamera = null;
+let smoothedLandmarks = null;
+const SMOOTHING_ALPHA = 0.25; // EMA 平滑濾波
 
-let globalPose = null;
-let globalCamera = null;
-
-const MIN_SPEED_KMH = 3.0;  
-const MAX_SPEED_KMH = 15.0; 
-
-let audioCtx = null;
-function playSound(type) {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    if (type === "slash") {
-      osc.type = "triangle"; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-    } else if (type === "crit") {
-      osc.type = "sawtooth"; osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.25);
-      gain.gain.setValueAtTime(0.5, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.25);
-    }
-  } catch (e) {}
-}
-
-const screens = ["homeScreen", "loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "rankScreen", "gameScreen"];
+const MIN_SPEED_KMH = 3.0, MAX_SPEED_KMH = 15.0;
+const screens = ["loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "gameScreen"];
 
 window.addEventListener("DOMContentLoaded", () => {
-  const toLoginBtn = document.getElementById("toLoginBtn");
-  if (toLoginBtn) toLoginBtn.addEventListener("click", () => { showScreen("loginScreen"); });
-
-  // 🔥 修正事件綁定：確認你的 HTML 中「輸入完名字進入大廳」的按鈕 ID
-  // 這裡假設 login 畫面的按鈕叫「loginGameBtn」，而大廳的出征按鈕叫「startBtn」
-  // 為了安全起見，如果 startBtn 是大廳出征鈕，我們讓它導向 startBattle
   const startBtn = document.getElementById("startBtn");
-  if (startBtn) {
-    startBtn.addEventListener("click", () => { startBattle(data.stage || 1); });
-  }
+  if (startBtn) startBtn.addEventListener("click", startGame);
 
-  // 如果你有另一個登入按鈕（例如叫 loginGameBtn），請對應綁定完名字後進入大廳
-  const loginGameBtn = document.getElementById("loginGameBtn");
-  if (loginGameBtn) {
-    loginGameBtn.addEventListener("click", startGame);
-  } else {
-    // 防呆：如果 HTML 沒有分開兩個 ID，而是共用 startBtn，那表示 startBtn 應該是登入按鈕
-    // 我們重新調整：輸入完名字 -> 執行 startGame (去大廳)
-    if (startBtn && !document.getElementById("loginGameBtn")) {
-      startBtn.removeEventListener("click", () => { startBattle(data.stage || 1); });
-      startBtn.addEventListener("click", startGame); 
-    }
-  }
-  
   const nameInput = document.getElementById("nameInput");
-  if (nameInput) {
-    nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") startGame(); });
-  }
+  if (nameInput) nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") startGame(); });
+
   refreshTop();
 });
 
-function save() {
-  localStorage.setItem("squatRPG", JSON.stringify(data));
-  refreshTop();
-}
+function save() { localStorage.setItem("squatRPG", JSON.stringify(data)); refreshTop(); }
 
 function showScreen(id) {
-  screens.forEach(s => { 
-    const el = document.getElementById(s); if(el) el.classList.remove("active"); 
-  });
-  const target = document.getElementById(id); if(target) target.add ? target.classList.add("active") : target.className += " active";
+  screens.forEach(s => { const el = document.getElementById(s); if(el) el.classList.remove("active"); });
+  const target = document.getElementById(id); if(target) target.classList.add("active");
   refreshTop();
 }
 
-// 🔥 修正：打完名字按開始，絕對只進大廳畫面，不偷跑進戰鬥！
 function startGame() {
   const nameInput = document.getElementById("nameInput");
   const name = nameInput ? nameInput.value.trim() : "";
   if (name === "") { alert("請先輸入勇者名稱"); return; }
-  data.name = name; 
-  save(); 
-  showScreen("lobbyScreen"); // 前往大廳
+  data.name = name;
+  save();
+  showScreen("lobbyScreen");
   initMobileGps();
 }
 
 function refreshTop() {
   if (document.getElementById("lobbyName")) document.getElementById("lobbyName").textContent = data.name;
-  if (document.getElementById("playerName")) document.getElementById("playerName").textContent = data.name;
   if (document.getElementById("coinText")) document.getElementById("coinText").textContent = "🪙 " + data.coins;
   if (document.getElementById("playerLevelText")) document.getElementById("playerLevelText").textContent = "LV." + data.roleLevel + " 聖殿騎士";
   if (document.getElementById("lobbyWalkDist")) document.getElementById("lobbyWalkDist").textContent = Number(data.walkDistance).toFixed(2);
-  
+
   const mainWeapon = data.shop ? data.shop.find(i => i.id.startsWith("weapon") && i.level > 0) : null;
   if (document.getElementById("battleWeaponText") && mainWeapon) {
-    document.getElementById("battleWeaponText").textContent = `裝備: ${mainWeapon.name} (階級 ${mainWeapon.level})`;
+    document.getElementById("battleWeaponText").textContent = `裝備: ${mainWeapon.name} Lv.${mainWeapon.level}`;
   }
 }
 
-// ==================== 2. GPS 遠征系統 ====================
+// ==================== 2. GPS 遠征邏輯 ====================
 function initMobileGps() {
   if (!navigator.geolocation) return;
   navigator.geolocation.watchPosition((position) => {
     const coords = position.coords; const speedMps = coords.speed;
     let currentSpeedKmh = (speedMps !== null && speedMps >= 0) ? speedMps * 3.6 : 0;
-    
+
     if ((speedMps === null || currentSpeedKmh === 0) && lastPosition) {
       const dMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
       currentSpeedKmh = dMeters * 3.6;
@@ -140,16 +81,16 @@ function initMobileGps() {
 
     if (document.getElementById("lobbyWalkSpeed")) document.getElementById("lobbyWalkSpeed").textContent = currentSpeedKmh.toFixed(1);
     const msgEl = document.getElementById("lobbyWalkMsg");
-    
+
     if (currentSpeedKmh < MIN_SPEED_KMH) {
-      if(msgEl) { msgEl.textContent = "💤 原地休憩中 (時速小於 3km/h 不計距離)"; msgEl.className = "walk-msg"; }
+      if(msgEl) { msgEl.textContent = "💤 原地休憩中 (低於 3km/h 不計距離)"; msgEl.className = "walk-msg"; }
       lastPosition = coords; return;
     }
     if (currentSpeedKmh > MAX_SPEED_KMH) {
-      if(msgEl) { msgEl.textContent = "⚠️ 速度過快！行軍遠征暫停計算"; msgEl.className = "walk-msg warn"; }
+      if(msgEl) { msgEl.textContent = "⚠️ 速度過快！遠征暫停計算"; msgEl.className = "walk-msg warn"; }
       lastPosition = coords; return;
     }
-    
+
     if (lastPosition) {
       const distMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
       if (distMeters > 2 && distMeters < 100) {
@@ -166,13 +107,13 @@ function calcDistanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371e3; const φ1 = lat1 * Math.PI / 180; const φ2 = lat2 * Math.PI / 180;
   const Δφ = (lat2 - lat1) * Math.PI / 180; const Δλ = (lon2 - lon1) * Math.PI / 180;
   const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); 
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
-// ==================== 3. 皇家鐵匠鋪 (商店) ====================
+// ==================== 3. 鐵匠鋪裝備 ====================
 function openRole() {
   document.getElementById("roleTitle").textContent = "殿堂騎士階級 Lv." + data.roleLevel;
-  document.getElementById("roleDesc").innerHTML = "基礎攻擊力：" + data.roleAttack;
+  document.getElementById("roleDesc").textContent = "基礎攻擊力：" + data.roleAttack;
   renderShop(); showScreen("roleScreen");
 }
 function upgradeRole() {
@@ -181,18 +122,14 @@ function upgradeRole() {
 }
 function renderShop() {
   const box = document.getElementById("shopItems"); if(!box) return; box.innerHTML = "";
-  if(!data.shop || data.shop.length < 9) data.shop = defaultData.shop;
   data.shop.forEach(item => {
     const card = document.createElement("div"); card.className = "shop-item-card";
     card.innerHTML = `
-      <div class="shop-item-left">
-        <div class="shop-item-icon">${item.icon}</div>
-        <div>
-          <div class="shop-item-name">${item.name} <span style="color:#eab308">Lv.${item.level}</span></div>
-          <div class="shop-item-stat">${item.desc} (威力: +${item.level * item.baseStat})</div>
-        </div>
+      <div>
+        <strong>${item.icon} ${item.name} <span style="color:#eab308">Lv.${item.level}</span></strong>
+        <div style="font-size:0.8rem; color:#aaa;">${item.desc} (+${item.level * item.baseStat})</div>
       </div>
-      <button class="small-btn" onclick="buyShopItem('${item.id}')">⚒️ 鍛造 (${item.cost}🪙)</button>
+      <button class="small-btn" onclick="buyShopItem('${item.id}')">鍛造 (${item.cost}🪙)</button>
     `;
     box.appendChild(card);
   });
@@ -202,196 +139,63 @@ function buyShopItem(id) {
   data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
 }
 
-// ==================== 4. 戰鬥核心 ====================
-function startBattle(stageNum) {
-  if (!stageNum || isNaN(stageNum)) {
-    stageNum = data.stage || 1;
-  }
-  
-  isSettling = false; 
-  currentBattleStage = parseInt(stageNum); 
-  const isElite = currentBattleStage % 10 === 0;
-  
-  maxBossHp = isElite ? (150 + currentBattleStage * 20) : (80 + currentBattleStage * 15); 
-  bossHp = maxBossHp;
-  
-  document.getElementById("stageText").textContent = isElite ? "👑 領主魔王戰" : "地城 STAGE " + currentBattleStage;
-  document.getElementById("boss").textContent = isElite ? "👹" : "👾";
-  
-  const currentPet = activePet();
-  const petIconEl = document.getElementById("battlePet");
-  const petLabelEl = document.getElementById("battlePetLabel");
-  if (petIconEl && petLabelEl) {
-    petIconEl.textContent = currentPet.icon;
-    petLabelEl.textContent = currentPet.name + " (助攻)";
-  }
-
-  updateBattleUI(); 
-  showScreen("gameScreen");
-  
-  startCameraAndPose();
-}
-
-function onSquatSuccess() {
-  if (isSettling) return; 
-
-  const pet = activePet();
-  const isCrit = (data.combo > 0 && data.combo % 4 === 0);
-  
-  let shopBonus = 0;
-  if(data.shop) {
-    data.shop.forEach(i => { shopBonus += (i.level * i.baseStat); });
-  }
-  
-  const dmg = data.roleAttack + pet.attack + shopBonus + (isCrit ? 35 : 0);
-  bossHp = Math.max(0, bossHp - dmg);
-
-  data.score += 15; data.energy += 1; data.combo += 1; data.squat += 1;
-  data.coins += 6; playSound(isCrit ? "crit" : "slash");
-
-  const flt = document.getElementById("floatingText");
-  if(flt) flt.textContent = isCrit ? "💥 CRITICAL -" + dmg : "⚔️ -" + dmg;
-
-  triggerVfx(); updateBattleUI(); save();
-
-  if (bossHp <= 0) {
-    isSettling = true; 
-    setTimeout(() => {
-      alert(`🎉 成功擊殺 STAGE ${currentBattleStage} 怪物！`);
-      data.coins += currentBattleStage * 40; 
-      
-      if (currentBattleStage === data.stage) {
-        data.stage++; 
-      }
-      data.combo = 0; 
-      save(); 
-      
-      showScreen("mapScreen"); 
-      setTimeout(() => {
-        renderMap(); 
-      }, 100);
-    }, 400);
-  }
-}
-
-function triggerVfx() {
-  const partySide = document.getElementById("playerParty");
-  const bossSide = document.getElementById("enemyBossSide");
-  const e = document.getElementById("hitEffect");
-  const f = document.getElementById("floatingText");
-  const s = document.getElementById("slashLine");
-
-  if(!partySide || !bossSide || !e || !f || !s) return;
-  
-  partySide.classList.remove("attack-anim");
-  bossSide.classList.remove("hurt-anim");
-  e.classList.remove("show"); f.classList.remove("show"); s.classList.remove("show");
-  
-  void bossSide.offsetWidth; 
-  
-  partySide.classList.add("attack-anim");
-  bossSide.classList.add("hurt-anim");
-  e.classList.add("show"); f.classList.add("show"); s.classList.add("show");
-}
-
-function updateBattleUI() {
-  if(document.getElementById("score")) document.getElementById("score").textContent = data.score;
-  if(document.getElementById("energy")) document.getElementById("energy").textContent = data.energy;
-  if(document.getElementById("squatCount")) document.getElementById("squatCount").textContent = data.squat;
-  if(document.getElementById("combo")) document.getElementById("combo").textContent = "COMBO x" + data.combo;
-  
-  const displayHp = isNaN(bossHp) ? 100 : bossHp;
-  const displayMax = isNaN(maxBossHp) ? 100 : maxBossHp;
-  
-  if(document.getElementById("hpText")) document.getElementById("hpText").textContent = displayHp + " / " + displayMax;
-  if(document.getElementById("hpFill")) document.getElementById("hpFill").style.width = ((displayHp / displayMax) * 100) + "%";
-}
-
-// ==================== 5. 戰寵與抽獎 ====================
+// ==================== 4. 戰寵與抽卡 ====================
+function activePet() { if(!data.pets) return defaultData.pets[0]; return data.pets.find(p => p.active && p.owned) || data.pets[0]; }
 function openPets() {
   const box = document.getElementById("petList"); if(!box) return; box.innerHTML = "";
-  if(!data.pets || data.pets.length < 5) data.pets = defaultData.pets;
   data.pets.forEach(p => {
     const div = document.createElement("div"); div.className = "feature-card";
-    div.innerHTML = `<div class="big">${p.icon}</div><h2>${p.name} <span class="badge">${p.rarity}</span></h2>
-      <p>等級 Lv.${p.level} | 額外加成攻擊: +${p.attack}<br>${p.owned ? '✅ 已召喚解鎖' : '🔒 封印於聖物箱中'}</p>
-      <div class="card-row">
-        <button class="small-btn" onclick="setPet(${p.id})">${p.active ? '⚔️ 戰鬥中' : '配置出擊'}</button>
-        <button class="small-btn" onclick="upgradePet(${p.id})">魔力強化</button>
-      </div>`;
+    div.innerHTML = `
+      <div>
+        <strong>${p.icon} ${p.name} <span style="font-size:0.8rem; color:#38bdf8;">[${p.rarity}]</span></strong>
+        <div style="font-size:0.8rem; color:#aaa;">Lv.${p.level} | 攻擊力: +${p.attack} (${p.owned ? '✅已解鎖' : '🔒未解鎖'})</div>
+      </div>
+      <button class="small-btn" onclick="setPet(${p.id})">${p.active ? '⚔️出擊中' : '配置'}</button>
+    `;
     box.appendChild(div);
   });
   showScreen("petScreen");
 }
 function setPet(id) {
-  const pet = data.pets.find(p => p.id === id); if (!pet.owned) { alert("此戰寵尚未解鎖，快去破譯幸運寶箱！"); return; }
+  const pet = data.pets.find(p => p.id === id); if (!pet.owned) { alert("尚未解鎖此戰寵！"); return; }
   data.pets.forEach(p => p.active = false); pet.active = true; save(); openPets();
-}
-function upgradePet(id) {
-  const pet = data.pets.find(p => p.id === id); if (!pet.owned) return;
-  const cost = pet.level * 200; if (data.coins < cost) { alert("健身幣不夠！"); return; }
-  data.coins -= cost; pet.level++; pet.attack += 8; save(); openPets();
 }
 function openGacha() { document.getElementById("gachaResult").textContent = ""; showScreen("gachaScreen"); }
 function drawGacha() {
-  if (data.coins < 300) { alert("健身幣不足開箱！"); return; }
-  data.coins -= 300; if(!data.pets || data.pets.length < 5) data.pets = defaultData.pets;
-  const r = Math.random() * 100;
-  let pet = data.pets[0];
-  if (r < 5) pet = data.pets[4];
-  else if (r < 15) pet = data.pets[3];
-  else if (r < 35) pet = data.pets[2];
-  else if (r < 65) pet = data.pets[1];
-  
+  if (data.coins < 300) { alert("健身幣不足！"); return; }
+  data.coins -= 300;
+  const pet = data.pets[Math.floor(Math.random() * data.pets.length)];
   pet.owned = true;
-  document.getElementById("gachaResult").innerHTML = `🔮 聖物覺醒！獲得：${pet.icon} 【${pet.name}】(${pet.rarity})`; save();
+  document.getElementById("gachaResult").innerHTML = `🔮 獲得：${pet.icon} 【${pet.name}】(${pet.rarity})`; save();
 }
 
-// ==================== 地圖系統 ====================
+// ==================== 5. 地圖與每日簽到 ====================
 function openMap() { renderMap(); showScreen("mapScreen"); }
 function renderMap() {
   const box = document.getElementById("mapNodes"); if(!box) return; box.innerHTML = "";
-  if (!data.stage) data.stage = 1;
-
-  for (let i = 1; i <= 20; i++) {
-    const node = document.createElement("div"); node.className = "stage-node";
-    if (i % 10 === 0) node.classList.add("elite"); 
-    
-    if (i === data.stage) {
-      node.classList.add("current");
-    } else if (i < data.stage) {
-      node.classList.add("cleared"); 
-    } else {
-      node.classList.add("locked"); 
-    }
-    
-    node.textContent = i % 10 === 0 ? "👹" : i;
-    node.style.top = (30 + (i - 1) * 32) + "px"; node.style.left = (i % 2 === 0 ? 240 : 90) + "px"; 
-    
-    node.addEventListener("click", () => {
-      if (i <= data.stage) {
-        startBattle(i); 
-      } else {
-        alert(`前置地下城 STAGE ${data.stage} 尚未突破，無法越級挑戰！`);
-      }
-    });
-
-    box.appendChild(node);
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = `Stage ${i} ${i <= data.stage ? '🔓' : '🔒'}`;
+    btn.onclick = () => { if (i <= data.stage) startBattle(i); };
+    box.appendChild(btn);
   }
 }
-
 function openDaily() {
   const box = document.getElementById("dailyList"); if(!box) return; box.innerHTML = "";
-  for(let i=0; i<7; i++) { box.innerHTML += `<div class="feature-card" style="padding:10px"><h4>第 ${i + 1} 天</h4><p>🪙 ${(i+1)*120}</p></div>`; }
+  for(let i=0; i<7; i++) {
+    box.innerHTML += `<div class="feature-card"><span>第 ${i + 1} 天簽到</span><strong>🪙 ${(i+1)*120}</strong></div>`;
+  }
   showScreen("dailyScreen");
 }
 function claimDaily() {
-  const dStr = new Date().toISOString().slice(0, 10); if (data.lastClaim === dStr) { alert("今日已領取過囉！"); return; }
-  data.coins += (data.dailyDay * 120); data.dailyDay = data.dailyDay === 7 ? 1 : data.dailyDay + 1; data.lastClaim = dStr; save(); openDaily();
+  const dStr = new Date().toISOString().slice(0, 10);
+  if (data.lastClaim === dStr) { alert("今日已簽到領取過囉！"); return; }
+  data.coins += (data.dailyDay * 120);
+  data.dailyDay = data.dailyDay === 7 ? 1 : data.dailyDay + 1;
+  data.lastClaim = dStr; save(); openDaily();
 }
-function activePet() { if(!data.pets) return defaultData.pets[0]; return data.pets.find(p => p.active && p.owned) || data.pets[0]; }
 
-// ==================== 6. MediaPipe 體感 AI ====================
+// ==================== 6. MediaPipe 體感 AI (EMA 防抖動) ====================
 async function startCameraAndPose() {
   const video = document.getElementById("webcam"); 
   const canvas = document.getElementById("canvas");
@@ -400,48 +204,106 @@ async function startCameraAndPose() {
 
   if (!globalPose) {
     globalPose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file });
-    globalPose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.45, minTrackingConfidence: 0.45 });
+    globalPose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
     globalPose.onResults((results) => {
-      canvas.width = video.videoWidth || 480; canvas.height = video.videoHeight || 640; ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.width = video.videoWidth || 480; canvas.height = video.videoHeight || 640; 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (results.poseLandmarks) {
-        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "#38bdf8", lineWidth: 3 });
-        drawLandmarks(ctx, results.poseLandmarks, { color: "#ca8a04", lineWidth: 1.5 });
-        checkLiveSquat(results.poseLandmarks);
+        const filtered = applyEmaSmoothing(results.poseLandmarks);
+        drawConnectors(ctx, filtered, POSE_CONNECTIONS, { color: "#38bdf8", lineWidth: 3 });
+        drawLandmarks(ctx, filtered, { color: "#ca8a04", lineWidth: 1.5 });
+        checkLiveSquat(filtered);
       }
     });
   }
 
   if (!globalCamera) {
-    globalCamera = new Camera(video, { 
-      onFrame: async () => { if(globalPose) await globalPose.send({ image: video }); }, 
-      width: 480, 
-      height: 640 
-    });
+    globalCamera = new Camera(video, { onFrame: async () => { if(globalPose) await globalPose.send({ image: video }); }, width: 480, height: 640 });
   }
-
   try {
-    if(statusText) statusText.textContent = "📷 正在召喚聖光鏡頭...";
+    if(statusText) statusText.textContent = "📷 啟動聖光鏡頭...";
     await globalCamera.start(); 
     if(statusText) statusText.textContent = "🛡️ 領主血條";
-  } catch (err) { 
-    if(statusText) statusText.textContent = "相機啟動失敗或權限被拒絕"; 
-    console.error(err);
+  } catch (err) { console.error(err); }
+}
+
+function applyEmaSmoothing(raw) {
+  if (!smoothedLandmarks || smoothedLandmarks.length !== raw.length) {
+    smoothedLandmarks = raw.map(lm => ({ ...lm }));
+    return smoothedLandmarks;
   }
+  for (let i = 0; i < raw.length; i++) {
+    smoothedLandmarks[i].x += SMOOTHING_ALPHA * (raw[i].x - smoothedLandmarks[i].x);
+    smoothedLandmarks[i].y += SMOOTHING_ALPHA * (raw[i].y - smoothedLandmarks[i].y);
+    smoothedLandmarks[i].z += SMOOTHING_ALPHA * (raw[i].z - smoothedLandmarks[i].z);
+    smoothedLandmarks[i].visibility = raw[i].visibility;
+  }
+  return smoothedLandmarks;
 }
 
 function checkLiveSquat(lm) {
   const lh = lm[23], lk = lm[25], la = lm[27], rh = lm[24], rk = lm[26], ra = lm[28];
-  if (lk.visibility < 0.4 || la.visibility < 0.4 || rk.visibility < 0.4 || ra.visibility < 0.4) return;
+  if (lk.visibility < 0.5 || la.visibility < 0.5 || rk.visibility < 0.5 || ra.visibility < 0.5) return;
+
   const minAngle = Math.min(calcAngle(lh, lk, la), calcAngle(rh, rk, ra));
-  if(document.getElementById("debug")) document.getElementById("debug").textContent = "膝蓋角度：" + Math.round(minAngle) + "°";
-  if (squatState === "up" && minAngle < 130) squatState = "down";
-  if (squatState === "down" && minAngle > 155) {
-    const now = Date.now(); if (now - lastAttackTime > 750) { onSquatSuccess(); lastAttackTime = now; }
+  document.getElementById("debug").textContent = `膝蓋角度：${Math.round(minAngle)}° (${squatState === 'up' ? '站立' : '深蹲中'})`;
+
+  if (squatState === "up" && minAngle < 125) squatState = "down";
+  if (squatState === "down" && minAngle > 160) {
+    const now = Date.now();
+    if (now - lastAttackTime > 800) { onSquatSuccess(); lastAttackTime = now; }
     squatState = "up";
   }
 }
+
 function calcAngle(a, b, c) {
-  const ab = { x: a.x - b.x, y: a.y - b.y }; const cb = { x: c.x - b.x, y: c.y - b.y };
-  const dot = ab.x * cb.x + ab.y * cb.y; const len = Math.sqrt(ab.x**2 + ab.y**2) * Math.sqrt(cb.x**2 + cb.y**2);
-  return Math.acos(Math.min(1, Math.max(-1, dot / len))) * 180 / Math.PI;
+  const ab = { x: a.x - b.x, y: a.y - b.y }, cb = { x: c.x - b.x, y: c.y - b.y };
+  const dot = ab.x * cb.x + ab.y * cb.y;
+  const len = Math.sqrt(ab.x**2 + ab.y**2) * Math.sqrt(cb.x**2 + cb.y**2);
+  return len === 0 ? 180 : Math.acos(Math.min(1, Math.max(-1, dot / len))) * 180 / Math.PI;
+}
+
+// ==================== 7. 戰鬥核心 ====================
+function startBattle(stageNum) {
+  isSettling = false; currentBattleStage = parseInt(stageNum);
+  maxBossHp = 80 + currentBattleStage * 20; bossHp = maxBossHp;
+
+  document.getElementById("stageText").textContent = "地城 STAGE " + currentBattleStage;
+  const pet = activePet();
+  if (document.getElementById("battlePetLabel")) {
+    document.getElementById("battlePetLabel").textContent = `${pet.icon} ${pet.name}`;
+  }
+
+  updateBattleUI();
+  showScreen("gameScreen");
+  startCameraAndPose();
+}
+
+function onSquatSuccess() {
+  if (isSettling) return;
+  const pet = activePet();
+  let shopBonus = 0;
+  if(data.shop) data.shop.forEach(i => { shopBonus += (i.level * i.baseStat); });
+
+  const dmg = data.roleAttack + pet.attack + shopBonus;
+  bossHp = Math.max(0, bossHp - dmg);
+
+  data.combo++; data.coins += 6;
+  document.getElementById("floatingText").textContent = `⚔️ -${dmg}`;
+  updateBattleUI(); save();
+
+  if (bossHp <= 0) {
+    isSettling = true;
+    setTimeout(() => {
+      alert(`🎉 擊殺 STAGE ${currentBattleStage} 怪物！`);
+      if (currentBattleStage === data.stage) data.stage++;
+      data.combo = 0; save(); showScreen("mapScreen");
+    }, 300);
+  }
+}
+
+function updateBattleUI() {
+  document.getElementById("hpText").textContent = `${bossHp} / ${maxBossHp}`;
+  document.getElementById("hpFill").style.width = `${(bossHp / maxBossHp) * 100}%`;
+  document.getElementById("combo").textContent = `COMBO x${data.combo}`;
 }
