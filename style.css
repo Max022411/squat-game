@@ -1,4 +1,4 @@
-/* ==================== 1. 全域視覺與版面導航 ==================== */
+/* 全域重設 */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -17,7 +17,7 @@ body, html {
   align-items: center;
 }
 
-/* 主容器 main */
+/* App 容器與 Main */
 main.app-container {
   width: 100%;
   max-width: 480px;
@@ -32,7 +32,7 @@ main.app-container {
   border-radius: 12px;
 }
 
-/* 畫面區塊控制 */
+/* Screen 頁面切換 */
 .screen {
   display: none;
   width: 100%;
@@ -47,7 +47,7 @@ main.app-container {
   display: flex;
 }
 
-/* ==================== 2. UI 毛玻璃與卡片樣式 ==================== */
+/* UI 面板 */
 .panel {
   width: 100%;
   background: rgba(255, 255, 255, 0.05);
@@ -135,7 +135,6 @@ button:hover {
   align-items: center;
 }
 
-/* 文字狀態標籤 */
 .user-title { font-size: 1.1rem; }
 .gps-info { margin-top: 6px; font-size: 0.85rem; color: #8f94fb; }
 .walk-msg { font-size: 0.85rem; color: #aaa; margin-top: 4px; }
@@ -143,7 +142,7 @@ button:hover {
 .walk-msg.warn { color: #ff9800; }
 .gacha-res { margin-top: 15px; font-size: 1.1rem; min-height: 30px; color: #eab308; }
 
-/* ==================== 3. 視訊與 Canvas UI 繪製層 ==================== */
+/* 體感視訊與 Canvas 容器 */
 .game-header {
   display: flex;
   justify-content: space-between;
