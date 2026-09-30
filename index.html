@@ -566,6 +566,54 @@
     }
 
     window.onload = function() { refreshTop(); };
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+// Firebase 專案設定檔
+const firebaseConfig = {
+  apiKey: "AIzaSyDKWts3ti5lIrowMf0TByuSpSbvyTf5sNA",
+  authDomain: "squat-game.firebaseapp.com",
+  projectId: "squat-game",
+  storageBucket: "squat-game.firebasestorage.app",
+  messagingSenderId: "1092189342263",
+  appId: "1:1092189342263:web:2a8f52261dce7580e08db2"
+};
+
+// 1. 初始化 Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 2. 登入並讀取/建立玩家資料
+window.loginUser = async function(userName) {
+  const name = userName || "勇者Alex";
+  try {
+    const userRef = doc(db, "users", name);
+    const docSnap = await getDoc(userRef);
+
+    if (docSnap.exists()) {
+      console.log("✅ 成功讀取雲端存檔：", docSnap.data());
+      window.userData = docSnap.data();
+    } else {
+      console.log("🆕 建立全新雲端存檔");
+      window.userData = { name: name, coins: 0, level: 1 };
+      await setDoc(userRef, window.userData);
+    }
+  } catch (error) {
+    console.error("❌ 存檔讀取失敗：", error);
+  }
+};
+
+// 3. 儲存/更新資料到雲端
+window.saveUser = async function() {
+  if (!window.userData) return;
+  try {
+    const userRef = doc(db, "users", window.userData.name);
+    await setDoc(userRef, window.userData, { merge: true });
+    console.log("☁️ 雲端同步成功！");
+  } catch (error) {
+    console.error("❌ 雲端同步失敗：", error);
+  }
+};
   </script>
 </body>
 </html>
