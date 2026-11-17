@@ -2,570 +2,2181 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 體感深蹲 RPG 遠征</title>
-  <link rel="stylesheet" href="style.css">
-  
-  <!-- MediaPipe API -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⚔️ 肌動 RPG - 智能體感健身冒險</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --bg-dark: #07070c;
+      --card-bg: #11121d;
+      --nav-bg: #0b0c14;
+      --accent-green: #00e676;
+      --accent-blue: #2979ff;
+      --accent-cyan: #00e5ff;
+      --accent-red: #ff1744;
+      --accent-gold: #ffea00;
+      --text-main: #ffffff;
+      --text-muted: #9094b0;
+      --rarity-common: #b0bec5;
+      --rarity-rare: #00b0ff;
+      --rarity-epic: #d500f9;
+      --rarity-legendary: #ffab00;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #020205; color: var(--text-main);
+      margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden;
+    }
+    .mobile-shell {
+      width: 100%; max-width: 480px;
+      background: radial-gradient(circle at 50% 0%, #141829 0%, #07070c 60%);
+      min-height: 100dvh; position: relative; padding-bottom: 80px;
+      box-shadow: 0 0 50px rgba(0,0,0,0.95); display: flex; flex-direction: column;
+    }
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(11, 12, 20, 0.92); backdrop-filter: blur(14px);
+      padding: 12px 16px; border-bottom: 1px solid rgba(41, 121, 255, 0.25);
+    }
+    .user-badge { display: flex; align-items: center; gap: 8px; }
+    .lvl-tag { background: linear-gradient(135deg, #00b0ff, #2979ff); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 900; }
+    .gold-tag { background: linear-gradient(135deg, #2b220a, #1a1405); border: 1px solid #ffab00; color: var(--accent-gold); padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+
+    .content-area { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .view-section { display: none; flex-direction: column; gap: 12px; animation: fadeIn 0.25s ease; flex: 1; }
+    .view-section.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card {
+      background: linear-gradient(160deg, #161829 0%, #0e101a 100%);
+      border-radius: 18px; padding: 16px; border: 1px solid #262942;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.6); width: 100%; position: relative; overflow: hidden;
+    }
+    .card h3 { margin: 0 0 12px 0; font-size: 16px; display: flex; align-items: center; gap: 8px; color: #f1f1f6; }
+
+    .vivid-hero-banner {
+      position: relative; border-radius: 20px; padding: 16px; overflow: hidden;
+      display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+    }
+    .banner-header-split {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; width: 100%; margin-bottom: 12px; position: relative; z-index: 2;
+    }
+    .banner-header-text { flex: 1; }
+    .banner-art-box { width: 96px; height: 96px; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
+    .banner-art-box svg { width: 100%; height: 100%; overflow: visible; }
+
+    .theme-guild { background: radial-gradient(circle at 85% 25%, rgba(0, 230, 118, 0.25) 0%, rgba(41, 121, 255, 0.15) 45%, transparent 70%), linear-gradient(135deg, #0d1b2a 0%, #16263b 50%, #0a101d 100%); border: 1.5px solid #00e676; }
+    .theme-map { background: radial-gradient(circle at 85% 50%, rgba(255, 23, 68, 0.28) 0%, rgba(255, 145, 0, 0.15) 45%, transparent 70%), linear-gradient(135deg, #240d1b 0%, #361428 50%, #140810 100%); border: 1.5px solid #ff5252; }
+    .theme-shop { background: radial-gradient(circle at 85% 50%, rgba(255, 215, 0, 0.28) 0%, rgba(255, 109, 0, 0.15) 45%, transparent 70%), linear-gradient(135deg, #261b0a 0%, #38280e 50%, #171005 100%); border: 1.5px solid #ffab00; }
+    .theme-rank { background: radial-gradient(circle at 85% 50%, rgba(0, 229, 255, 0.28) 0%, rgba(101, 31, 255, 0.2) 45%, transparent 70%), linear-gradient(135deg, #12102e 0%, #1f1b4d 50%, #0b091c 100%); border: 1.5px solid #00e5ff; }
+
+    .spin-slow { animation: spinMagic 18s linear infinite; transform-origin: 100px 100px; }
+    .float-vivid { animation: floatVivid 2.8s ease-in-out infinite; }
+    @keyframes spinMagic { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes floatVivid { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; position: relative; z-index: 2; }
+    .stat-box { background: rgba(16, 18, 32, 0.85); padding: 12px; border-radius: 14px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(6px); }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .stat-val { font-size: 20px; font-weight: 900; }
+
+    /* 大廳每日步數與里程面板 */
+    .step-tracker-panel {
+      background: rgba(14, 18, 34, 0.9);
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+    }
+    .step-panel-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step-icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(0, 229, 255, 0.15);
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .btn-step-action {
+      background: rgba(0, 229, 255, 0.18);
+      border: 1px solid #00e5ff;
+      color: #84ffff;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .bar-bg { width: 100%; height: 12px; background-color: rgba(10, 12, 22, 0.85); border-radius: 6px; overflow: hidden; margin: 4px 0; border: 1px solid rgba(255,255,255,0.1); }
+    .bar-fill { height: 100%; transition: width 0.3s ease; }
+    .hp-fill { background: linear-gradient(90deg, #ff1744, #ff5252); width: 100%; }
+    .exp-fill { background: linear-gradient(90deg, #00c853, #00e676, #80d8ff); width: 0%; }
+
+    button { font-family: inherit; font-weight: bold; cursor: pointer; border: none; border-radius: 10px; color: white; transition: transform 0.1s, opacity 0.2s; }
+    button:active:not(:disabled) { transform: scale(0.96); }
+    button:disabled { cursor: not-allowed; opacity: 0.6; }
+    .btn-primary { width: 100%; padding: 14px; font-size: 15px; background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 900; box-shadow: 0 4px 18px rgba(0, 230, 118, 0.35); }
+    .btn-logout { background: rgba(255, 23, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(255, 23, 68, 0.3); padding: 4px 8px; font-size: 11px; border-radius: 6px; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; width: 100%; max-width: 480px;
+      background: rgba(11, 12, 20, 0.96); backdrop-filter: blur(12px);
+      border-top: 1px solid #22253a; display: grid; grid-template-columns: repeat(6, 1fr); padding: 6px 2px 10px 2px; z-index: 100;
+    }
+    .nav-item { background: transparent; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px 0; font-size: 10px; gap: 2px; border-radius: 8px; }
+    .nav-item .icon { font-size: 18px; }
+    .nav-item.active { color: var(--accent-cyan); background: rgba(0, 229, 255, 0.12); }
+
+    .checkin-btn { background: linear-gradient(135deg, #ffab00, #ff6d00); color: #000; width: 100%; padding: 12px; font-size: 13px; font-weight: 900; border-radius: 12px; margin-bottom: 12px; position: relative; z-index: 2; }
+    .checkin-btn.claimed { background: rgba(25, 28, 45, 0.8); color: var(--text-muted); border: 1px solid #2b2b40; }
+    
+    .task-row { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #191c30, #121424); padding: 12px; border-radius: 14px; margin-bottom: 8px; border: 1px solid #292d47; font-size: 12px; gap: 10px; }
+    .task-info { flex: 1; }
+    .task-progress-bg { width: 100%; height: 7px; background: #0b0c14; border-radius: 4px; overflow: hidden; margin-top: 6px; border: 1px solid #222538; }
+    .task-progress-fill { height: 100%; background: linear-gradient(90deg, #2979ff, #00e5ff); transition: width 0.3s ease; }
+    .task-btn-locked { background: #23263a; color: var(--text-muted); padding: 8px 12px; font-size: 11px; white-space: nowrap; }
+    .task-btn-ready { background: linear-gradient(135deg, #00e676, #00c853); color: #000; padding: 8px 14px; font-size: 12px; white-space: nowrap; box-shadow: 0 0 12px rgba(0,230,118,0.4); }
+    .task-btn-claimed { background: rgba(0, 230, 118, 0.1); color: var(--accent-green); border: 1px solid rgba(0, 230, 118, 0.3); padding: 8px 12px; font-size: 11px; white-space: nowrap; }
+
+    /* 20關地圖卡片 */
+    .quest-path { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .quest-node {
+      background: linear-gradient(135deg, #17192b 0%, #10121f 100%);
+      border: 1.5px solid #282c47; border-radius: 16px; padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; width: 100%;
+    }
+    .quest-node.unlocked { border-color: #00b0ff; background: radial-gradient(circle at 10% 50%, rgba(0, 176, 255, 0.18), transparent 60%), linear-gradient(135deg, #162038, #101424); }
+    .quest-node.cleared { border-color: var(--accent-green); background: radial-gradient(circle at 10% 50%, rgba(0, 230, 118, 0.15), transparent 60%), linear-gradient(135deg, #11261e, #0e141c); }
+    .quest-node.boss-node { border-color: var(--accent-red); background: radial-gradient(circle at 15% 50%, rgba(255, 23, 68, 0.28), transparent 65%), linear-gradient(135deg, #2e111b, #140d18); }
+    .monster-svg-avatar { width: 54px; height: 54px; border-radius: 14px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.14); display: flex; justify-content: center; align-items: center; flex-shrink: 0; padding: 3px; }
+
+    /* 滿屏上下雙卡池：祈願轉蛋所 */
+    .gacha-fullscreen-wrap { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: calc(100dvh - 155px); }
+    .gacha-banner-card {
+      flex: 1; position: relative; border-radius: 20px; padding: 16px;
+      display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7); min-height: 250px;
+    }
+    .gacha-banner-equip { background: radial-gradient(circle at 82% 42%, rgba(0, 229, 255, 0.28) 0%, rgba(41, 121, 255, 0.15) 35%, transparent 70%), linear-gradient(135deg, #0d152c 0%, #17264a 50%, #0b1021 100%); border: 1.5px solid #3d7aff; }
+    .gacha-banner-pet { background: radial-gradient(circle at 82% 42%, rgba(255, 23, 68, 0.3) 0%, rgba(170, 0, 255, 0.2) 40%, transparent 70%), linear-gradient(135deg, #1f0b24 0%, #31102f 50%, #120617 100%); border: 1.5px solid #d500f9; }
+    .banner-bg-glow { position: absolute; right: -10px; top: 42%; transform: translateY(-50%); width: 195px; height: 195px; pointer-events: none; z-index: 1; }
+    .banner-top-info { position: relative; z-index: 3; max-width: 60%; }
+    .banner-tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+    .gacha-pill { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; }
+    .pill-gold { background: linear-gradient(90deg, #ffab00, #ffea00); color: #000; }
+    .pill-cyan { background: rgba(0, 229, 255, 0.2); border: 1px solid #00e5ff; color: #84ffff; }
+    .pill-crimson { background: rgba(255, 23, 68, 0.25); border: 1px solid #ff5252; color: #ff8a80; }
+    .banner-title { font-size: 19px; font-weight: 900; margin: 0 0 4px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+    .banner-subtitle { font-size: 11px; color: #c5cae9; margin: 0 0 8px 0; line-height: 1.4; }
+    .featured-preview-strip { display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.15); padding: 4px 10px; border-radius: 8px; font-size: 11px; color: var(--accent-gold); }
+    .banner-action-row { position: relative; z-index: 3; display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; margin-top: 12px; }
+    .btn-gacha-single { padding: 10px 8px; border-radius: 12px; background: rgba(15, 20, 38, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.35); color: #fff; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .btn-gacha-multi { padding: 10px 8px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; overflow: hidden; }
+    .btn-multi-equip { background: linear-gradient(135deg, #00b0ff 0%, #2979ff 50%, #651fff 100%); border: 1.5px solid #80d8ff; }
+    .btn-multi-pet { background: linear-gradient(135deg, #ff1744 0%, #d500f9 60%, #651fff 100%); border: 1.5px solid #ff80ab; }
+    .discount-ribbon { position: absolute; top: 0; right: 0; background: var(--accent-gold); color: #000; font-size: 9px; font-weight: 900; padding: 1px 6px; border-bottom-left-radius: 8px; }
+    .gacha-results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin: 14px 0; padding: 4px; }
+    .gacha-reward-chip { background: #1a1c2e; border-radius: 12px; padding: 8px; display: flex; align-items: center; gap: 8px; text-align: left; }
+
+    /* =========================================
+       🛡️ 角色裝備展示台 (RPG 左右環繞四部位插槽)
+       ========================================= */
+    .hero-armory-showcase {
+      background:
+        radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.22) 0%, rgba(213, 0, 249, 0.12) 45%, rgba(10, 12, 24, 0.95) 78%),
+        linear-gradient(180deg, #14182e 0%, #090b14 100%);
+      border: 1.5px solid #3d5afe;
+      border-radius: 20px;
+      padding: 16px 10px;
+      margin-bottom: 14px;
+      box-shadow: inset 0 0 35px rgba(0, 229, 255, 0.15), 0 10px 30px rgba(0,0,0,0.75);
+      position: relative;
+      overflow: hidden;
+    }
+    .armory-stage-grid {
+      display: grid;
+      grid-template-columns: 88px 1fr 88px;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 2;
+    }
+    .armory-side-col {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .armory-slot-box {
+      background: rgba(14, 17, 30, 0.88);
+      border: 1.5px solid #2e3558;
+      border-radius: 14px;
+      padding: 8px 6px;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transition: 0.25s;
+    }
+    .armory-slot-icon {
+      width: 44px; height: 44px; margin: 2px auto;
+      display: flex; justify-content: center; align-items: center;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+    }
+    .armory-slot-icon svg { width: 100%; height: 100%; }
+    .armory-slot-type { font-size: 10px; color: var(--text-muted); display: block; }
+    .armory-slot-name { font-size: 11px; font-weight: 900; color: #fff; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .armory-slot-atk { font-size: 10px; color: var(--accent-green); font-weight: bold; }
+
+    .svg-stage {
+      width: 100%; height: 215px;
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+
+    .filter-pills-row {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; scrollbar-width: none;
+    }
+    .filter-pills-row::-webkit-scrollbar { display: none; }
+    .filter-pill-btn {
+      flex: 0 0 auto; padding: 6px 12px; border-radius: 16px; font-size: 11px; font-weight: bold;
+      background: #171a2d; color: var(--text-muted); border: 1px solid #282d4a;
+    }
+    .filter-pill-btn.active {
+      background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; border-color: transparent; font-weight: 900;
+    }
+
+    /* 全螢幕雙畫面戰鬥系統 */
+    .fullscreen-battle {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; height: 100dvh; background: #050508;
+      z-index: 500; display: none; flex-direction: column; overflow: hidden;
+    }
+    .battle-top-controls { position: absolute; top: 12px; right: 12px; z-index: 600; display: flex; gap: 8px; }
+    .btn-icon-circle { width: 40px; height: 40px; border-radius: 50%; background: rgba(15, 15, 24, 0.85); border: 1px solid #383854; color: white; font-size: 18px; display: flex; justify-content: center; align-items: center; }
+    .battle-rpg-scene {
+      position: relative; width: 100%; height: 42%;
+      background: radial-gradient(circle at 75% 45%, rgba(255, 23, 68, 0.22) 0%, transparent 55%), radial-gradient(circle at 25% 55%, rgba(0, 229, 255, 0.18) 0%, transparent 55%), linear-gradient(180deg, #19122b 0%, #0b0914 100%);
+      border-bottom: 2px solid #00e5ff; display: flex; flex-direction: column; justify-content: space-between; padding: 12px 14px 8px 14px; overflow: hidden;
+    }
+    .battle-stage-header { display: flex; flex-direction: column; gap: 4px; z-index: 2; width: 100%; padding-right: 52px; }
+    .battle-stage-title { font-size: 13px; font-weight: bold; color: var(--accent-gold); display: flex; justify-content: space-between; align-items: center; }
+    .monster-hud { width: 100%; background: rgba(0,0,0,0.6); padding: 6px 10px; border-radius: 10px; border: 1px solid #3d253d; z-index: 2; }
+    .versus-stage { flex: 1; display: flex; justify-content: space-around; align-items: center; position: relative; padding: 0 10px; }
+    .battle-hero-box { width: 110px; height: 125px; position: relative; }
+    .hero-attack-anim { animation: heroStrike 0.45s ease-out; }
+    @keyframes heroStrike {
+      0% { transform: translateX(0) scale(1); }
+      35% { transform: translateX(95px) scale(1.15) rotate(8deg); }
+      70% { transform: translateX(85px) scale(1.1); }
+      100% { transform: translateX(0) scale(1); }
+    }
+    .slash-effect { position: absolute; right: 18%; top: 20%; font-size: 48px; opacity: 0; pointer-events: none; z-index: 10; }
+    .slash-anim { animation: slashPop 0.4s ease-out; }
+    @keyframes slashPop { 0% { opacity: 0; transform: scale(0.4); } 40% { opacity: 1; transform: scale(1.3); } 100% { opacity: 0; transform: scale(1.5); } }
+    .dmg-popup { position: absolute; right: 12%; top: 5%; font-size: 20px; font-weight: 900; color: #ffea00; text-shadow: 0 2px 8px #ff1744, 0 0 4px #000; opacity: 0; pointer-events: none; z-index: 15; white-space: nowrap; }
+    .dmg-anim { animation: dmgFloat 0.7s ease-out; }
+    @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(10px) scale(0.7); } 30% { opacity: 1; transform: translateY(-8px) scale(1.2); } 100% { opacity: 0; transform: translateY(-28px) scale(1); } }
+    .battle-monster-box { width: 105px; height: 105px; display: flex; align-items: center; justify-content: center; position: relative; filter: drop-shadow(0 6px 16px rgba(255, 23, 68, 0.5)); }
+    .monster-hit-anim { animation: monsterShake 0.4s ease; }
+    @keyframes monsterShake {
+      0%, 100% { transform: translateX(0); filter: brightness(1); }
+      25% { transform: translateX(12px) rotate(10deg); filter: brightness(2.5); }
+      50% { transform: translateX(-10px) rotate(-8deg); filter: brightness(2); }
+    }
+    .combo-sequence-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: rgba(10, 10, 18, 0.92); padding: 6px 10px; border-radius: 10px; border: 1px solid #2b2b44; z-index: 5; }
+    .combo-steps-wrap { display: flex; align-items: center; gap: 6px; overflow-x: auto; }
+    .combo-step { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; background: #1a1a28; border: 1px solid #2e2e46; font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .combo-step.active-step { background: rgba(0, 230, 118, 0.2); border-color: var(--accent-green); color: #ffffff; font-weight: bold; }
+
+    .battle-camera-scene { position: relative; width: 100%; height: 58%; background: #000; overflow: hidden; }
+    .battle-camera-scene canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    .pose-visual-card { position: absolute; top: 12px; left: 12px; background: rgba(13, 13, 22, 0.88); border: 2px solid var(--accent-green); border-radius: 14px; padding: 8px 14px; display: flex; align-items: center; gap: 10px; z-index: 20; }
+    .pose-anim-icon { width: 44px; height: 44px; background: #1e1e30; border-radius: 10px; display: flex; justify-content: center; align-items: center; }
+    .camera-feedback-pill { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(10, 10, 18, 0.92); border: 1.5px solid #3a3a58; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: bold; color: var(--accent-green); white-space: nowrap; z-index: 20; max-width: 94%; overflow: hidden; text-overflow: ellipsis; }
+
+    .countdown-overlay { position: fixed; inset: 0; background: radial-gradient(circle, rgba(20,25,45,0.92) 0%, rgba(5,5,10,0.98) 100%); z-index: 800; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+    .countdown-num { font-size: 110px; font-weight: 900; color: var(--accent-gold); text-shadow: 0 0 35px rgba(255, 234, 0, 0.8); animation: countPop 0.85s ease-out infinite; }
+    @keyframes countPop { 0% { transform: scale(0.3); opacity: 0; } 40% { transform: scale(1.15); opacity: 1; } 80% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); z-index: 950; display: none; justify-content: center; align-items: center; padding: 24px; }
+    .modal-box { width: 100%; max-width: 360px; background: #161624; border: 1px solid #32324e; border-radius: 20px; padding: 22px; text-align: center; }
+    .modal-btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+
+    .shop-tabs, .equip-subtabs { display: flex; gap: 8px; margin-bottom: 12px; width: 100%; }
+    .shop-tab-btn, .subtab-btn { flex: 1; padding: 10px; background: #161829; color: var(--text-muted); border-radius: 10px; font-size: 13px; font-weight: bold; border: 1px solid #262942; }
+    .shop-tab-btn.active, .subtab-btn.active { background: linear-gradient(135deg, #00b0ff, #2979ff); color: white; border-color: #80d8ff; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+    .item-card {
+      background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.06) 0%, transparent 65%), linear-gradient(160deg, #191c30 0%, #101220 100%);
+      border: 1.5px solid #282c47; border-radius: 16px; padding: 12px; text-align: center; position: relative; width: 100%;
+    }
+    .item-card.equipped { border-color: var(--accent-green); box-shadow: inset 0 0 18px rgba(0,230,118,0.18); }
+    .rarity-common { border-color: #607d8b; }
+    .rarity-rare { border-color: #00b0ff; box-shadow: inset 0 0 12px rgba(0, 176, 255, 0.15); }
+    .rarity-epic { border-color: #d500f9; box-shadow: inset 0 0 15px rgba(213, 0, 249, 0.2); }
+    .rarity-legendary { border-color: #ffab00; box-shadow: 0 0 15px rgba(255, 171, 0, 0.3), inset 0 0 18px rgba(255, 171, 0, 0.22); }
+    .badge-common { color: var(--rarity-common); }
+    .badge-rare { color: var(--rarity-rare); }
+    .badge-epic { color: var(--rarity-epic); }
+    .badge-legendary { color: var(--rarity-legendary); }
+    .item-icon-box { width: 60px; height: 60px; margin: 6px auto; display: flex; justify-content: center; align-items: center; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.65)); }
+    .item-icon-box svg { width: 100%; height: 100%; }
+    .list-row { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #181b2e, #111322); padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; border: 1px solid #262a45; width: 100%; }
+  </style>
 </head>
 <body>
 
-  <main class="app-container">
+  <!-- 📷 登入後詢問是否同意開啟鏡頭 Modal -->
+  <div class="modal-overlay" id="camera-consent-modal">
+    <div class="modal-box">
+      <div style="font-size: 48px; margin-bottom: 8px;">📷</div>
+      <h3 style="margin: 0 0 8px 0; font-size: 18px;">開啟 AI 體感鏡頭權限</h3>
+      <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin: 0;">
+        《肌動 RPG》採用嚴格科學關節判別（需全身 12 個關鍵點入鏡），偵測您的深蹲、開合跳與高抬腿動作來驅動角色攻擊怪物。是否同意開啟鏡頭？
+      </p>
+      <div class="modal-btn-stack">
+        <button onclick="grantCameraConsent()" style="padding: 14px; background: var(--accent-green); color: #000; font-size: 15px;">✅ 同意並開啟鏡頭</button>
+        <button onclick="declineCameraConsent()" style="padding: 10px; background: #262638; color: var(--text-muted); font-size: 13px;">稍後再說</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- 1. 登入畫面 -->
-    <section id="loginScreen" class="screen active">
-      <div class="center-box">
-        <h1>⚔️ 聖殿騎士：深蹲遠征</h1>
-        <div class="panel">
-          <input type="text" id="nameInput" value="勇者" placeholder="請輸入勇者名稱">
-          <button id="startBtn" type="button" onclick="startGame()">進入勇者大廳</button>
+  <!-- ✨ 轉蛋開獎炫光彈出視窗 Modal -->
+  <div class="modal-overlay" id="gacha-reveal-modal">
+    <div class="modal-box" style="border-color: var(--accent-gold);">
+      <div style="font-size: 12px; color: var(--accent-gold); font-weight: bold;">✨ 祈願召喚結果 ✨</div>
+      <h3 style="margin: 4px 0 8px 0; font-size: 19px;" id="gacha-modal-title">獲得神兵碎片</h3>
+      <div class="gacha-results-grid" id="gacha-results-grid"></div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">碎片已自動存入「角色/背包 ➔ 奧術碎片合成爐」中！</div>
+      <button onclick="closeGachaModal()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ffab00, #ff6d00); color: #000; font-size: 14px;">確認收下</button>
+    </div>
+  </div>
+
+  <!-- ⚙️ 戰鬥中右上角設定選單 Modal -->
+  <div class="modal-overlay" id="battle-pause-modal">
+    <div class="modal-box">
+      <div style="font-size: 42px; margin-bottom: 6px;">⚙️</div>
+      <h3 style="margin: 0 0 6px 0; font-size: 18px;" id="pause-modal-title">戰鬥設定選單</h3>
+      <p style="color: var(--text-muted); font-size: 12px; margin: 0;" id="pause-modal-desc">目前動作偵測已暫停，請選擇操作：</p>
+      <div class="modal-btn-stack">
+        <button onclick="pauseBattleAction()" style="padding: 13px; background: #ffab00; color: #000; font-size: 14px;">⏸️ 暫停休息 (保持畫面)</button>
+        <button onclick="resumeBattleAction()" style="padding: 13px; background: var(--accent-green); color: #000; font-size: 14px;">▶️ 繼續戰鬥</button>
+        <button onclick="leaveBattleAction()" style="padding: 13px; background: var(--accent-red); color: #fff; font-size: 14px;">🚪 離開關卡 (保存今日運動數)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⏱️ 點進關卡後 3-2-1 動態滿屏倒數 -->
+  <div class="countdown-overlay" id="countdown-overlay">
+    <div style="font-size: 16px; color: var(--text-muted); margin-bottom: 12px; font-weight: bold;" id="countdown-stage-name">準備戰鬥</div>
+    <div class="countdown-num" id="countdown-number">3</div>
+    <div style="font-size: 14px; color: var(--accent-green); margin-top: 16px;">請退後讓全身(含手腕與腳踝)完整入鏡！</div>
+  </div>
+
+  <!-- 🔥 滿屏上下雙畫面戰鬥視窗 (右上角僅保留設定齒輪) -->
+  <div class="fullscreen-battle" id="fullscreen-battle">
+    <div class="battle-top-controls">
+      <button class="btn-icon-circle" onclick="openPauseMenu()" title="設定選單">⚙️</button>
+    </div>
+
+    <div class="battle-rpg-scene">
+      <div class="battle-stage-header">
+        <div class="battle-stage-title">
+          <span id="active-stage-title">第 1 關</span>
+          <span style="color: var(--accent-green); font-size: 12px;">⚔️ 攻擊力：<b id="battle-player-atk">15</b></span>
+        </div>
+        <div class="monster-hud">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+            <span id="monster-name" style="color: #ff8a80;">守衛怪物</span>
+            <span>HP: <span id="monster-hp">450</span> / <span id="monster-maxhp">450</span></span>
+          </div>
+          <div class="bar-bg" style="height: 9px; margin: 4px 0 0 0;">
+            <div class="bar-fill hp-fill" id="monster-hp-bar"></div>
+          </div>
         </div>
       </div>
-    </section>
 
-    <!-- 2. 大廳畫面 -->
-    <section id="lobbyScreen" class="screen">
-      <header>
-        <h2>🏰 勇者大廳</h2>
-        <div class="panel">
-          <p class="user-title"><strong id="lobbyName">勇者</strong></p>
-          <p><span id="coinText">🪙 0</span> | <span id="playerLevelText">LV.1 聖殿騎士</span></p>
-          <p class="gps-info">🚶 累積行軍：<span id="lobbyWalkDist">0.00</span> km (時速 <span id="lobbyWalkSpeed">0.0</span> km/h)</p>
-          <p id="lobbyWalkMsg" class="walk-msg">GPS 初始化中...</p>
+      <div class="versus-stage">
+        <div class="battle-hero-box" id="battle-hero-box">
+          <svg viewBox="0 0 200 230" width="100%" height="100%">
+            <ellipse cx="100" cy="205" rx="48" ry="10" fill="rgba(0, 229, 255, 0.35)" />
+            <path d="M 68 78 L 42 182 L 72 172 L 100 185 L 128 172 L 158 182 L 132 78 Z" fill="#8e0000" stroke="#ff1744" stroke-width="1.5" />
+            <polygon points="75,138 93,138 90,182 77,182" fill="#1e2436" stroke="#3949ab" stroke-width="1.5" />
+            <polygon points="107,138 125,138 123,182 110,182" fill="#1e2436" stroke="#3949ab" stroke-width="1.5" />
+            <g id="battle-svg-shoes"></g>
+            <path d="M 66 82 L 48 118 L 58 134 L 74 102 Z" fill="#263238" stroke="#607d8b" stroke-width="1.5" />
+            <path d="M 134 82 L 152 118 L 142 134 L 126 102 Z" fill="#263238" stroke="#607d8b" stroke-width="1.5" />
+            <g id="battle-svg-chest"></g>
+            <g transform="translate(134, 96)">
+              <path d="M 0 -6 L 30 -6 L 32 22 L 15 42 L -2 22 Z" fill="#1a237e" stroke="#00e5ff" stroke-width="2.5" />
+              <polygon points="15,0 24,16 15,32 6,16" fill="#ffd700" />
+            </g>
+            <g id="battle-svg-weapon" transform="translate(52, 122)"></g>
+            <polygon points="76,38 124,38 120,66 100,78 80,66" fill="#ffdfc4" stroke="#d7a17c" stroke-width="2" />
+            <polygon points="82,50 96,53 84,56" fill="#00e5ff" />
+            <polygon points="118,50 104,53 116,56" fill="#00e5ff" />
+            <path d="M 80 46 L 96 50 M 120 46 L 104 50" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" />
+            <path d="M 94 66 L 106 64" stroke="#8d5524" stroke-width="2" stroke-linecap="round" />
+            <g id="battle-svg-head"></g>
+            <g id="battle-svg-pet" transform="translate(138, 8) scale(0.55)"></g>
+          </svg>
         </div>
-      </header>
 
-      <nav class="nav-menu">
-        <button type="button" onclick="openMap()">🗺️ 選擇關卡</button>
-        <button type="button" onclick="openRole()">⚒️ 皇家鐵匠鋪</button>
-        <button type="button" onclick="openPets()">🐾 戰寵夥伴</button>
-        <button type="button" onclick="openGacha()">🔮 聖物寶箱</button>
-        <button type="button" onclick="openDaily()">📅 每日簽到</button>
-        <button type="button" onclick="openBodyTracker()">📊 體態紀錄與照片</button>
+        <div class="slash-effect" id="slash-effect">💥</div>
+        <div class="dmg-popup" id="dmg-popup">-25</div>
+        <div class="battle-monster-box" id="battle-monster-box"></div>
+      </div>
+
+      <div class="combo-sequence-bar">
+        <div class="combo-steps-wrap" id="combo-sequence-bar"></div>
+        <span style="font-size: 11px; color: var(--accent-gold); white-space: nowrap;">本場已做: <b id="battle-rep-count">0</b> 下</span>
+      </div>
+    </div>
+
+    <div class="battle-camera-scene">
+      <video id="input_video" style="display: none;" playsinline></video>
+      <canvas id="output_canvas" width="480" height="640"></canvas>
+
+      <div class="pose-visual-card">
+        <div class="pose-anim-icon" id="pose-svg-icon"></div>
+        <div>
+          <div style="font-size: 11px; color: var(--accent-green); font-weight: bold;">請執行當前動作</div>
+          <div style="font-size: 17px; font-weight: 900; color: white;" id="current-move-title">深蹲</div>
+        </div>
+      </div>
+
+      <div class="camera-feedback-pill" id="pose-status">請將全身(含手腕與雙腳踝)入鏡</div>
+    </div>
+  </div>
+
+  <!-- 主畫面容器 -->
+  <div class="mobile-shell">
+    <div id="login-container" style="padding: 40px 20px; text-align: center; margin: auto 0;">
+      <div class="vivid-hero-banner theme-guild" style="min-height: 320px; align-items: center; justify-content: center; text-align: center; padding: 28px 20px;">
+        <svg viewBox="0 0 200 200" width="145" height="145" style="margin-bottom: 10px;">
+          <g class="spin-slow">
+            <circle cx="100" cy="100" r="82" fill="none" stroke="#00e676" stroke-width="2" stroke-dasharray="12 8" opacity="0.6"/>
+            <circle cx="100" cy="100" r="65" fill="none" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.5"/>
+          </g>
+          <g class="float-vivid">
+            <g transform="translate(100, 100)">
+              <path d="M 0 -55 L 45 -30 L 45 20 Q 0 65 0 65 Q 0 65 -45 20 L -45 -30 Z" fill="#102840" stroke="#00e5ff" stroke-width="3"/>
+              <polygon points="0,-70 -12,15 12,15" fill="#fff9c4" stroke="#ffab00" stroke-width="2.5"/>
+              <rect x="-26" y="10" width="52" height="9" rx="3" fill="#ffd700" stroke="#e65100" stroke-width="2"/>
+              <circle cx="0" cy="14" r="5" fill="#ff1744"/>
+            </g>
+          </g>
+        </svg>
+        <h1 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 900; color: #fff;">肌動 RPG</h1>
+        <p style="color: #b0bec5; font-size: 13px; margin-bottom: 24px; line-height: 1.5;">
+          AI 科學化體感健身冒險！<br>深蹲、開合跳化為真實劍氣，鍛造 25 件神兵與 7 大戰寵！
+        </p>
+        <button id="btn-login" class="btn-primary" style="font-size: 16px;">🚀 Google 帳號快速登入</button>
+      </div>
+    </div>
+
+    <div id="app-container" style="display: none; width: 100%; flex: 1; flex-direction: column;">
+      <div class="top-bar">
+        <div class="user-badge">
+          <strong id="ui-name" style="font-size: 15px;">--</strong>
+          <span class="lvl-tag">Lv.<span id="ui-lvl">1</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="gold-tag">💰 <span id="top-gold">0</span></span>
+          <button class="btn-logout" id="btn-logout">登出</button>
+        </div>
+      </div>
+
+      <div class="content-area">
+        
+        <!-- 1. 🏠 大廳 -->
+        <div id="view-home" class="view-section active">
+          <div class="vivid-hero-banner theme-guild">
+            <div class="banner-header-split">
+              <div class="banner-header-text">
+                <div class="banner-tag-row">
+                  <span class="gacha-pill pill-cyan" id="cam-ready-indicator">📷 鏡頭待命</span>
+                </div>
+                <h2 class="banner-title" style="color: #e0f2f1;">🏰 冒險者公會聖殿</h2>
+                <p class="banner-subtitle" style="margin-bottom: 0;">燃燒體能極限，累積經驗升階解鎖神聖戰力！</p>
+              </div>
+              <div class="banner-art-box">
+                <svg viewBox="0 0 200 200">
+                  <g class="spin-slow">
+                    <circle cx="100" cy="100" r="82" fill="none" stroke="#00e676" stroke-width="2.2" stroke-dasharray="12 6" opacity="0.7"/>
+                    <polygon points="100,22 168,140 32,140" fill="none" stroke="#00e5ff" stroke-width="1.5" opacity="0.45"/>
+                    <polygon points="100,178 168,60 32,60" fill="none" stroke="#00e5ff" stroke-width="1.5" opacity="0.45"/>
+                  </g>
+                  <g class="float-vivid">
+                    <g transform="translate(100, 100)">
+                      <path d="M 0 -52 L 44 -28 L 44 18 Q 0 62 0 62 Q 0 62 -44 18 L -44 -28 Z" fill="#0d2b26" stroke="#00e676" stroke-width="3.5"/>
+                      <polygon points="0,-34 20,0 0,34 -20,0" fill="#00e5ff" stroke="#ffffff" stroke-width="2"/>
+                      <circle cx="-52" cy="-22" r="4.5" fill="#ffea00"/>
+                      <circle cx="52" cy="22" r="4" fill="#00e676"/>
+                    </g>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            
+            <button class="checkin-btn" id="btn-daily-checkin" onclick="claimDailyCheckin()">📅 點擊領取今日簽到獎勵 (+150 金幣)</button>
+
+            <div class="stat-grid">
+              <div class="stat-box">
+                <div class="stat-label">⚔️ 目前總攻擊力</div>
+                <div class="stat-val" style="color: var(--accent-green);" id="home-atk">15</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">🔥 歷史總運動數</div>
+                <div class="stat-val" style="color: var(--accent-gold);" id="home-squats">0 次</div>
+              </div>
+            </div>
+
+            <!-- 🚶 今日步行步數與里程紀錄面板 (已移除測試按鈕) -->
+            <div class="step-tracker-panel">
+              <div class="step-panel-left">
+                <div class="step-icon-badge">🚶</div>
+                <div>
+                  <div style="font-size: 11px; color: var(--text-muted);">今日步行步數 (約 <span id="home-walk-meters" style="color:var(--accent-cyan); font-weight:bold;">0</span> m)</div>
+                  <div style="font-size: 18px; font-weight: 900; color: #fff;"><span id="home-daily-steps">0</span> <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">步</span></div>
+                </div>
+              </div>
+              <button class="btn-step-action" id="btn-step-sensor" onclick="enableStepSensor()">📱 開啟計步感應</button>
+            </div>
+
+            <div style="position: relative; z-index: 2; font-size: 12px; color: #b0bec5; display: flex; justify-content: space-between;">
+              <span>勇者經驗值 (EXP)</span>
+              <span><b id="home-exp" style="color: white;">0</b> / <span id="home-maxexp">100</span></span>
+            </div>
+            <div class="bar-bg" style="position: relative; z-index: 2;"><div class="bar-fill exp-fill" id="home-exp-bar"></div></div>
+          </div>
+
+          <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">📜 公會每日懸賞任務</h3>
+                <span class="gacha-pill pill-cyan" id="daily-moves-summary">今日動作：0下 | 行走：0m</span>
+              </div>
+              <div id="daily-tasks-container"></div>
+            </div>
+            <button class="btn-primary" onclick="switchTab('stages')" style="margin-top: 10px;">⚔️ 進入 20 關世界地圖討伐魔王</button>
+          </div>
+        </div>
+
+        <!-- 2. 🗺️ 20關地圖 -->
+        <div id="view-stages" class="view-section">
+          <div class="vivid-hero-banner theme-map">
+            <div class="banner-header-split" style="margin-bottom: 0;">
+              <div class="banner-header-text">
+                <div class="banner-tag-row">
+                  <span class="gacha-pill pill-gold">每5關首領降臨</span>
+                </div>
+                <h2 class="banner-title" style="color: #ffcdd2;">🗺️ 20關深淵討伐地圖</h2>
+                <p class="banner-subtitle" style="margin: 0;">20 隻各異魔物鎮守！點擊已解鎖關卡展開雙畫面實況對決！</p>
+              </div>
+              <div class="banner-art-box">
+                <svg viewBox="0 0 200 200">
+                  <g class="spin-slow">
+                    <circle cx="100" cy="100" r="78" fill="none" stroke="#ff1744" stroke-width="2.2" stroke-dasharray="12 6" opacity="0.7"/>
+                    <rect x="48" y="48" width="104" height="104" fill="none" stroke="#ff9100" stroke-width="1.6" opacity="0.45" transform="rotate(45 100 100)"/>
+                  </g>
+                  <g class="float-vivid">
+                    <g transform="translate(100, 100)">
+                      <circle cx="0" cy="0" r="38" fill="#310a18" stroke="#ff5252" stroke-width="3"/>
+                      <polygon points="-18,-8 -4,2 -14,10" fill="#ffea00"/>
+                      <polygon points="18,-8 4,2 14,10" fill="#ffea00"/>
+                      <path d="M -18 16 L -10 24 L 0 16 L 10 24 L 18 16" fill="none" stroke="#ff1744" stroke-width="3"/>
+                    </g>
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="flex: 1; display: flex; flex-direction: column; padding: 12px;">
+            <div class="quest-path" id="quest-path-container"></div>
+          </div>
+        </div>
+
+        <!-- 3. 🛒 商城 -->
+        <div id="view-shop" class="view-section">
+          <div class="vivid-hero-banner theme-shop">
+            <div class="banner-header-split" style="margin-bottom: 0;">
+              <div class="banner-header-text">
+                <div class="banner-tag-row">
+                  <span class="gacha-pill pill-gold">25件神兵防具</span>
+                  <span class="gacha-pill pill-crimson">7大兇猛戰寵</span>
+                </div>
+                <h2 class="banner-title" style="color: #fff8e1;">🛒 傳說軍械與戰寵圖鑑</h2>
+                <p class="banner-subtitle" style="margin: 0;">一覽 25 件頂尖神兵與 7 隻兇猛戰寵，透過碎片合成解鎖逆天戰力！</p>
+              </div>
+              <div class="banner-art-box">
+                <svg viewBox="0 0 200 200">
+                  <g class="spin-slow">
+                    <circle cx="100" cy="100" r="76" fill="none" stroke="#ffd700" stroke-width="2" stroke-dasharray="8 8" opacity="0.7"/>
+                  </g>
+                  <g class="float-vivid">
+                    <g transform="translate(100, 100)">
+                      <rect x="-34" y="-12" width="68" height="44" rx="6" fill="#5d4037" stroke="#ffd700" stroke-width="3"/>
+                      <path d="M -36 -12 Q 0 -40 36 -12 Z" fill="#8d6e63" stroke="#ffd700" stroke-width="3"/>
+                      <circle cx="0" cy="8" r="8" fill="#ffea00" stroke="#e65100" stroke-width="2"/>
+                    </g>
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="flex: 1;">
+            <div class="shop-tabs">
+              <button class="shop-tab-btn active" onclick="switchShopTab('equipment')">🛡️ 神兵防具圖鑑 (25件)</button>
+              <button class="shop-tab-btn" onclick="switchShopTab('pets')">🐾 兇猛戰寵契約 (7隻)</button>
+            </div>
+            <div id="shop-equipment-section">
+              <div class="filter-pills-row" id="shop-filter-bar">
+                <button class="filter-pill-btn active" onclick="filterShopItems('all', this)">全部 (25)</button>
+                <button class="filter-pill-btn" onclick="filterShopItems('weapon', this)">🗡️ 武器 (7)</button>
+                <button class="filter-pill-btn" onclick="filterShopItems('head', this)">🪖 頭盔 (6)</button>
+                <button class="filter-pill-btn" onclick="filterShopItems('chest', this)">🦺 胸甲 (6)</button>
+                <button class="filter-pill-btn" onclick="filterShopItems('shoes', this)">👟 鞋子 (6)</button>
+              </div>
+              <div class="grid-2" id="shop-items-container"></div>
+            </div>
+            <div id="shop-pets-section" style="display: none;">
+              <div class="grid-2" id="shop-pets-container"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 🎰 祈願轉蛋所 -->
+        <div id="view-gacha" class="view-section">
+          <div class="gacha-fullscreen-wrap">
+            <div class="gacha-banner-card gacha-banner-equip">
+              <svg class="banner-bg-glow" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="80" fill="rgba(0,229,255,0.18)"/>
+                <g class="spin-slow">
+                  <circle cx="100" cy="100" r="72" fill="none" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.7"/>
+                  <polygon points="100,28 162,136 38,136" fill="none" stroke="#00e5ff" stroke-width="1.2" opacity="0.4"/>
+                  <polygon points="100,172 162,64 38,64" fill="none" stroke="#00e5ff" stroke-width="1.2" opacity="0.4"/>
+                </g>
+                <g class="float-vivid">
+                  <g transform="translate(100, 102) rotate(-18)">
+                    <polygon points="0,-78 -14,15 14,15" fill="#fff9c4" stroke="#ffab00" stroke-width="3" />
+                    <polygon points="0,-72 -6,12 6,12" fill="#00e5ff" opacity="0.65" />
+                    <path d="M -30 12 L 30 12 L 22 24 L -22 24 Z" fill="#ffd700" stroke="#e65100" stroke-width="2" />
+                    <rect x="-6" y="24" width="12" height="26" rx="3" fill="#4e342e" stroke="#ffd700" stroke-width="1.5" />
+                    <circle cx="0" cy="18" r="5" fill="#ff1744" />
+                  </g>
+                </g>
+              </svg>
+
+              <div class="banner-top-info">
+                <div class="banner-tag-row">
+                  <span class="gacha-pill pill-gold">25件神兵全收錄</span>
+                  <span class="gacha-pill pill-cyan">必掉神兵碎片</span>
+                </div>
+                <h2 class="banner-title" style="color: #e0f7fa;">⚔️ 星界神兵鍛造池</h2>
+                <p class="banner-subtitle">凝聚奧術星火，隨機召喚 25 件傳說神兵、星冕神盔與不朽神鎧碎片！</p>
+                <div class="featured-preview-strip">
+                  <span>🔥 傳說套裝：<b>泰坦聖劍 / 星冕盔 / 泰坦鎧 / 虛空靴</b></span>
+                </div>
+              </div>
+
+              <div class="banner-action-row">
+                <button class="btn-gacha-single" onclick="gachaPull('equipment', 1)">
+                  <span style="font-size: 13px;">🗡️ 單抽鍛造</span>
+                  <span style="font-size: 11px; color: var(--accent-gold);">💰 300 金幣</span>
+                </button>
+                <button class="btn-gacha-multi btn-multi-equip" onclick="gachaPull('equipment', 10)">
+                  <span class="discount-ribbon">9折必出高階</span>
+                  <span style="font-size: 14px; font-weight: 900;">⚡ 十連神兵祈願</span>
+                  <span style="font-size: 11px; color: #ffea00;">💰 2,700 金幣</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="gacha-banner-card gacha-banner-pet">
+              <svg class="banner-bg-glow" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="80" fill="rgba(255,23,68,0.2)"/>
+                <g class="spin-slow">
+                  <circle cx="100" cy="100" r="74" fill="none" stroke="#ff1744" stroke-width="1.8" stroke-dasharray="14 8" opacity="0.75"/>
+                  <rect x="52" y="52" width="96" height="96" fill="none" stroke="#ff5252" stroke-width="1.4" opacity="0.45" transform="rotate(45 100 100)"/>
+                </g>
+                <g class="float-vivid">
+                  <g transform="translate(100, 102)">
+                    <path d="M -20 -5 L -72 -38 L -58 5 L -75 28 L -28 20 Z" fill="#4a0e4e" stroke="#ff1744" stroke-width="1.8"/>
+                    <path d="M 20 -5 L 72 -38 L 58 5 L 75 28 L 28 20 Z" fill="#4a0e4e" stroke="#ff1744" stroke-width="1.8"/>
+                    <path d="M -22 -24 Q -52 -68 -14 -56 Q -8 -38 -8 -26 Z" fill="#ff1744" stroke="#ffea00" stroke-width="2"/>
+                    <path d="M 22 -24 Q 52 -68 14 -56 Q 8 -38 8 -26 Z" fill="#ff1744" stroke="#ffea00" stroke-width="2"/>
+                    <polygon points="0,-44 -38,-12 -28,36 0,50 28,36 38,-12" fill="#250c40" stroke="#e040fb" stroke-width="2.5"/>
+                    <polygon points="-24,-8 -5,3 -19,10" fill="#ffea00"/>
+                    <polygon points="24,-8 5,3 19,10" fill="#ffea00"/>
+                    <polygon points="-16,22 -10,35 -5,24" fill="#ffffff"/>
+                    <polygon points="16,22 10,35 5,24" fill="#ffffff"/>
+                  </g>
+                </g>
+              </svg>
+
+              <div class="banner-top-info">
+                <div class="banner-tag-row">
+                  <span class="gacha-pill pill-crimson">兇猛狂暴戰寵</span>
+                  <span class="gacha-pill pill-gold">超高額攻擊羈絆</span>
+                </div>
+                <h2 class="banner-title" style="color: #ffd0e0;">🐉 深淵魔獸召喚陣</h2>
+                <p class="banner-subtitle">締結深淵血契，收服毀滅魔龍、寒冰霜牙虎與狂暴巨獸碎片！</p>
+                <div class="featured-preview-strip">
+                  <span>🩸 大獎：<b>毀滅魔龍獸 (+300攻)</b></span>
+                </div>
+              </div>
+
+              <div class="banner-action-row">
+                <button class="btn-gacha-single" onclick="gachaPull('pet', 1)">
+                  <span style="font-size: 13px;">🐾 單抽召喚</span>
+                  <span style="font-size: 11px; color: var(--accent-gold);">💰 400 金幣</span>
+                </button>
+                <button class="btn-gacha-multi btn-multi-pet" onclick="gachaPull('pet', 10)">
+                  <span class="discount-ribbon">9折必出高階</span>
+                  <span style="font-size: 14px; font-weight: 900;">🔥 十連深淵契約</span>
+                  <span style="font-size: 11px; color: #ffea00;">💰 3,600 金幣</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. 🛡️ 角色與背包 -->
+        <div id="view-equip" class="view-section">
+          <div class="card" style="flex: 1;">
+            <h3>🛡️ 勇者神裝聖殿與合成爐</h3>
+            <div class="equip-subtabs">
+              <button class="subtab-btn active" onclick="switchEquipTab('hero')">⚔️ 角色紙娃娃</button>
+              <button class="subtab-btn" onclick="switchEquipTab('bag')">🔮 奧術碎片合成爐</button>
+            </div>
+
+            <div id="equip-hero-section">
+              <div class="hero-armory-showcase">
+                <div class="armory-stage-grid">
+                  <!-- 左欄：武器 + 頭盔 -->
+                  <div class="armory-side-col">
+                    <div class="armory-slot-box" id="box-slot-weapon">
+                      <span class="armory-slot-type">🗡️ 武器</span>
+                      <div class="armory-slot-icon" id="icon-slot-weapon"></div>
+                      <span class="armory-slot-name" id="slot-weapon">無</span>
+                      <span class="armory-slot-atk" id="atk-slot-weapon">+0 攻</span>
+                    </div>
+                    <div class="armory-slot-box" id="box-slot-head">
+                      <span class="armory-slot-type">🪖 頭盔</span>
+                      <div class="armory-slot-icon" id="icon-slot-head"></div>
+                      <span class="armory-slot-name" id="slot-head">無</span>
+                      <span class="armory-slot-atk" id="atk-slot-head">+0 攻</span>
+                    </div>
+                  </div>
+
+                  <!-- 中央：帥氣稜角戰神模型 + 雙層旋轉星陣 -->
+                  <div class="svg-stage">
+                    <svg viewBox="0 0 200 230" width="100%" height="100%">
+                      <defs>
+                        <radialGradient id="heroAura" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.38"/>
+                          <stop offset="60%" stop-color="#651fff" stop-opacity="0.15"/>
+                          <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+                        </radialGradient>
+                      </defs>
+                      <circle cx="100" cy="110" r="82" fill="url(#heroAura)" />
+                      <g transform="translate(100, 202) scale(1, 0.34)">
+                        <g class="spin-slow" style="transform-origin: 0px 0px;">
+                          <circle cx="0" cy="0" r="74" fill="none" stroke="#00e5ff" stroke-width="4" stroke-dasharray="14 8"/>
+                          <circle cx="0" cy="0" r="56" fill="none" stroke="#ffd700" stroke-width="2.5"/>
+                          <polygon points="0,-70 60,35 -60,35" fill="none" stroke="#00e5ff" stroke-width="2" opacity="0.6"/>
+                          <polygon points="0,70 60,-35 -60,-35" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.6"/>
+                        </g>
+                      </g>
+                      <g class="float-vivid">
+                        <path d="M 68 78 L 38 186 L 70 174 L 100 188 L 130 174 L 162 186 L 132 78 Z" fill="#7f0000" stroke="#ff1744" stroke-width="1.8" />
+                        <polygon points="75,138 93,138 90,182 77,182" fill="#1e2436" stroke="#3949ab" stroke-width="1.5" />
+                        <polygon points="107,138 125,138 123,182 110,182" fill="#1e2436" stroke="#3949ab" stroke-width="1.5" />
+                        <g id="svg-shoes"></g>
+                        <path d="M 66 82 L 46 120 L 58 134 L 74 102 Z" fill="#263238" stroke="#78909c" stroke-width="1.8" />
+                        <path d="M 134 82 L 154 120 L 142 134 L 126 102 Z" fill="#263238" stroke="#78909c" stroke-width="1.8" />
+                        <g id="svg-chest"></g>
+                        <g transform="translate(134, 96)">
+                          <path d="M 0 -6 L 30 -6 L 32 22 L 15 42 L -2 22 Z" fill="#1a237e" stroke="#00e5ff" stroke-width="2.5" />
+                          <path d="M 4 -1 L 26 -1 L 27 19 L 15 35 L 3 19 Z" fill="#0d133d" />
+                          <polygon points="15,2 23,16 15,30 7,16" fill="#ffd700" stroke="#ff6f00" stroke-width="1" />
+                        </g>
+                        <g id="svg-weapon" transform="translate(52, 122)"></g>
+                        <polygon points="76,38 124,38 120,66 100,78 80,66" fill="#ffdfc4" stroke="#d7a17c" stroke-width="2" />
+                        <polygon points="82,50 96,53 84,56" fill="#00e5ff" />
+                        <polygon points="118,50 104,53 116,56" fill="#00e5ff" />
+                        <path d="M 80 46 L 96 50 M 120 46 L 104 50" stroke="#1a1a2e" stroke-width="2.8" stroke-linecap="round" />
+                        <path d="M 94 66 L 106 64" stroke="#8d5524" stroke-width="2" stroke-linecap="round" />
+                        <g id="svg-head"></g>
+                        <g id="svg-pet-companion" transform="translate(136, 4) scale(0.56)"></g>
+                      </g>
+                    </svg>
+                  </div>
+
+                  <!-- 右欄：胸甲 + 鞋子 -->
+                  <div class="armory-side-col">
+                    <div class="armory-slot-box" id="box-slot-chest">
+                      <span class="armory-slot-type">🦺 胸甲</span>
+                      <div class="armory-slot-icon" id="icon-slot-chest"></div>
+                      <span class="armory-slot-name" id="slot-chest">無</span>
+                      <span class="armory-slot-atk" id="atk-slot-chest">+0 攻</span>
+                    </div>
+                    <div class="armory-slot-box" id="box-slot-shoes">
+                      <span class="armory-slot-type">👟 鞋子</span>
+                      <div class="armory-slot-icon" id="icon-slot-shoes"></div>
+                      <span class="armory-slot-name" id="slot-shoes">無</span>
+                      <span class="armory-slot-atk" id="atk-slot-shoes">+0 攻</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 背包部位分類篩選器 -->
+              <div class="filter-pills-row" id="inv-filter-bar">
+                <button class="filter-pill-btn active" onclick="filterInventoryItems('all', this)">全部已擁有</button>
+                <button class="filter-pill-btn" onclick="filterInventoryItems('weapon', this)">🗡️ 武器</button>
+                <button class="filter-pill-btn" onclick="filterInventoryItems('head', this)">🪖 頭盔</button>
+                <button class="filter-pill-btn" onclick="filterInventoryItems('chest', this)">🦺 胸甲</button>
+                <button class="filter-pill-btn" onclick="filterInventoryItems('shoes', this)">👟 鞋子</button>
+              </div>
+
+              <div class="grid-2" id="inventory-container"></div>
+            </div>
+
+            <div id="equip-bag-section" style="display: none;">
+              <div class="vivid-hero-banner theme-rank" style="margin-bottom: 12px; padding: 14px;">
+                <h3 style="margin: 0 0 4px 0; color: #84ffff;">🔮 奧術靈魂碎片合成爐</h3>
+                <p style="margin: 0; font-size: 11px; color: #c5cae9;">收集滿指定數量的裝備或戰寵碎片，即可在此直接鍛造 25 件神兵與契約戰寵！</p>
+              </div>
+              <div id="shards-container"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. 👥 好友與排行 -->
+        <div id="view-rank" class="view-section">
+          <div class="vivid-hero-banner theme-rank">
+            <div class="banner-header-split" style="margin-bottom: 0;">
+              <div class="banner-header-text">
+                <div class="banner-tag-row">
+                  <span class="gacha-pill pill-cyan">全服即時同步</span>
+                </div>
+                <h2 class="banner-title" style="color: #fff9c4;">🏆 王者榮耀英雄榜</h2>
+                <p class="banner-subtitle" style="margin: 0;">與全服勇者比拚累積體感運動次數，爭奪最強肌動王者稱號！</p>
+              </div>
+              <div class="banner-art-box">
+                <svg viewBox="0 0 200 200">
+                  <g class="spin-slow">
+                    <circle cx="100" cy="100" r="76" fill="none" stroke="#ffd700" stroke-width="2" stroke-dasharray="10 6" opacity="0.7"/>
+                  </g>
+                  <g class="float-vivid">
+                    <g transform="translate(100, 100)">
+                      <path d="M -30 -32 L 30 -32 L 22 8 Q 0 30 0 30 Q 0 30 -22 8 Z" fill="#ffd700" stroke="#ff6f00" stroke-width="2.5"/>
+                      <rect x="-8" y="28" width="16" height="16" fill="#ffb300"/>
+                      <rect x="-24" y="42" width="48" height="10" rx="3" fill="#ff8f00"/>
+                      <polygon points="0,-18 5,-6 18,-6 8,2 12,14 0,7 -12,14 -8,2 -18,-6 -5,-6" fill="#fff9c4"/>
+                    </g>
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>👥 冒險好友結盟</h3>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <input type="email" id="friend-email-input" placeholder="輸入朋友登入過的 Google Email..." style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #2b2f4c; background: #0e101c; color: white; font-size: 12px;">
+              <button onclick="addFriend()" style="background: linear-gradient(135deg, #00b0ff, #2979ff); padding: 0 16px; font-size: 12px;">搜尋結盟</button>
+            </div>
+            <div id="friends-list"></div>
+          </div>
+
+          <div class="card" style="flex: 1;">
+            <h3>👑 全服運動巔峰榜 (TOP 10)</h3>
+            <div id="leaderboard-list" style="color: var(--text-muted); font-size: 13px;">讀取排行榜中...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <nav class="bottom-nav">
+        <button class="nav-item active" data-tab="home" onclick="switchTab('home')">
+          <span class="icon">🏠</span><span>大廳</span>
+        </button>
+        <button class="nav-item" data-tab="stages" onclick="switchTab('stages')">
+          <span class="icon">🗺️</span><span>關卡</span>
+        </button>
+        <button class="nav-item" data-tab="shop" onclick="switchTab('shop')">
+          <span class="icon">🛒</span><span>商城</span>
+        </button>
+        <button class="nav-item" data-tab="gacha" onclick="switchTab('gacha')">
+          <span class="icon">🎰</span><span>轉蛋</span>
+        </button>
+        <button class="nav-item" data-tab="equip" onclick="switchTab('equip')">
+          <span class="icon">🛡️</span><span>角色/背包</span>
+        </button>
+        <button class="nav-item" data-tab="rank" onclick="switchTab('rank')">
+          <span class="icon">🏆</span><span>好友/排行</span>
+        </button>
       </nav>
-    </section>
+    </div>
+  </div>
 
-    <!-- 3. 地圖畫面 -->
-    <section id="mapScreen" class="screen">
-      <h2>🗺️ 地下城遠征</h2>
-      <div class="panel scroll-panel" id="mapNodes"></div>
-      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
-    </section>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
-    <!-- 4. 鐵匠鋪裝備畫面 -->
-    <section id="roleScreen" class="screen">
-      <h2 id="roleTitle">殿堂騎士階級</h2>
-      <p id="roleDesc" class="sub-text"></p>
-      <button type="button" onclick="upgradeRole()" class="action-btn">⬆️ 升級騎士階級</button>
-      <div class="panel scroll-panel" id="shopItems"></div>
-      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
-    </section>
-
-    <!-- 5. 戰寵畫面 -->
-    <section id="petScreen" class="screen">
-      <h2>🐾 戰寵夥伴</h2>
-      <div class="panel scroll-panel" id="petList"></div>
-      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
-    </section>
-
-    <!-- 6. 抽卡畫面 -->
-    <section id="gachaScreen" class="screen">
-      <h2>🔮 聖物寶箱</h2>
-      <div class="panel center-box">
-        <p>消耗 300 🪙 解鎖隨機戰寵夥伴！</p>
-        <button type="button" onclick="drawGacha()">🎲 祈願開箱 (300🪙)</button>
-        <div id="gachaResult" class="gacha-res"></div>
-      </div>
-      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
-    </section>
-
-    <!-- 7. 每日簽到畫面 -->
-    <section id="dailyScreen" class="screen">
-      <h2>📅 每日簽到</h2>
-      <div class="panel scroll-panel" id="dailyList"></div>
-      <button type="button" onclick="claimDaily()" class="action-btn">🎁 領取本日獎勵</button>
-      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
-    </section>
-
-    <!-- 8. 體態紀錄畫面（含拍照與 AI 建議） -->
-    <section id="bodyTrackerScreen" class="screen">
-      <h2>📊 體態紀錄日記</h2>
-      <div class="panel">
-        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-          <input type="number" id="weightInput" placeholder="體重 (kg)" step="0.1" style="width: 50%; padding: 8px; border-radius: 8px; border: none; text-align: center;">
-          <input type="number" id="fatInput" placeholder="體脂率 (%)" step="0.1" style="width: 50%; padding: 8px; border-radius: 8px; border: none; text-align: center;">
-        </div>
-
-        <div style="margin-bottom: 8px; text-align: center;">
-          <label style="display: block; font-size: 0.85rem; color: #ccc; margin-bottom: 4px;">📸 上傳/拍攝體態照片：</label>
-          <input type="file" id="photoInput" accept="image/*" capture="environment" style="width: 100%; color: white;">
-        </div>
-
-        <button type="button" onclick="addBodyRecord()" class="action-btn">➕ 新增紀錄並分析</button>
-      </div>
-      
-      <div class="panel scroll-panel" id="bodyRecordList"></div>
-      <button type="button" onclick="showScreen('lobbyScreen')">⬅️ 返回大廳</button>
-    </section>
-
-    <!-- 9. 體感戰鬥畫面 -->
-    <section id="gameScreen" class="screen">
-      <header class="game-header">
-        <h3 id="stageText">STAGE 1</h3>
-        <span id="battleWeaponText" class="sub-info"></span>
-      </header>
-
-      <div class="game-view-container">
-        <video id="webcam" playsinline></video>
-        <canvas id="canvas"></canvas>
-
-        <div class="hud-overlay">
-          <div class="hud-top">
-            <span id="cameraStatus" class="tag">📷 鏡頭準備中...</span>
-            <span id="battlePetLabel" class="pet-tag"></span>
-          </div>
-
-          <div class="hp-bar"><div id="hpFill" class="hp-fill"></div></div>
-          
-          <div class="hud-mid">
-            <span id="hpText">100 / 100</span>
-            <span id="combo" class="combo-text">COMBO x0</span>
-          </div>
-          
-          <div class="hud-bot">
-            <span id="debug">膝蓋角度：--°</span>
-            <span id="floatingText" class="dmg-text"></span>
-          </div>
-        </div>
-      </div>
-
-      <button type="button" onclick="showScreen('mapScreen')" class="retreat-btn">🏳️ 撤退返回</button>
-    </section>
-
-  </main>
-
-  <script>
-    const defaultData = {
-      name: "勇者", coins: 1200, stage: 1, score: 0, energy: 0, combo: 0, squat: 0,
-      roleLevel: 1, roleAttack: 10, dailyDay: 1, lastClaim: "", walkDistance: 0.0,
-      bodyRecords: [],
-      shop: [
-        { id: "weapon_1", name: "鏽鐵短劍", icon: "🗡️", level: 1, baseStat: 3, cost: 100, desc: "新手必備基礎短劍" },
-        { id: "weapon_2", name: "王者之劍", icon: "⚔️", level: 0, baseStat: 8, cost: 250, desc: "大幅強化揮斬威力" },
-        { id: "weapon_3", name: "龍牙巨劍", icon: "🐉", level: 0, baseStat: 18, cost: 600, desc: "龍骨打造終極利刃" },
-        { id: "shield_1", name: "木製圓盾", icon: "🪵", level: 0, baseStat: 2, cost: 120, desc: "稍微提升防禦力" },
-        { id: "shield_2", name: "聖光光盾", icon: "🛡️", level: 0, baseStat: 6, cost: 400, desc: "獲得額外代幣加成" },
-        { id: "boots_1", name: "皮製長靴", icon: "🥾", level: 0, baseStat: 2, cost: 150, desc: "優化走路收益" }
-      ],
-      pets: [
-        { id: 1, name: "光靈幼獸", icon: "🐾", rarity: "稀有", level: 1, attack: 12, owned: true, active: true },
-        { id: 2, name: "焰火狐", icon: "🔥", rarity: "史詩", level: 1, attack: 25, owned: false, active: false },
-        { id: 3, name: "星辰貓", icon: "🌙", rarity: "傳說", level: 1, attack: 45, owned: false, active: false }
-      ]
+    const firebaseConfig = {
+      apiKey: "AIzaSyCUKHUDolxU-03T2snUNWM_lZGLmH5wVPw",
+      authDomain: "fitness-rpg-5f640.firebaseapp.com",
+      projectId: "fitness-rpg-5f640",
+      storageBucket: "fitness-rpg-5f640.firebasestorage.app",
+      messagingSenderId: "29127924305",
+      appId: "1:29127924305:web:a2655adea01d3910793670",
+      measurementId: "G-DJW73K12NF"
     };
 
-    let data = JSON.parse(JSON.stringify(defaultData));
-    try {
-      const local = localStorage.getItem("squatRPG");
-      if (local) data = Object.assign({}, defaultData, JSON.parse(local));
-      if (!data.bodyRecords) data.bodyRecords = [];
-    } catch (e) {
-      console.warn("使用預設存檔");
-    }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
 
-    let bossHp = 100, maxBossHp = 100, currentBattleStage = 1;
-    let squatState = "up", lastAttackTime = 0, lastPosition = null, isSettling = false;
-    let globalPose = null, globalCamera = null;
-    let smoothedLandmarks = null;
-    const SMOOTHING_ALPHA = 0.25;
+    let currentUser = null;
+    let playerData = {
+      level: 1, exp: 0, maxExp: 100, baseAtk: 10, totalSquats: 0, gold: 500,
+      inventory: ["新手木棒"],
+      equipped: { weapon: "新手木棒", head: "無", chest: "無", shoes: "無" },
+      pets: [], equippedPet: null, clearedStages: [], shards: {}, friends: [],
+      lastCheckin: "", dailyDate: "", dailyMoves: 0, dailyStages: 0, dailySteps: 0, claimedTasks: []
+    };
 
-    const MIN_SPEED_KMH = 3.0, MAX_SPEED_KMH = 15.0;
-    const screens = ["loginScreen", "lobbyScreen", "mapScreen", "petScreen", "roleScreen", "gachaScreen", "dailyScreen", "bodyTrackerScreen", "gameScreen"];
+    let currentShopFilter = "all";
+    let currentInvFilter = "all";
+    const STEP_LENGTH_METERS = 0.8; // 標準步幅：1步 = 0.8m (1250步 = 1000m)
 
-    function save() { 
-      try { localStorage.setItem("squatRPG", JSON.stringify(data)); } catch(e){}
-      refreshTop(); 
-    }
+    // 每日懸賞任務設定 (含「每日行走 1000m」任務)
+    const dailyQuestsConfig = [
+      { id: "daily_walk_1000m", title: "🚶 每日行走 1000m", rewardText: "獎勵：+120 金幣 & 疾風之靴碎片 x3", target: 1000, unit: "m", getProgress: () => Math.floor((playerData.dailySteps || 0) * STEP_LENGTH_METERS), goldReward: 120, shardItem: "疾風之靴", shardCount: 3 },
+      { id: "daily_10_moves", title: "🔥 完成 10 下體感動作", rewardText: "獎勵：+100 金幣 & 精鋼戰劍碎片 x3", target: 10, unit: "下", getProgress: () => playerData.dailyMoves || 0, goldReward: 100, shardItem: "精鋼戰劍", shardCount: 3 },
+      { id: "daily_1_stage", title: "⚔️ 擊敗任一關卡魔王 1 次", rewardText: "獎勵：+150 金幣 & 地獄烈焰獸碎片 x2", target: 1, unit: "次", getProgress: () => playerData.dailyStages || 0, goldReward: 150, shardItem: "地獄烈焰獸", shardCount: 2 },
+      { id: "daily_25_moves", title: "💪 深度燃脂：完成 25 下體感動作", rewardText: "獎勵：+300 金幣 & 烈焰巨斧碎片 x2", target: 25, unit: "下", getProgress: () => playerData.dailyMoves || 0, goldReward: 300, shardItem: "烈焰巨斧", shardCount: 2 }
+    ];
 
-    function showScreen(id) {
-      screens.forEach(s => { 
-        const el = document.getElementById(s); 
-        if(el) el.classList.remove("active"); 
-      });
-      const target = document.getElementById(id); 
-      if(target) target.classList.add("active");
-      refreshTop();
-    }
+    let currentStage = null;
+    let monsterHp = 450, monsterMaxHp = 450, sessionSquats = 0;
+    let isBattleActive = false, isBattlePaused = false;
+    let comboMoveList = [], currentComboIndex = 0, lastAttackTimestamp = 0, hasAskedCameraConsent = false;
 
-    function startGame() {
-      const nameInput = document.getElementById("nameInput");
-      const name = nameInput ? nameInput.value.trim() : "勇者";
-      data.name = name || "勇者";
-      save();
-      showScreen("lobbyScreen");
-      try { initMobileGps(); } catch(e){}
-    }
+    // 手機加速度計步感應變數
+    let stepSensorListening = false;
+    let lastStepTime = 0;
 
-    function refreshTop() {
-      if (document.getElementById("lobbyName")) document.getElementById("lobbyName").textContent = data.name || "勇者";
-      if (document.getElementById("coinText")) document.getElementById("coinText").textContent = "🪙 " + (data.coins || 0);
-      if (document.getElementById("playerLevelText")) document.getElementById("playerLevelText").textContent = "LV." + (data.roleLevel || 1) + " 聖殿騎士";
-      if (document.getElementById("lobbyWalkDist")) document.getElementById("lobbyWalkDist").textContent = Number(data.walkDistance || 0).toFixed(2);
+    window.enableStepSensor = async function() {
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        try {
+          const permission = await DeviceMotionEvent.requestPermission();
+          if (permission !== 'granted') return alert("需要允許動作感應權限才能自動計步！");
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      if (!stepSensorListening) {
+        window.addEventListener('devicemotion', handleDeviceMotion);
+        stepSensorListening = true;
+      }
+      const btn = document.getElementById("btn-step-sensor");
+      if (btn) {
+        btn.textContent = "📱 計步感應中";
+        btn.style.background = "rgba(0, 230, 118, 0.2)";
+        btn.style.borderColor = "#00e676";
+        btn.style.color = "#00e676";
+      }
+    };
 
-      const mainWeapon = (data.shop && Array.isArray(data.shop)) ? data.shop.find(i => i.id.startsWith("weapon") && i.level > 0) : null;
-      if (document.getElementById("battleWeaponText")) {
-        document.getElementById("battleWeaponText").textContent = mainWeapon ? `裝備: ${mainWeapon.name} Lv.${mainWeapon.level}` : "";
+    function handleDeviceMotion(event) {
+      const acc = event.accelerationIncludingGravity;
+      if (!acc) return;
+      const magnitude = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
+      const now = Date.now();
+      // 偵測步行步伐震動峰值 (大於 13.2 m/s² 且間隔 > 350ms)
+      if (magnitude > 13.2 && (now - lastStepTime > 350)) {
+        lastStepTime = now;
+        playerData.dailySteps = (playerData.dailySteps || 0) + 1;
+        updateUI();
+        if (playerData.dailySteps % 10 === 0 && currentUser) {
+          updateDoc(doc(db, "players", currentUser.uid), { dailySteps: playerData.dailySteps });
+        }
       }
     }
 
-    // --- 體態紀錄與 AI 建議邏輯 ---
-    function openBodyTracker() {
-      renderBodyRecords();
-      showScreen("bodyTrackerScreen");
-    }
+    const exerciseVisuals = {
+      squat: { name: "深蹲", svg: `<svg viewBox="0 0 60 60" width="36" height="36"><circle cx="30" cy="12" r="6" fill="#00e676"/><path d="M30 18 L26 32 L16 36 L18 48 M26 32 L38 36 L40 48 M30 22 L42 26" stroke="#00e676" stroke-width="4" stroke-linecap="round" fill="none"/></svg>` },
+      jumping_jack: { name: "開合跳", svg: `<svg viewBox="0 0 60 60" width="36" height="36"><circle cx="30" cy="14" r="6" fill="#ffea00"/><path d="M14 10 L30 22 L46 10 M30 20 L30 36 L16 52 M30 36 L44 52" stroke="#ffea00" stroke-width="4" stroke-linecap="round" fill="none"/></svg>` },
+      high_knees: { name: "高抬腿", svg: `<svg viewBox="0 0 60 60" width="36" height="36"><circle cx="30" cy="12" r="6" fill="#00e5ff"/><path d="M30 18 L30 34 L22 50 M30 34 L44 28 L44 42 M20 26 L30 20 L40 26" stroke="#00e5ff" stroke-width="4" stroke-linecap="round" fill="none"/></svg>` }
+    };
 
-    function generateAdvisorTips(weight, fat) {
-      let advice = [];
-      
-      if (!isNaN(fat) && fat > 0) {
-        if (fat > 25) {
-          advice.push("💡 體脂稍高：建議多進行深蹲訓練與有氧遠征行軍，加快脂肪燃燒！");
-        } else if (fat >= 15 && fat <= 25) {
-          advice.push("✨ 體脂相當標準：維持目前強度，並多補充高蛋白質食物以增強肌肉量！");
+    // 25 件全品階帥氣裝備產生器
+    function createEquipVisuals(type, style, c1, c2, c3, rarity) {
+      const glowBg = rarity === 'legendary' ? `rgba(255,171,0,0.28)` : (rarity === 'epic' ? `rgba(213,0,249,0.22)` : (rarity === 'rare' ? `rgba(0,176,255,0.2)` : `rgba(176,190,197,0.12)`));
+      const ringStroke = rarity === 'legendary' ? `stroke="#ffea00" stroke-width="1.5" stroke-dasharray="6 3"` : (rarity === 'epic' ? `stroke="#d500f9" stroke-width="1.2" stroke-dasharray="4 4"` : ``);
+      let charSvg = "", iconInner = "";
+
+      if (type === "weapon") {
+        if (style === "club") {
+          charSvg = `<path d="M-4,-60 L6,-60 L8,12 L-6,12 Z" fill="${c1}" stroke="${c2}" stroke-width="2"/><polygon points="-8,-52 -16,-48 -6,-44" fill="${c3}"/><polygon points="8,-40 16,-36 6,-32" fill="${c3}"/>`;
+          iconInner = `<g transform="translate(50,52) rotate(25)"><path d="M-6,-38 L6,-38 L8,32 L-8,32 Z" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="-8,-28 -18,-22 -8,-16" fill="${c3}"/><polygon points="8,-16 18,-10 8,-4" fill="${c3}"/></g>`;
+        } else if (style === "dagger") {
+          charSvg = `<path d="M0,-68 Q-14,-35 -4,-14 L6,-14 Z" fill="${c1}" stroke="${c2}" stroke-width="2"/><rect x="-12" y="-14" width="24" height="5" rx="2" fill="${c3}"/><rect x="-3" y="-9" width="6" height="18" fill="#3e2723"/>`;
+          iconInner = `<g transform="translate(50,52) rotate(25)"><path d="M0,-42 Q-18,-10 -5,14 L6,14 Z" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><rect x="-14" y="14" width="28" height="6" rx="2" fill="${c3}"/><rect x="-4" y="20" width="8" height="16" fill="#3e2723"/></g>`;
+        } else if (style === "sword") {
+          charSvg = `<polygon points="0,-86 -8,-18 8,-18" fill="${c1}" stroke="${c2}" stroke-width="2"/><line x1="0" y1="-78" x2="0" y2="-22" stroke="${c3}" stroke-width="2"/><path d="M-18,-18 L18,-18 L12,-10 L-12,-10 Z" fill="${c3}" stroke="${c2}" stroke-width="1.5"/><rect x="-4" y="-10" width="8" height="22" fill="#4e342e"/><circle cx="0" cy="14" r="5" fill="${c3}"/>`;
+          iconInner = `<g transform="translate(50,50) rotate(30)"><polygon points="0,-44 -8,14 8,14" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><line x1="0" y1="-36" x2="0" y2="10" stroke="${c3}" stroke-width="2"/><path d="M-20,14 L20,14 L14,22 L-14,22 Z" fill="${c3}"/><rect x="-4" y="22" width="8" height="16" fill="#4e342e"/></g>`;
+        } else if (style === "spear") {
+          charSvg = `<rect x="-3" y="-65" width="6" height="88" fill="#37474f" stroke="${c2}" stroke-width="1.5"/><polygon points="0,-102 -12,-62 0,-70 12,-62" fill="${c1}" stroke="${c2}" stroke-width="2"/><polygon points="-12,-62 -22,-48 -4,-54" fill="${c3}"/><polygon points="12,-62 22,-48 4,-54" fill="${c3}"/>`;
+          iconInner = `<g transform="translate(50,52) rotate(30)"><rect x="-3" y="-20" width="6" height="62" fill="#37474f"/><polygon points="0,-46 -14,-12 0,-18 14,-12" fill="${c1}" stroke="${c2}" stroke-width="2"/><polygon points="-12,-14 -24,0 -4,-6" fill="${c3}"/><polygon points="12,-14 24,0 4,-6" fill="${c3}"/></g>`;
+        } else if (style === "axe") {
+          charSvg = `<rect x="-4" y="-75" width="8" height="95" fill="#3e2723" stroke="#1b0000" stroke-width="1.5"/><polygon points="0,-88 -5,-72 5,-72" fill="${c3}"/><path d="M-4,-68 Q-38,-82 -34,-42 Q-28,-22 -4,-34 Z" fill="${c1}" stroke="${c3}" stroke-width="2.2"/><path d="M4,-68 Q38,-82 34,-42 Q28,-22 4,-34 Z" fill="${c1}" stroke="${c3}" stroke-width="2.2"/><circle cx="0" cy="-52" r="5" fill="${c3}"/>`;
+          iconInner = `<g transform="translate(50,52) rotate(20)"><rect x="-4" y="-36" width="8" height="74" fill="#3e2723"/><path d="M-4,-28 Q-38,-42 -34,-2 Q-26,16 -4,4 Z" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><path d="M4,-28 Q38,-42 34,-2 Q26,16 4,4 Z" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><circle cx="0" cy="-12" r="5" fill="${c3}"/></g>`;
+        } else if (style === "twinblade") {
+          charSvg = `<rect x="-3" y="-65" width="6" height="82" fill="#210b36"/><path d="M0,-92 Q-28,-65 -6,-18 L4,-18 Z" fill="${c1}" stroke="${c2}" stroke-width="2"/><path d="M0,-75 Q24,-55 6,-22 Z" fill="${c3}" opacity="0.85"/><circle cx="0" cy="-18" r="6" fill="${c3}"/>`;
+          iconInner = `<g transform="translate(50,50) rotate(28)"><path d="M0,-44 Q-28,-18 -6,20 L5,20 Z" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><path d="M0,-30 Q24,-10 6,16 Z" fill="${c3}"/><circle cx="0" cy="20" r="6" fill="${c2}"/></g>`;
         } else {
-          advice.push("🔥 精壯體態：體脂維持得非常好！可透過皇家鐵匠鋪提升武器階級挑戰更高級地下城。");
+          charSvg = `<polygon points="0,-102 -12,-18 12,-18" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="0,-94 -5,-20 5,-20" fill="${c3}"/><path d="M-26,-22 L0,-12 L26,-22 L18,-10 L-18,-10 Z" fill="${c2}" stroke="#fff" stroke-width="1.5"/><rect x="-5" y="-10" width="10" height="24" fill="#4e342e"/><circle cx="0" cy="-16" r="5" fill="#ff1744"/><circle cx="0" cy="16" r="6" fill="${c2}"/>`;
+          iconInner = `<g transform="translate(50,50) rotate(28)"><polygon points="0,-46 -11,14 11,14" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="0,-38 -5,12 5,12" fill="${c3}"/><path d="M-24,10 L0,18 L24,10 L16,22 L-16,22 Z" fill="${c2}"/><rect x="-4" y="22" width="8" height="16" fill="#4e342e"/><circle cx="0" cy="15" r="4.5" fill="#ff1744"/></g>`;
         }
-      } else {
-        advice.push("🎯 建議每日持續記錄體重與體脂，能更精準追蹤身體轉變！");
+      } else if (type === "head") {
+        if (style === "band") {
+          charSvg = `<g transform="translate(100, 32)"><path d="M-26,12 Q-28,-14 0,-14 Q28,-14 26,12 Z" fill="${c1}" stroke="${c2}" stroke-width="2"/><rect x="-28" y="6" width="56" height="8" rx="3" fill="${c3}"/><polygon points="0,2 -6,12 6,12" fill="${c2}"/></g>`;
+          iconInner = `<path d="M24,60 Q24,24 50,24 Q76,24 76,60 Z" fill="${c1}" stroke="${c2}" stroke-width="3"/><rect x="20" y="50" width="60" height="10" rx="4" fill="${c3}"/>`;
+        } else if (style === "knight") {
+          charSvg = `<g transform="translate(100, 30)"><path d="M-12,-14 Q0,-34 16,-20 L0,-10 Z" fill="${c3}"/><path d="M-28,20 L-26,-6 Q0,-22 26,-6 L28,20 L16,26 L12,10 L-12,10 L-16,26 Z" fill="${c1}" stroke="${c2}" stroke-width="2.2"/><line x1="-18" y1="6" x2="18" y2="6" stroke="${c2}" stroke-width="3"/><polygon points="0,-14 -5,6 5,6" fill="${c3}"/></g>`;
+          iconInner = `<path d="M38,24 Q50,4 68,16 L50,28 Z" fill="${c3}"/><path d="M24,68 L26,34 Q50,16 74,34 L76,68 L60,74 L56,52 L44,52 L40,74 Z" fill="${c1}" stroke="${c2}" stroke-width="3"/><polygon points="50,24 44,48 56,48" fill="${c3}"/>`;
+        } else if (style === "wolf") {
+          charSvg = `<g transform="translate(100, 30)"><polygon points="-26,6 -32,-22 -10,-8" fill="${c1}" stroke="${c2}" stroke-width="2"/><polygon points="26,6 32,-22 10,-8" fill="${c1}" stroke="${c2}" stroke-width="2"/><path d="M-28,20 L-24,-6 L0,-14 L24,-6 L28,20 L16,12 L0,20 L-16,12 Z" fill="${c1}" stroke="${c2}" stroke-width="2.2"/><polygon points="0,-6 -6,10 6,10" fill="${c3}"/></g>`;
+          iconInner = `<polygon points="24,44 16,14 40,30" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="76,44 84,14 60,30" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="50,24 22,42 26,72 40,62 50,70 60,62 74,72 78,42" fill="${c1}" stroke="${c2}" stroke-width="3"/><polygon points="50,34 43,52 57,52" fill="${c3}"/>`;
+        } else {
+          charSvg = `<g transform="translate(100, 28)"><path d="M-24,8 L-48,-18 L-36,16 Z M24,8 L48,-18 L36,16 Z" fill="${c3}" stroke="${c2}" stroke-width="1.5"/><path d="M-28,22 L-24,-8 Q0,-24 24,-8 L28,22 L16,28 L12,10 L-12,10 L-16,28 Z" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="0,-24 -8,4 0,14 8,4" fill="${c3}" stroke="#fff" stroke-width="1"/></g>`;
+          iconInner = `<path d="M26,48 L6,18 L18,58 Z M74,48 L94,18 L82,58 Z" fill="${c3}"/><path d="M24,70 L28,34 Q50,16 72,34 L76,70 L60,76 L55,54 L45,54 L40,76 Z" fill="${c1}" stroke="${c2}" stroke-width="3"/><polygon points="50,14 42,44 50,56 58,44" fill="${c3}"/>`;
+        }
+      } else if (type === "chest") {
+        if (style === "tunic") {
+          charSvg = `<polygon points="68,80 132,80 124,142 76,142" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><path d="M74,80 L122,138 M126,80 L78,138" stroke="${c3}" stroke-width="3"/><rect x="73" y="128" width="54" height="8" fill="#3e2723" stroke="${c3}" stroke-width="1.5"/>`;
+          iconInner = `<polygon points="24,22 76,22 70,78 30,78" fill="${c1}" stroke="${c2}" stroke-width="3"/><path d="M28,24 L68,74 M72,24 L32,74" stroke="${c3}" stroke-width="3.5"/><rect x="28" y="64" width="44" height="8" fill="#3e2723"/>`;
+        } else if (style === "plate") {
+          charSvg = `<polygon points="50,76 76,74 68,102 44,94" fill="${c2}" stroke="${c3}" stroke-width="2"/><polygon points="150,76 124,74 132,102 156,94" fill="${c2}" stroke="${c3}" stroke-width="2"/><polygon points="66,78 134,78 124,144 100,150 76,144" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="100,90 86,108 100,126 114,108" fill="${c3}" stroke="#fff" stroke-width="1.5"/><rect x="72" y="132" width="56" height="8" fill="${c2}"/>`;
+          iconInner = `<polygon points="10,24 32,20 26,46 6,38" fill="${c2}"/><polygon points="90,24 68,20 74,46 94,38" fill="${c2}"/><polygon points="24,22 76,22 68,78 50,84 32,78" fill="${c1}" stroke="${c2}" stroke-width="3"/><polygon points="50,34 36,50 50,66 64,50" fill="${c3}" stroke="#fff" stroke-width="1.5"/>`;
+        } else {
+          charSvg = `<polygon points="40,70 76,74 68,104 34,90" fill="${c1}" stroke="${c3}" stroke-width="2.2"/><polygon points="160,70 124,74 132,104 166,90" fill="${c1}" stroke="${c3}" stroke-width="2.2"/><polygon points="64,78 136,78 126,144 100,152 74,144" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><path d="M76,92 L100,104 L124,92 M78,112 L100,124 L122,112" stroke="${c3}" stroke-width="3" fill="none"/><polygon points="100,86 90,106 100,130 110,106" fill="${c3}" stroke="#fff" stroke-width="1.5"/>`;
+          iconInner = `<polygon points="6,20 34,22 26,48 4,36" fill="${c1}" stroke="${c3}" stroke-width="2"/><polygon points="94,20 66,22 74,48 96,36" fill="${c1}" stroke="${c3}" stroke-width="2"/><polygon points="22,22 78,22 68,78 50,86 32,78" fill="${c1}" stroke="${c2}" stroke-width="3"/><polygon points="50,30 38,50 50,72 62,50" fill="${c3}" stroke="#fff" stroke-width="1.5"/>`;
+        }
+      } else if (type === "shoes") {
+        const hasWings = style === "winged";
+        charSvg = `<polygon points="73,164 95,164 96,194 68,194" fill="${c1}" stroke="${c2}" stroke-width="2"/><polygon points="105,164 127,164 132,194 104,194" fill="${c1}" stroke="${c2}" stroke-width="2"/><rect x="74" y="166" width="20" height="6" fill="${c3}"/><rect x="106" y="166" width="20" height="6" fill="${c3}"/>${hasWings ? `<polygon points="68,176 52,162 68,188" fill="${c3}"/><polygon points="132,176 148,162 132,188" fill="${c3}"/>` : ''}`;
+        iconInner = `<polygon points="24,30 46,30 48,72 18,72" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><polygon points="54,30 76,30 82,72 52,72" fill="${c1}" stroke="${c2}" stroke-width="2.5"/><rect x="24" y="34" width="22" height="7" fill="${c3}"/><rect x="54" y="34" width="22" height="7" fill="${c3}"/>${hasWings ? `<polygon points="18,46 4,30 18,62" fill="${c3}"/><polygon points="82,46 96,30 82,62" fill="${c3}"/>` : ''}`;
       }
 
-      advice.push("🏋️ 深蹲小叮嚀：下蹲時注意膝蓋不內扣，臀部向後坐，維護下肢關節健康。");
-      return advice.join("<br>");
-    }
-
-    function addBodyRecord() {
-      const weight = parseFloat(document.getElementById("weightInput").value);
-      const fat = parseFloat(document.getElementById("fatInput").value);
-      const photoInput = document.getElementById("photoInput");
-
-      if (isNaN(weight) || weight <= 0) {
-        alert("請輸入有效的體重數字！");
-        return;
-      }
-
-      const advice = generateAdvisorTips(weight, fat);
-      const dateStr = new Date().toLocaleDateString('zh-TW');
-
-      const saveRecord = (photoData) => {
-        const newRecord = {
-          date: dateStr,
-          weight: weight,
-          fat: isNaN(fat) ? null : fat,
-          photo: photoData || null,
-          advice: advice
-        };
-
-        data.bodyRecords.unshift(newRecord);
-        save();
-        renderBodyRecords();
-
-        document.getElementById("weightInput").value = "";
-        document.getElementById("fatInput").value = "";
-        document.getElementById("photoInput").value = "";
+      return {
+        svg: charSvg,
+        iconSvg: `<circle cx="50" cy="50" r="44" fill="${glowBg}" ${ringStroke}/>${iconInner}`
       };
+    }
 
-      if (photoInput.files && photoInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          saveRecord(e.target.result);
-        };
-        reader.readAsDataURL(photoInput.files[0]);
+    const rawEquipConfigs = [
+      ["新手木棒", "weapon", "武器", "common", "一般", 5, 0, 5, "club", "#8d6e63", "#4e342e", "#cfd8dc"],
+      ["獵人雙刃", "weapon", "武器", "common", "一般", 8, 180, 5, "dagger", "#b0bec5", "#455a64", "#8d6e63"],
+      ["皮質頭盔", "head", "頭盔", "common", "一般", 10, 400, 5, "band", "#8d6e63", "#4e342e", "#d7ccc8"],
+      ["斥候面罩", "head", "頭盔", "common", "一般", 12, 450, 5, "band", "#37474f", "#263238", "#00e676"],
+      ["布衣", "chest", "胸甲", "common", "一般", 6, 300, 5, "tunic", "#607d8b", "#37474f", "#b0bec5"],
+      ["輕風胸甲", "chest", "胸甲", "common", "一般", 15, 500, 5, "tunic", "#00897b", "#004d40", "#64ffda"],
+      ["布鞋", "shoes", "鞋子", "common", "一般", 4, 250, 5, "boot", "#78909c", "#37474f", "#cfd8dc"],
+      ["荒野皮靴", "shoes", "鞋子", "common", "一般", 9, 380, 5, "boot", "#6d4c41", "#3e2723", "#ffab00"],
+
+      ["精鋼戰劍", "weapon", "武器", "rare", "精良", 35, 2000, 10, "sword", "#e0f7fa", "#00b0ff", "#ffd700"],
+      ["寒霜長槍", "weapon", "武器", "rare", "精良", 45, 2600, 10, "spear", "#84ffff", "#0091ea", "#00e5ff"],
+      ["鐵製頭盔", "head", "頭盔", "rare", "精良", 38, 2400, 10, "knight", "#b0bec5", "#37474f", "#ff1744"],
+      ["蒼狼戰盔", "head", "頭盔", "rare", "精良", 46, 2800, 10, "wolf", "#546e7a", "#00b0ff", "#00e5ff"],
+      ["重裝板甲", "chest", "胸甲", "rare", "精良", 55, 3000, 10, "plate", "#ffd54f", "#f57f17", "#ff3d00"],
+      ["秘銀鎖子甲", "chest", "胸甲", "rare", "精良", 62, 3400, 10, "plate", "#80d8ff", "#0277bd", "#00e5ff"],
+      ["疾風之靴", "shoes", "鞋子", "rare", "精良", 30, 1600, 10, "winged", "#00e676", "#00695c", "#ffea00"],
+      ["鋼鐵戰靴", "shoes", "鞋子", "rare", "精良", 40, 2100, 10, "boot", "#90a4ae", "#263238", "#00b0ff"],
+
+      ["烈焰巨斧", "weapon", "武器", "epic", "史詩", 90, 12000, 20, "axe", "#ff1744", "#b71c1c", "#ffea00"],
+      ["暗影死神雙刃", "weapon", "武器", "epic", "史詩", 115, 15000, 20, "twinblade", "#d500f9", "#4a148c", "#00e5ff"],
+      ["聖騎士重盔", "head", "頭盔", "epic", "史詩", 85, 10000, 20, "winged", "#ffd700", "#ff6f00", "#ff1744"],
+      ["深淵魔龍鎧", "chest", "胸甲", "epic", "史詩", 120, 16000, 20, "dragon", "#311b92", "#d500f9", "#ff1744"],
+      ["雷霆瞬步靴", "shoes", "鞋子", "epic", "史詩", 80, 9500, 20, "winged", "#651fff", "#d500f9", "#00e5ff"],
+
+      ["泰坦神聖之劍", "weapon", "武器", "legendary", "傳說", 220, 55000, 40, "holysword", "#fff9c4", "#ffab00", "#00e5ff"],
+      ["永恆星冕神盔", "head", "頭盔", "legendary", "傳說", 180, 45000, 40, "winged", "#fff9c4", "#ffab00", "#00e5ff"],
+      ["不朽泰坦神鎧", "chest", "胸甲", "legendary", "傳說", 240, 60000, 40, "dragon", "#ffd700", "#e65100", "#00e5ff"],
+      ["虛空神行戰靴", "shoes", "鞋子", "legendary", "傳說", 160, 42000, 40, "winged", "#ffd700", "#ff6d00", "#00e5ff"]
+    ];
+
+    const shopItems = rawEquipConfigs.map(([id, type, typeLabel, rarity, rarityName, bonus, price, requiredShards, style, c1, c2, c3]) => {
+      const vis = createEquipVisuals(type, style, c1, c2, c3, rarity);
+      return { id, type, typeLabel, rarity, rarityName, bonus, price, requiredShards, svg: vis.svg, iconSvg: vis.iconSvg };
+    });
+
+    const petItems = [
+      { id: "凶暴綠林狼", rarity: "common", rarityName: "一般", bonusAtk: 10, price: 400, requiredShards: 5, desc: "眼神銳利的綠林凶狼",
+        iconSvg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(0,230,118,0.12)"/><polygon points="22,42 18,14 40,30" fill="#2e7d32" stroke="#00e676" stroke-width="2"/><polygon points="78,42 82,14 60,30" fill="#2e7d32" stroke="#00e676" stroke-width="2"/><polygon points="50,24 20,44 30,78 50,88 70,78 80,44" fill="#1b5e20" stroke="#00e676" stroke-width="2.5"/><polygon points="30,48 45,56 34,60" fill="#ffea00"/><polygon points="70,48 55,56 66,60" fill="#ffea00"/></svg>` },
+      { id: "暗影毒蛛", rarity: "common", rarityName: "一般", bonusAtk: 15, price: 500, requiredShards: 5, desc: "吐出劇毒絲線的暗影巨蛛",
+        iconSvg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(170,0,255,0.15)"/><path d="M12,30 L35,48 L10,55 M88,30 L65,48 L90,55" stroke="#aa00ff" stroke-width="4" fill="none"/><ellipse cx="50" cy="54" rx="22" ry="26" fill="#210b36" stroke="#d500f9" stroke-width="2.5"/><circle cx="40" cy="46" r="4.5" fill="#ff1744"/><circle cx="60" cy="46" r="4.5" fill="#ff1744"/></svg>` },
+      { id: "地獄烈焰獸", rarity: "rare", rarityName: "精良", bonusAtk: 40, price: 3000, requiredShards: 10, desc: "雙眼燃燒怒火的狂暴烈焰獸",
+        iconSvg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(255,82,82,0.2)"/><path d="M22,45 Q30,8 50,20 Q70,8 78,45 Q90,65 50,88 Q10,65 22,45 Z" fill="#b71c1c" stroke="#ffab00" stroke-width="2.5"/><polygon points="28,46 45,54 32,60" fill="#ffea00"/><polygon points="72,46 55,54 68,60" fill="#ffea00"/></svg>` },
+      { id: "雷霆霸王鷹", rarity: "rare", rarityName: "精良", bonusAtk: 55, price: 4000, requiredShards: 10, desc: "俯視獵物的凶猛雷霆霸鷹",
+        iconSvg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="rgba(0,229,255,0.2)"/><polygon points="50,14 22,38 14,26 26,68 50,84 74,68 86,26 78,38" fill="#0d47a1" stroke="#00e5ff" stroke-width="2.5"/><polygon points="30,44 46,52 34,56" fill="#ffea00"/><polygon points="70,44 54,52 66,56" fill="#ffea00"/><polygon points="50,52 40,68 50,86 60,68" fill="#ffd700"/></svg>` },
+      { id: "深淵狂暴巨獸", rarity: "epic", rarityName: "史詩", bonusAtk: 110, price: 18000, requiredShards: 20, desc: "面目猙獰的深淵惡鬼巨獸",
+        iconSvg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="rgba(213,0,249,0.22)"/><polygon points="50,20 18,40 24,78 50,90 76,78 82,40" fill="#311b92" stroke="#d500f9" stroke-width="3"/><polygon points="26,46 45,55 30,62" fill="#ff1744"/><polygon points="74,46 55,55 70,62" fill="#ff1744"/><polygon points="32,76 38,62 45,76" fill="#fff"/><polygon points="68,76 62,62 55,76" fill="#fff"/></svg>` },
+      { id: "寒冰霜牙虎", rarity: "epic", rarityName: "史詩", bonusAtk: 140, price: 22000, requiredShards: 20, desc: "森冷獠牙霜牙巨虎",
+        iconSvg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="rgba(0,229,255,0.25)"/><polygon points="50,18 20,36 24,72 50,86 76,72 80,36" fill="#006064" stroke="#84ffff" stroke-width="3"/><polygon points="28,44 44,52 32,58" fill="#00e5ff"/><polygon points="72,44 56,52 68,58" fill="#00e5ff"/><polygon points="32,68 38,92 46,70" fill="#e0f7fa"/><polygon points="68,68 62,92 54,70" fill="#e0f7fa"/></svg>` },
+      { id: "毀滅魔龍獸", rarity: "legendary", rarityName: "傳說", bonusAtk: 300, price: 80000, requiredShards: 40, desc: "傳說中帶來毀滅的凶狠魔龍",
+        iconSvg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="rgba(255,23,68,0.28)"/><path d="M28,28 Q6,4 36,16 M72,28 Q94,4 64,16" fill="#ff1744" stroke="#ffea00" stroke-width="2"/><polygon points="50,16 18,38 26,76 50,90 74,76 82,38" fill="#250c40" stroke="#ffab00" stroke-width="2.5"/><polygon points="26,44 45,52 30,58" fill="#ffea00"/><polygon points="74,44 55,52 70,58" fill="#ffea00"/></svg>` }
+    ];
+
+    const uniqueMonsters20 = [
+      { name: "劇毒藍史萊姆", svg: `<svg viewBox="0 0 100 100"><path d="M18,76 Q14,28 50,24 Q86,28 82,76 Z" fill="#00acc1" stroke="#00e676" stroke-width="3"/><polygon points="32,50 45,55 35,60" fill="#ffea00"/><polygon points="68,50 55,55 65,60" fill="#ffea00"/></svg>` },
+      { name: "暗夜吸血蝠", svg: `<svg viewBox="0 0 100 100"><path d="M8,32 L36,48 L16,64 Z M92,32 L64,48 L84,64 Z" fill="#4a148c" stroke="#d500f9" stroke-width="2"/><circle cx="50" cy="52" r="20" fill="#210b36" stroke="#aa00ff" stroke-width="2.5"/><circle cx="42" cy="48" r="4" fill="#ff1744"/><circle cx="58" cy="48" r="4" fill="#ff1744"/></svg>` },
+      { name: "叢林狂暴哥布林", svg: `<svg viewBox="0 0 100 100"><polygon points="6,40 28,34 24,54" fill="#558b2f"/><polygon points="94,40 72,34 76,54" fill="#558b2f"/><polygon points="50,22 24,40 30,76 50,86 70,76 76,40" fill="#33691e" stroke="#8bc34a" stroke-width="2.5"/><polygon points="30,46 46,54 34,58" fill="#ff1744"/><polygon points="70,46 54,54 66,58" fill="#ff1744"/></svg>` },
+      { name: "深淵獨眼幽靈", svg: `<svg viewBox="0 0 100 100"><path d="M22,82 L26,40 Q50,12 74,40 L78,82 L50,70 Z" fill="#311b92" stroke="#7c4dff" stroke-width="3"/><circle cx="50" cy="48" r="14" fill="#fff9c4" stroke="#ff1744" stroke-width="2.5"/><circle cx="50" cy="48" r="6" fill="#d50000"/></svg>` },
+      { name: "🔥深淵史萊姆霸主", svg: `<svg viewBox="0 0 100 100"><polygon points="30,28 38,10 50,24 62,10 70,28" fill="#ffd700" stroke="#ff6f00" stroke-width="2"/><path d="M14,80 Q10,30 50,26 Q90,30 86,80 Z" fill="#880e4f" stroke="#ff4081" stroke-width="3.5"/><polygon points="28,48 45,56 32,62" fill="#ffea00"/><polygon points="72,48 55,56 68,62" fill="#ffea00"/></svg>` },
+      { name: "荒漠劇毒巨蠍", svg: `<svg viewBox="0 0 100 100"><path d="M50,28 Q75,8 82,24" fill="none" stroke="#ff6d00" stroke-width="5"/><ellipse cx="50" cy="58" rx="24" ry="22" fill="#bf360c" stroke="#ff9100" stroke-width="2.5"/><circle cx="40" cy="52" r="4" fill="#ffea00"/><circle cx="60" cy="52" r="4" fill="#ffea00"/></svg>` },
+      { name: "腐木千年樹妖", svg: `<svg viewBox="0 0 100 100"><path d="M26,86 L30,28 L50,14 L70,28 L74,86 Z" fill="#4e342e" stroke="#8d6e63" stroke-width="2.5"/><polygon points="34,48 45,54 36,58" fill="#00e676"/><polygon points="66,48 55,54 64,58" fill="#00e676"/></svg>` },
+      { name: "煉獄雙頭魔犬", svg: `<svg viewBox="0 0 100 100"><polygon points="34,26 14,44 20,74 34,82 48,74" fill="#3e2723" stroke="#ff5252" stroke-width="2"/><polygon points="66,26 52,44 52,74 66,82 86,74" fill="#271c19" stroke="#ff9100" stroke-width="2"/><circle cx="28" cy="52" r="4" fill="#ff1744"/><circle cx="72" cy="52" r="4" fill="#ffea00"/></svg>` },
+      { name: "虛空暗影刺客", svg: `<svg viewBox="0 0 100 100"><polygon points="50,14 18,48 28,84 72,84 82,48" fill="#1a1a2e" stroke="#00e5ff" stroke-width="2.5"/><polygon points="34,48 46,52 38,56" fill="#00e5ff"/><polygon points="66,48 54,52 62,56" fill="#00e5ff"/></svg>` },
+      { name: "🔥狂暴綠林獸王", svg: `<svg viewBox="0 0 100 100"><polygon points="50,18 16,42 26,82 50,92 74,82 84,42" fill="#1b5e20" stroke="#76ff03" stroke-width="3"/><polygon points="28,48 45,56 32,62" fill="#ff1744"/><polygon points="72,48 55,56 68,62" fill="#ff1744"/><circle cx="50" cy="70" r="8" fill="none" stroke="#ffd700" stroke-width="3.5"/></svg>` },
+      { name: "極地寒冰晶怪", svg: `<svg viewBox="0 0 100 100"><polygon points="50,8 22,32 14,66 36,88 64,88 86,66 78,32" fill="#006064" stroke="#84ffff" stroke-width="3"/><rect x="30" y="44" width="14" height="6" fill="#e0f7fa"/><rect x="56" y="44" width="14" height="6" fill="#e0f7fa"/></svg>` },
+      { name: "狂暴熔岩火靈", svg: `<svg viewBox="0 0 100 100"><path d="M22,68 Q12,38 50,12 Q88,38 78,68 Q50,92 22,68 Z" fill="#d50000" stroke="#ffea00" stroke-width="3"/><polygon points="32,48 46,54 36,60" fill="#fff9c4"/><polygon points="68,48 54,54 64,60" fill="#fff9c4"/></svg>` },
+      { name: "雷霆雙翼石像鬼", svg: `<svg viewBox="0 0 100 100"><polygon points="6,28 30,42 14,68" fill="#37474f" stroke="#ffea00" stroke-width="2"/><polygon points="94,28 70,42 86,68" fill="#37474f" stroke="#ffea00" stroke-width="2"/><polygon points="50,22 24,38 30,76 50,86 70,76 76,38" fill="#455a64" stroke="#00e5ff" stroke-width="2.5"/></svg>` },
+      { name: "重裝鋼鐵機甲兵", svg: `<svg viewBox="0 0 100 100"><rect x="22" y="20" width="56" height="64" rx="10" fill="#546e7a" stroke="#cfd8dc" stroke-width="3"/><rect x="30" y="38" width="40" height="10" fill="#ff1744"/><line x1="34" y1="68" x2="66" y2="68" stroke="#263238" stroke-width="6"/></svg>` },
+      { name: "🔥熔岩泰坦石巨人", svg: `<svg viewBox="0 0 100 100"><polygon points="50,14 16,34 12,74 34,90 66,90 88,74 84,34" fill="#263238" stroke="#ff6d00" stroke-width="3.5"/><polygon points="28,44 46,50 32,56" fill="#ffea00"/><polygon points="72,44 54,50 68,56" fill="#ffea00"/><path d="M30,72 L50,62 L70,72" fill="none" stroke="#ff1744" stroke-width="4"/></svg>` },
+      { name: "冥界骷髏戰將", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="46" r="26" fill="#cfd8dc" stroke="#455a64" stroke-width="3"/><rect x="36" y="64" width="28" height="18" fill="#cfd8dc" stroke="#455a64" stroke-width="2.5"/><circle cx="40" cy="44" r="6" fill="#ff1744"/><circle cx="60" cy="44" r="6" fill="#ff1744"/></svg>` },
+      { name: "深淵劇毒九頭蛇", svg: `<svg viewBox="0 0 100 100"><path d="M24,78 Q14,30 34,24 M50,78 L50,16 M76,78 Q86,30 66,24" fill="none" stroke="#00c853" stroke-width="10" stroke-linecap="round"/><circle cx="34" cy="24" r="8" fill="#00e676"/><circle cx="50" cy="16" r="9" fill="#00e676"/><circle cx="66" cy="24" r="8" fill="#00e676"/></svg>` },
+      { name: "詛咒死靈大法師", svg: `<svg viewBox="0 0 100 100"><polygon points="50,10 16,84 84,84" fill="#120024" stroke="#aa00ff" stroke-width="3"/><circle cx="42" cy="48" r="4" fill="#00e5ff"/><circle cx="58" cy="48" r="4" fill="#00e5ff"/></svg>` },
+      { name: "黑曜煉獄魔騎士", svg: `<svg viewBox="0 0 100 100"><polygon points="24,14 34,38 18,38" fill="#ff1744"/><polygon points="76,14 66,38 82,38" fill="#ff1744"/><polygon points="50,20 22,38 26,82 50,92 74,82 78,38" fill="#111" stroke="#ff5252" stroke-width="3"/><polygon points="30,48 48,54 34,60" fill="#ff1744"/><polygon points="70,48 52,54 66,60" fill="#ff1744"/></svg>` },
+      { name: "🔥終焉毀滅魔龍皇", svg: `<svg viewBox="0 0 100 100"><path d="M26,28 Q4,4 36,16 M74,28 Q96,4 64,16" fill="#ff1744" stroke="#ffea00" stroke-width="2.5"/><polygon points="50,16 14,38 22,78 50,94 78,78 86,38" fill="#310a18" stroke="#ffd700" stroke-width="3.5"/><polygon points="26,44 45,52 30,58" fill="#ffea00"/><polygon points="74,44 55,52 70,58" fill="#ffea00"/><polygon points="50,22 43,34 50,42 57,34" fill="#ffea00"/></svg>` }
+    ];
+
+    const stageHpCurve = [
+      450, 750, 1100, 1600, 3200,
+      3800, 4600, 5600, 6800, 11000,
+      13000, 15500, 18500, 22000, 36000,
+      42000, 49000, 58000, 68000, 98000
+    ];
+
+    const stagesData = [];
+    for (let i = 1; i <= 20; i++) {
+      const isBoss = i % 5 === 0;
+      const chapter = Math.floor((i - 1) / 5);
+      const moves = isBoss ? ["squat", "jumping_jack", "high_knees"] : (i % 2 === 0 ? ["squat", "jumping_jack"] : ["squat", "high_knees"]);
+      const mInfo = uniqueMonsters20[i - 1];
+
+      stagesData.push({
+        id: i,
+        name: `第 ${i} 關`,
+        monsterSvg: mInfo.svg,
+        enemy: mInfo.name,
+        hp: stageHpCurve[i - 1],
+        moves: moves,
+        desc: moves.map(m => exerciseVisuals[m].name).join(" ➔ "),
+        firstGold: isBoss ? 400 * (chapter + 1) + 600 : 80 * i,
+        firstExp: isBoss ? 800 * (chapter + 1) + 1200 : 150 * i,
+        repeatGold: Math.floor((80 * i) * 0.3),
+        repeatExp: Math.floor((150 * i) * 0.3),
+        isBoss: isBoss
+      });
+    }
+
+    const defaultSVGs = {
+      head: `<path d="M 72 44 L 66 24 L 82 30 L 92 14 L 104 28 L 118 16 L 122 32 L 134 26 L 128 46 Q 100 32 72 44 Z" fill="#1a1a2e" stroke="#3949ab" stroke-width="1.5" />`,
+      chest: `<polygon points="68,80 132,80 122,142 78,142" fill="#283593" stroke="#5c6bc0" stroke-width="2.5" /><polygon points="90,80 100,104 110,80" fill="#00e5ff" />`,
+      shoes: `<polygon points="73,168 95,168 96,194 68,194" fill="#37474f" stroke="#78909c" stroke-width="2"/><polygon points="105,168 127,168 132,194 104,194" fill="#37474f" stroke="#78909c" stroke-width="2"/>`,
+      weapon: ``
+    };
+
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === tabName));
+      document.getElementById(`view-${tabName}`).classList.add('active');
+
+      if (tabName === 'home') updateUI();
+      if (tabName === 'stages') renderQuestMap();
+      if (tabName === 'shop') renderShop();
+      if (tabName === 'equip') { renderInventory(); renderShardsBag(); }
+      if (tabName === 'rank') { loadLeaderboard(); renderFriends(); }
+    };
+
+    window.switchShopTab = function(type) {
+      document.querySelectorAll('.shop-tab-btn').forEach(el => el.classList.remove('active'));
+      if(type === 'equipment') {
+        document.querySelector('.shop-tab-btn:nth-child(1)').classList.add('active');
+        document.getElementById('shop-equipment-section').style.display = 'block';
+        document.getElementById('shop-pets-section').style.display = 'none';
       } else {
-        saveRecord(null);
+        document.querySelector('.shop-tab-btn:nth-child(2)').classList.add('active');
+        document.getElementById('shop-equipment-section').style.display = 'none';
+        document.getElementById('shop-pets-section').style.display = 'block';
+        renderPetsShop();
       }
-    }
+    };
 
-    function renderBodyRecords() {
-      const listContainer = document.getElementById("bodyRecordList");
-      if (!listContainer) return;
-      listContainer.innerHTML = "";
-
-      if (data.bodyRecords.length === 0) {
-        listContainer.innerHTML = "<p style='text-align:center; color:#aaa; margin-top:20px;'>尚無紀錄，開始記錄你的第一天吧！</p>";
-        return;
+    window.switchEquipTab = function(type) {
+      document.querySelectorAll('.subtab-btn').forEach(el => el.classList.remove('active'));
+      if(type === 'hero') {
+        document.querySelector('.subtab-btn:nth-child(1)').classList.add('active');
+        document.getElementById('equip-hero-section').style.display = 'block';
+        document.getElementById('equip-bag-section').style.display = 'none';
+      } else {
+        document.querySelector('.subtab-btn:nth-child(2)').classList.add('active');
+        document.getElementById('equip-hero-section').style.display = 'none';
+        document.getElementById('equip-bag-section').style.display = 'block';
+        renderShardsBag();
       }
+    };
 
-      data.bodyRecords.forEach((rec, index) => {
-        const item = document.createElement("div");
-        item.className = "feature-card";
-        item.style.flexDirection = "column";
-        item.style.alignItems = "flex-start";
+    window.filterShopItems = function(category, btnEl) {
+      currentShopFilter = category;
+      document.querySelectorAll('#shop-filter-bar .filter-pill-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      renderShop();
+    };
 
-        const fatText = rec.fat ? ` | 體脂：${rec.fat}%` : "";
-        let photoHtml = rec.photo ? `<img src="${rec.photo}" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin: 8px 0;">` : "";
+    window.filterInventoryItems = function(category, btnEl) {
+      currentInvFilter = category;
+      document.querySelectorAll('#inv-filter-bar .filter-pill-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      renderInventory();
+    };
 
-        item.innerHTML = `
-          <div style="display:flex; justify-shadow:space-between; width:100%; align-items:center;">
-            <strong>📅 ${rec.date}</strong>
-            <button class="small-btn" onclick="deleteBodyRecord(${index})" style="background:#ff416c; border:none;">刪除</button>
-          </div>
-          <div style="font-size:0.85rem; color:#38bdf8; margin-top:4px;">⚖️ 體重：${rec.weight} kg ${fatText}</div>
-          ${photoHtml}
-          <div style="font-size:0.8rem; color:#e2e8f0; background:rgba(255,255,255,0.1); padding:8px; border-radius:6px; margin-top:6px; width:100%;">
-            ${rec.advice || "無建議"}
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById("login-container").style.display = "none";
+        document.getElementById("app-container").style.display = "flex";
+        document.getElementById("ui-name").textContent = user.displayName;
+
+        const today = new Date().toISOString().slice(0, 10);
+        const playerRef = doc(db, "players", user.uid);
+        const snap = await getDoc(playerRef);
+        if (!snap.exists()) {
+          await setDoc(playerRef, {
+            name: user.displayName || "勇者",
+            email: user.email,
+            level: 1, exp: 0, maxExp: 100, baseAtk: 10, totalSquats: 0, gold: 500,
+            inventory: ["新手木棒"],
+            equipped: { weapon: "新手木棒", head: "無", chest: "無", shoes: "無" },
+            pets: [], equippedPet: null, clearedStages: [], shards: {}, friends: [],
+            lastCheckin: "", dailyDate: today, dailyMoves: 0, dailyStages: 0, dailySteps: 0, claimedTasks: []
+          });
+        }
+        const rawData = (await getDoc(playerRef)).data() || {};
+        let eqObj = rawData.equipped;
+        if (!eqObj || typeof eqObj === 'string') {
+          eqObj = { weapon: typeof eqObj === 'string' ? eqObj : "新手木棒", head: "無", chest: "無", shoes: "無" };
+        }
+
+        const isSameDay = rawData.dailyDate === today;
+        const dailyMoves = isSameDay ? Number(rawData.dailyMoves || 0) : 0;
+        const dailyStages = isSameDay ? Number(rawData.dailyStages || 0) : 0;
+        const dailySteps = isSameDay ? Number(rawData.dailySteps || 0) : 0;
+        const claimedTasks = isSameDay && Array.isArray(rawData.claimedTasks) ? rawData.claimedTasks : [];
+
+        if (!isSameDay) {
+          await updateDoc(playerRef, { dailyDate: today, dailyMoves: 0, dailyStages: 0, dailySteps: 0, claimedTasks: [] });
+        }
+
+        playerData = {
+          level: Number(rawData.level || 1),
+          exp: Number(rawData.exp || 0),
+          maxExp: Number(rawData.maxExp || 100),
+          baseAtk: Number(rawData.baseAtk ?? rawData.atk ?? 10),
+          totalSquats: Number(rawData.totalSquats || 0),
+          gold: Number(rawData.gold ?? 500),
+          inventory: Array.isArray(rawData.inventory) ? rawData.inventory : ["新手木棒"],
+          equipped: eqObj,
+          pets: Array.isArray(rawData.pets) ? rawData.pets : [],
+          equippedPet: rawData.equippedPet || null,
+          clearedStages: Array.isArray(rawData.clearedStages) ? rawData.clearedStages : [],
+          shards: rawData.shards || {},
+          friends: Array.isArray(rawData.friends) ? rawData.friends : [],
+          lastCheckin: rawData.lastCheckin || "",
+          dailyDate: today,
+          dailyMoves: dailyMoves,
+          dailyStages: dailyStages,
+          dailySteps: dailySteps,
+          claimedTasks: claimedTasks
+        };
+        updateUI();
+        renderQuestMap();
+        renderInventory();
+
+        // 若裝置支援免權限直接監聽加速度計，自動開啟步數偵測
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') {
+          window.enableStepSensor();
+        }
+
+        if (!hasAskedCameraConsent) {
+          hasAskedCameraConsent = true;
+          document.getElementById("camera-consent-modal").style.display = "flex";
+        }
+      } else {
+        document.getElementById("login-container").style.display = "block";
+        document.getElementById("app-container").style.display = "none";
+      }
+    });
+
+    document.getElementById("btn-login").onclick = () => signInWithPopup(auth, googleProvider).catch(console.error);
+    document.getElementById("btn-logout").onclick = () => signOut(auth);
+
+    window.grantCameraConsent = async function() {
+      document.getElementById("camera-consent-modal").style.display = "none";
+      try {
+        await startCameraEngine();
+        document.getElementById("cam-ready-indicator").textContent = "📷 鏡頭已就緒";
+      } catch (err) {
+        alert("無法取得相機權限，請確認瀏覽器允許存取攝影機。");
+      }
+    };
+
+    window.declineCameraConsent = function() {
+      document.getElementById("camera-consent-modal").style.display = "none";
+    };
+
+    window.claimDailyCheckin = async function() {
+      const today = new Date().toISOString().slice(0, 10);
+      if (playerData.lastCheckin === today) return alert("今日已經簽到過了，請明天再來！");
+      playerData.lastCheckin = today;
+      playerData.gold += 150;
+      await updateDoc(doc(db, "players", currentUser.uid), { gold: playerData.gold, lastCheckin: today });
+      alert("📅 簽到成功！獲得 +150 金幣！");
+      updateUI();
+    };
+
+    function renderDailyTasks() {
+      const walkMeters = Math.floor((playerData.dailySteps || 0) * STEP_LENGTH_METERS);
+      const summaryEl = document.getElementById("daily-moves-summary");
+      if (summaryEl) summaryEl.textContent = `今日動作：${playerData.dailyMoves || 0}下 | 行走：${walkMeters}m`;
+
+      const container = document.getElementById("daily-tasks-container");
+      if (!container) return;
+
+      container.innerHTML = dailyQuestsConfig.map(quest => {
+        const currentProg = Math.min(quest.target, quest.getProgress());
+        const percent = Math.min(100, (currentProg / quest.target) * 100);
+        const isClaimed = playerData.claimedTasks.includes(quest.id);
+        const isCompleted = currentProg >= quest.target;
+        const u = quest.unit || "";
+
+        let btnHtml = isClaimed
+          ? `<button class="task-btn-claimed" disabled>✓ 已領取</button>`
+          : (isCompleted ? `<button class="task-btn-ready" onclick="claimTask('${quest.id}')">🎁 領取</button>` : `<button class="task-btn-locked" disabled>未達成 (${currentProg}/${quest.target}${u})</button>`);
+
+        return `
+          <div class="task-row">
+            <div class="task-info">
+              <div style="font-weight: bold; color: ${isCompleted ? '#fff' : '#d0d0e0'};">${quest.title}</div>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${quest.rewardText}</div>
+              <div class="task-progress-bg">
+                <div class="task-progress-fill" style="width: ${percent}%; background: ${isCompleted ? 'var(--accent-green)' : 'linear-gradient(90deg, #2979ff, #00e5ff)'};"></div>
+              </div>
+            </div>
+            ${btnHtml}
           </div>
         `;
-        listContainer.appendChild(item);
-      });
+      }).join('');
     }
 
-    function deleteBodyRecord(index) {
-      data.bodyRecords.splice(index, 1);
-      save();
-      renderBodyRecords();
+    window.claimTask = async function(questId) {
+      const quest = dailyQuestsConfig.find(q => q.id === questId);
+      if (!quest) return;
+      if (quest.getProgress() < quest.target) return alert("任務尚未完成！");
+      if (playerData.claimedTasks.includes(questId)) return alert("今日已領取過！");
+
+      playerData.claimedTasks.push(questId);
+      playerData.gold += quest.goldReward;
+      playerData.shards[quest.shardItem] = (playerData.shards[quest.shardItem] || 0) + quest.shardCount;
+
+      if (currentUser) {
+        await updateDoc(doc(db, "players", currentUser.uid), {
+          gold: playerData.gold, shards: playerData.shards, claimedTasks: playerData.claimedTasks
+        });
+      }
+      alert(`🎯 任務完成！獲得 +${quest.goldReward} 金幣 & 【${quest.shardItem}】碎片 x${quest.shardCount}！`);
+      updateUI();
+    };
+
+    function getCalculatedAtk() {
+      let totalBonus = 0;
+      if (playerData.equipped && typeof playerData.equipped === 'object') {
+        Object.values(playerData.equipped).forEach(itemName => {
+          const item = shopItems.find(i => i.id === itemName);
+          if (item) totalBonus += Number(item.bonus || 0);
+        });
+      }
+      if (playerData.equippedPet) {
+        const pItem = petItems.find(p => p.id === playerData.equippedPet);
+        if (pItem) totalBonus += Number(pItem.bonusAtk || 0);
+      }
+      return (Number(playerData.baseAtk) || 10) + totalBonus;
     }
-    // ---------------------------
 
-    function initMobileGps() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.watchPosition((position) => {
-        const coords = position.coords; const speedMps = coords.speed;
-        let currentSpeedKmh = (speedMps !== null && speedMps >= 0) ? speedMps * 3.6 : 0;
+    function updateUI() {
+      const atk = getCalculatedAtk();
+      const steps = playerData.dailySteps || 0;
+      const walkMeters = Math.floor(steps * STEP_LENGTH_METERS);
 
-        if ((speedMps === null || currentSpeedKmh === 0) && lastPosition) {
-          const dMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
-          currentSpeedKmh = dMeters * 3.6;
+      document.getElementById("ui-lvl").textContent = playerData.level || 1;
+      document.getElementById("top-gold").textContent = playerData.gold || 0;
+      document.getElementById("home-atk").textContent = atk;
+      document.getElementById("home-squats").textContent = `${playerData.totalSquats || 0} 次`;
+      document.getElementById("home-daily-steps").textContent = steps.toLocaleString();
+      document.getElementById("home-walk-meters").textContent = walkMeters.toLocaleString();
+      document.getElementById("home-exp").textContent = playerData.exp || 0;
+      document.getElementById("home-maxexp").textContent = playerData.maxExp || 100;
+
+      const expPercent = Math.min(100, ((playerData.exp || 0) / (playerData.maxExp || 100)) * 100);
+      document.getElementById("home-exp-bar").style.width = `${expPercent}%`;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const checkinBtn = document.getElementById("btn-daily-checkin");
+      if (checkinBtn) {
+        if (playerData.lastCheckin === today) {
+          checkinBtn.textContent = "✓ 今日簽到獎勵已領取";
+          checkinBtn.classList.add("claimed");
+          checkinBtn.disabled = true;
+        } else {
+          checkinBtn.textContent = "📅 點擊領取今日簽到獎勵 (+150 金幣)";
+          checkinBtn.classList.remove("claimed");
+          checkinBtn.disabled = false;
         }
-
-        if (document.getElementById("lobbyWalkSpeed")) document.getElementById("lobbyWalkSpeed").textContent = currentSpeedKmh.toFixed(1);
-        const msgEl = document.getElementById("lobbyWalkMsg");
-
-        if (currentSpeedKmh < MIN_SPEED_KMH) {
-          if(msgEl) { msgEl.textContent = "💤 原地休憩中 (低於 3km/h 不計距離)"; msgEl.className = "walk-msg"; }
-          lastPosition = coords; return;
-        }
-        if (currentSpeedKmh > MAX_SPEED_KMH) {
-          if(msgEl) { msgEl.textContent = "⚠️ 速度過快！遠征暫停計算"; msgEl.className = "walk-msg warn"; }
-          lastPosition = coords; return;
-        }
-
-        if (lastPosition) {
-          const distMeters = calcDistanceMeters(lastPosition.latitude, lastPosition.longitude, coords.latitude, coords.longitude);
-          if (distMeters > 2 && distMeters < 100) {
-            data.walkDistance = (data.walkDistance || 0) + (distMeters / 1000);
-            data.coins = (data.coins || 0) + Math.floor(distMeters / 10) * 5; 
-            save();
-          }
-        }
-        if(msgEl) { msgEl.textContent = "🟢 聖騎士全速行軍中！"; msgEl.className = "walk-msg ok"; }
-        lastPosition = coords;
-      }, (err) => {}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      }
+      renderDailyTasks();
     }
 
-    function calcDistanceMeters(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; const φ1 = lat1 * Math.PI / 180; const φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180; const Δλ = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-    }
+    function renderQuestMap() {
+      const container = document.getElementById("quest-path-container");
+      const currentAtk = getCalculatedAtk();
+      container.innerHTML = stagesData.map((stage, idx) => {
+        const isCleared = playerData.clearedStages.includes(stage.id);
+        const isUnlocked = idx === 0 || playerData.clearedStages.includes(stagesData[idx - 1].id);
+        
+        let statusClass = isCleared ? "cleared" : (isUnlocked ? "unlocked" : "");
+        if(stage.isBoss) statusClass += " boss-node";
+        let statusText = isCleared ? "⭐ 已通關" : (isUnlocked ? "⚔️ 點擊出戰" : "🔒 未解鎖");
 
-    function openRole() {
-      document.getElementById("roleTitle").textContent = "殿堂騎士階級 Lv." + data.roleLevel;
-      document.getElementById("roleDesc").textContent = "基礎攻擊力：" + data.roleAttack;
-      renderShop(); showScreen("roleScreen");
-    }
-    function upgradeRole() {
-      const cost = data.roleLevel * 300; if (data.coins < cost) { alert("健身幣不足！"); return; }
-      data.coins -= cost; data.roleLevel++; data.roleAttack += 6; save(); openRole();
-    }
-    function renderShop() {
-      const box = document.getElementById("shopItems"); if(!box) return; box.innerHTML = "";
-      data.shop.forEach(item => {
-        const card = document.createElement("div"); card.className = "shop-item-card";
-        card.innerHTML = `
-          <div>
-            <strong>${item.icon} ${item.name} <span style="color:#eab308">Lv.${item.level}</span></strong>
-            <div style="font-size:0.8rem; color:#aaa;">${item.desc} (+${item.level * item.baseStat})</div>
+        return `
+          <div class="quest-node ${statusClass}" onclick="selectStage(${stage.id})">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div class="monster-svg-avatar">${stage.monsterSvg}</div>
+              <div>
+                <div style="font-weight: 900; font-size: 13px; color:${stage.isBoss?'#ff8a80':'white'}">${stage.name}：${stage.enemy}</div>
+                <div style="font-size: 11px; color: var(--accent-gold); margin-top: 3px;">輪替動作：${stage.desc}</div>
+                <div style="font-size: 10px; color: #b0bec5; margin-top: 2px;">❤️ 魔王血量：<b style="color:#ff5252;">${stage.hp} HP</b> (約需 ${Math.ceil(stage.hp / currentAtk)} 下標準動作)</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 11px; font-weight: bold; color: ${isCleared ? 'var(--accent-green)' : (isUnlocked ? 'var(--accent-cyan)' : 'var(--text-muted)')};">${statusText}</div>
+              <div style="font-size: 10px; color: var(--accent-gold); margin-top: 4px;">首通: +${stage.firstGold}G</div>
+            </div>
           </div>
-          <button class="small-btn" onclick="buyShopItem('${item.id}')">鍛造 (${item.cost}🪙)</button>
         `;
-        box.appendChild(card);
-      });
-    }
-    function buyShopItem(id) {
-      const item = data.shop.find(i => i.id === id); if (data.coins < item.cost) { alert("健身幣餘額不足！"); return; }
-      data.coins -= item.cost; item.level++; item.cost = Math.floor(item.cost * 1.6); save(); renderShop();
+      }).join('');
     }
 
-    function activePet() { if(!data.pets) return defaultData.pets[0]; return data.pets.find(p => p.active && p.owned) || data.pets[0]; }
-    function openPets() {
-      const box = document.getElementById("petList"); if(!box) return; box.innerHTML = "";
-      data.pets.forEach(p => {
-        const div = document.createElement("div"); div.className = "feature-card";
-        div.innerHTML = `
-          <div>
-            <strong>${p.icon} ${p.name} <span style="font-size:0.8rem; color:#38bdf8;">[${p.rarity}]</span></strong>
-            <div style="font-size:0.8rem; color:#aaa;">Lv.${p.level} | 攻擊力: +${p.attack} (${p.owned ? '✅已解鎖' : '🔒未解鎖'})</div>
-          </div>
-          <button class="small-btn" onclick="setPet(${p.id})">${p.active ? '⚔️出擊中' : '配置'}</button>
-        `;
-        box.appendChild(div);
+    function syncHeroSVG() {
+      const slots = ["weapon", "head", "chest", "shoes"];
+      slots.forEach(slotKey => {
+        const itemName = playerData.equipped?.[slotKey] || "無";
+        const itemObj = shopItems.find(i => i.id === itemName);
+        const charSvgContent = itemObj ? itemObj.svg : defaultSVGs[slotKey];
+
+        const mainEl = document.getElementById(`svg-${slotKey}`);
+        const battleEl = document.getElementById(`battle-svg-${slotKey}`);
+        if (mainEl) mainEl.innerHTML = charSvgContent;
+        if (battleEl) battleEl.innerHTML = charSvgContent;
+
+        const slotIconBox = document.getElementById(`icon-slot-${slotKey}`);
+        const slotAtkEl = document.getElementById(`atk-slot-${slotKey}`);
+        const slotCardEl = document.getElementById(`box-slot-${slotKey}`);
+        if (slotIconBox) {
+          slotIconBox.innerHTML = itemObj
+            ? `<svg viewBox="0 0 100 100">${itemObj.iconSvg}</svg>`
+            : `<span style="font-size:18px; opacity:0.35;">➕</span>`;
+        }
+        if (slotAtkEl) {
+          slotAtkEl.textContent = itemObj ? `+${itemObj.bonus} 攻擊` : `未穿戴`;
+        }
+        if (slotCardEl) {
+          slotCardEl.className = `armory-slot-box ${itemObj ? 'rarity-' + itemObj.rarity : ''}`;
+        }
       });
-      showScreen("petScreen");
-    }
-    function setPet(id) {
-      const pet = data.pets.find(p => p.id === id); if (!pet.owned) { alert("尚未解鎖此戰寵！"); return; }
-      data.pets.forEach(p => p.active = false); pet.active = true; save(); openPets();
-    }
-    function openGacha() { document.getElementById("gachaResult").textContent = ""; showScreen("gachaScreen"); }
-    function drawGacha() {
-      if (data.coins < 300) { alert("健身幣不足！"); return; }
-      data.coins -= 300;
-      const pet = data.pets[Math.floor(Math.random() * data.pets.length)];
-      pet.owned = true;
-      document.getElementById("gachaResult").innerHTML = `🔮 獲得：${pet.icon} 【${pet.name}】(${pet.rarity})`; save();
+
+      const petObj = petItems.find(p => p.id === playerData.equippedPet);
+      const petSvgContent = petObj ? petObj.iconSvg : "";
+      const companionEl = document.getElementById("svg-pet-companion");
+      if (companionEl) companionEl.innerHTML = petSvgContent;
+      const battlePetEl = document.getElementById("battle-svg-pet");
+      if (battlePetEl) battlePetEl.innerHTML = petSvgContent;
     }
 
-    function openMap() { renderMap(); showScreen("mapScreen"); }
-    function renderMap() {
-      const box = document.getElementById("mapNodes"); if(!box) return; box.innerHTML = "";
-      for (let i = 1; i <= 10; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = `Stage ${i} ${i <= data.stage ? '🔓' : '🔒'}`;
-        btn.onclick = () => { if (i <= data.stage) startBattle(i); };
-        box.appendChild(btn);
+    function renderComboSequence() {
+      const bar = document.getElementById("combo-sequence-bar");
+      bar.innerHTML = comboMoveList.map((moveType, idx) => {
+        const info = exerciseVisuals[moveType];
+        const isActive = idx === currentComboIndex;
+        return `<div class="combo-step ${isActive ? 'active-step' : ''}"><span>${isActive ? '🔥 當前：' : '⏳ 輪替：'}${info.name}</span></div>`;
+      }).join('<span style="color:#666; font-size:10px;">➔</span>');
+
+      const activeMoveType = comboMoveList[currentComboIndex];
+      if (activeMoveType) {
+        const vInfo = exerciseVisuals[activeMoveType];
+        document.getElementById("pose-svg-icon").innerHTML = vInfo.svg;
+        document.getElementById("current-move-title").textContent = vInfo.name;
+      }
+      document.getElementById("battle-rep-count").textContent = sessionSquats;
+    }
+
+    window.selectStage = async function(stageId) {
+      const idx = stagesData.findIndex(s => s.id === stageId);
+      const isUnlocked = idx === 0 || playerData.clearedStages.includes(stagesData[idx - 1].id);
+      if (!isUnlocked) return alert("🔒 此關卡尚未解鎖，請先完成前置關卡！");
+
+      currentStage = stagesData[idx];
+      monsterHp = Number(currentStage.hp);
+      monsterMaxHp = Number(currentStage.hp);
+      sessionSquats = 0;
+
+      comboMoveList = [...currentStage.moves];
+      currentComboIndex = 0;
+      resetPoseTrackingState();
+
+      syncHeroSVG();
+      document.getElementById("active-stage-title").textContent = currentStage.name;
+      document.getElementById("battle-player-atk").textContent = getCalculatedAtk();
+      document.getElementById("monster-name").textContent = currentStage.enemy;
+      document.getElementById("battle-monster-box").innerHTML = currentStage.monsterSvg;
+      document.getElementById("monster-hp").textContent = monsterHp;
+      document.getElementById("monster-maxhp").textContent = monsterMaxHp;
+      document.getElementById("monster-hp-bar").style.width = "100%";
+      renderComboSequence();
+
+      document.getElementById("fullscreen-battle").style.display = "flex";
+      await startCameraEngine();
+
+      isBattleActive = false;
+      isBattlePaused = false;
+      const overlay = document.getElementById("countdown-overlay");
+      const numEl = document.getElementById("countdown-number");
+      document.getElementById("countdown-stage-name").textContent = `${currentStage.name} - ${currentStage.enemy} (HP: ${monsterMaxHp})`;
+      overlay.style.display = "flex";
+
+      const sequence = ["3", "2", "1", "FIGHT!"];
+      for (let i = 0; i < sequence.length; i++) {
+        numEl.textContent = sequence[i];
+        await new Promise(r => setTimeout(r, 800));
+      }
+      overlay.style.display = "none";
+      isBattleActive = true;
+    };
+
+    window.openPauseMenu = function() {
+      isBattlePaused = true;
+      document.getElementById("battle-pause-modal").style.display = "flex";
+    };
+    window.pauseBattleAction = function() {
+      isBattlePaused = true;
+      document.getElementById("pause-modal-title").textContent = "⏸️ 戰鬥已暫停";
+    };
+    window.resumeBattleAction = function() {
+      isBattlePaused = false;
+      document.getElementById("battle-pause-modal").style.display = "none";
+    };
+    window.leaveBattleAction = async function() {
+      isBattleActive = false;
+      isBattlePaused = false;
+      document.getElementById("battle-pause-modal").style.display = "none";
+      document.getElementById("fullscreen-battle").style.display = "none";
+
+      if (sessionSquats > 0 && currentUser) {
+        await updateDoc(doc(db, "players", currentUser.uid), {
+          totalSquats: playerData.totalSquats, dailyMoves: playerData.dailyMoves
+        });
+      }
+      updateUI();
+      renderQuestMap();
+    };
+
+    function triggerActionSuccess(qualityMultiplier = 1.0, moveLabel = "標準攻擊") {
+      if (!isBattleActive || isBattlePaused || !currentStage) return;
+
+      const now = Date.now();
+      if (now - lastAttackTimestamp < 800) return;
+      lastAttackTimestamp = now;
+
+      sessionSquats++;
+      playerData.totalSquats = (playerData.totalSquats || 0) + 1;
+      playerData.dailyMoves = (playerData.dailyMoves || 0) + 1;
+
+      const baseAtk = getCalculatedAtk();
+      const finalDamage = Math.round(baseAtk * qualityMultiplier);
+      monsterHp = Math.max(0, monsterHp - finalDamage);
+
+      currentComboIndex = (currentComboIndex + 1) % comboMoveList.length;
+      resetPoseTrackingState();
+      renderComboSequence();
+
+      const heroBox = document.getElementById("battle-hero-box");
+      const monsterBox = document.getElementById("battle-monster-box");
+      const slashEl = document.getElementById("slash-effect");
+      const dmgEl = document.getElementById("dmg-popup");
+
+      heroBox.classList.remove("hero-attack-anim");
+      monsterBox.classList.remove("monster-hit-anim");
+      slashEl.classList.remove("slash-anim");
+      dmgEl.classList.remove("dmg-anim");
+      void heroBox.offsetWidth;
+
+      slashEl.textContent = qualityMultiplier >= 1.25 ? "⚡🔥" : "💥";
+      dmgEl.textContent = `${moveLabel} -${finalDamage}`;
+      heroBox.classList.add("hero-attack-anim");
+      monsterBox.classList.add("monster-hit-anim");
+      slashEl.classList.add("slash-anim");
+      dmgEl.classList.add("dmg-anim");
+
+      document.getElementById("monster-hp").textContent = monsterHp;
+      document.getElementById("monster-hp-bar").style.width = `${(monsterHp / monsterMaxHp) * 100}%`;
+
+      if (monsterHp <= 0) {
+        isBattleActive = false;
+        setTimeout(() => handleStageVictory(), 550);
       }
     }
-    function openDaily() {
-      const box = document.getElementById("dailyList"); if(!box) return; box.innerHTML = "";
-      for(let i=0; i<7; i++) {
-        box.innerHTML += `<div class="feature-card"><span>第 ${i + 1} 天簽到</span><strong>🪙 ${(i+1)*120}</strong></div>`;
+
+    async function handleStageVictory() {
+      const isFirstTime = !playerData.clearedStages.includes(currentStage.id);
+      const rewardGold = isFirstTime ? currentStage.firstGold : currentStage.repeatGold;
+      const rewardExp = isFirstTime ? currentStage.firstExp : currentStage.repeatExp;
+
+      if (isFirstTime) playerData.clearedStages.push(currentStage.id);
+
+      playerData.gold += rewardGold;
+      playerData.exp += rewardExp;
+      playerData.dailyStages = (playerData.dailyStages || 0) + 1;
+
+      while (playerData.exp >= playerData.maxExp) {
+        playerData.exp -= playerData.maxExp;
+        playerData.level++;
+        playerData.maxExp = Math.floor(playerData.maxExp * 1.3);
+        playerData.baseAtk += 5;
       }
-      showScreen("dailyScreen");
-    }
-    function claimDaily() {
-      const dStr = new Date().toISOString().slice(0, 10);
-      if (data.lastClaim === dStr) { alert("今日已簽到領取過囉！"); return; }
-      data.coins += (data.dailyDay * 120);
-      data.dailyDay = data.dailyDay === 7 ? 1 : data.dailyDay + 1;
-      data.lastClaim = dStr; save(); openDaily();
-    }
 
-    async function startCameraAndPose() {
-      const video = document.getElementById("webcam"); 
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d"); 
-      const statusText = document.getElementById("cameraStatus");
+      const allItems = [...shopItems, ...petItems];
+      const dropItem = allItems[Math.floor(Math.random() * allItems.length)];
+      const dropAmount = currentStage.isBoss ? 5 : 2;
+      playerData.shards[dropItem.id] = (playerData.shards[dropItem.id] || 0) + dropAmount;
 
-      if (!globalPose) {
-        globalPose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file });
-        globalPose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-        globalPose.onResults((results) => {
-          canvas.width = video.videoWidth || 480; canvas.height = video.videoHeight || 640; 
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          if (results.poseLandmarks) {
-            const filtered = applyEmaSmoothing(results.poseLandmarks);
-            drawConnectors(ctx, filtered, POSE_CONNECTIONS, { color: "#38bdf8", lineWidth: 3 });
-            drawLandmarks(ctx, filtered, { color: "#ca8a04", lineWidth: 1.5 });
-            checkLiveSquat(filtered);
-          }
+      if (currentUser) {
+        await updateDoc(doc(db, "players", currentUser.uid), {
+          level: playerData.level, exp: playerData.exp, maxExp: playerData.maxExp, baseAtk: playerData.baseAtk,
+          totalSquats: playerData.totalSquats, dailyMoves: playerData.dailyMoves, dailyStages: playerData.dailyStages,
+          gold: playerData.gold, clearedStages: playerData.clearedStages, shards: playerData.shards
         });
       }
 
-      if (!globalCamera) {
-        globalCamera = new Camera(video, { onFrame: async () => { if(globalPose) await globalPose.send({ image: video }); }, width: 480, height: 640 });
-      }
-      try {
-        if(statusText) statusText.textContent = "📷 啟動聖光鏡頭...";
-        await globalCamera.start(); 
-        if(statusText) statusText.textContent = "🛡️ 領主血條";
-      } catch (err) { console.error(err); }
+      const totalRepsDone = sessionSquats;
+      sessionSquats = 0;
+      alert(`🎉 擊敗 ${currentStage.enemy}！(共運動 ${totalRepsDone} 下)\n${isFirstTime ? '🌟【首通獎勵】' : '🔄【重複通關獎勵】'}\n金幣 +${rewardGold}G | 經驗 +${rewardExp} EXP\n📦 掉落【${dropItem.id}】碎片 x${dropAmount}！`);
+      updateUI();
+      leaveBattleAction();
     }
 
-    function applyEmaSmoothing(raw) {
-      if (!smoothedLandmarks || smoothedLandmarks.length !== raw.length) {
-        smoothedLandmarks = raw.map(lm => ({ ...lm }));
-        return smoothedLandmarks;
-      }
-      for (let i = 0; i < raw.length; i++) {
-        smoothedLandmarks[i].x += SMOOTHING_ALPHA * (raw[i].x - smoothedLandmarks[i].x);
-        smoothedLandmarks[i].y += SMOOTHING_ALPHA * (raw[i].y - smoothedLandmarks[i].y);
-        smoothedLandmarks[i].z += SMOOTHING_ALPHA * (raw[i].z - smoothedLandmarks[i].z);
-        smoothedLandmarks[i].visibility = raw[i].visibility;
-      }
-      return smoothedLandmarks;
-    }
+    window.gachaPull = async function(type, count = 1) {
+      const singleCost = type === 'equipment' ? 300 : 400;
+      const totalCost = count === 10 ? Math.floor(singleCost * 10 * 0.9) : singleCost;
 
-    function checkLiveSquat(lm) {
-      const lh = lm[23], lk = lm[25], la = lm[27], rh = lm[24], rk = lm[26], ra = lm[28];
-      if (lk.visibility < 0.5 || la.visibility < 0.5 || rk.visibility < 0.5 || ra.visibility < 0.5) return;
+      if (playerData.gold < totalCost) return alert(`💰 金幣不足！需要 ${totalCost} 金幣。`);
+      playerData.gold -= totalCost;
 
-      const minAngle = Math.min(calcAngle(lh, lk, la), calcAngle(rh, rk, ra));
-      document.getElementById("debug").textContent = `膝蓋角度：${Math.round(minAngle)}° (${squatState === 'up' ? '站立' : '深蹲中'})`;
+      const pool = type === 'equipment' ? shopItems : petItems;
+      const results = [];
 
-      if (squatState === "up" && minAngle < 125) squatState = "down";
-      if (squatState === "down" && minAngle > 160) {
-        const now = Date.now();
-        if (now - lastAttackTime > 800) { onSquatSuccess(); lastAttackTime = now; }
-        squatState = "up";
-      }
-    }
-
-    function calcAngle(a, b, c) {
-      const ab = { x: a.x - b.x, y: a.y - b.y }, cb = { x: c.x - b.x, y: c.y - b.y };
-      const dot = ab.x * cb.x + ab.y * cb.y;
-      const len = Math.sqrt(ab.x**2 + ab.y**2) * Math.sqrt(cb.x**2 + cb.y**2);
-      return len === 0 ? 180 : Math.acos(Math.min(1, Math.max(-1, dot / len))) * 180 / Math.PI;
-    }
-
-    function startBattle(stageNum) {
-      isSettling = false; currentBattleStage = parseInt(stageNum);
-      maxBossHp = 80 + currentBattleStage * 20; bossHp = maxBossHp;
-
-      document.getElementById("stageText").textContent = "地城 STAGE " + currentBattleStage;
-      const pet = activePet();
-      if (document.getElementById("battlePetLabel")) {
-        document.getElementById("battlePetLabel").textContent = `${pet.icon} ${pet.name}`;
+      for (let i = 0; i < count; i++) {
+        let candidatePool = (count === 10 && i === 9) ? pool.filter(item => item.rarity !== 'common') : pool;
+        const pulled = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+        const gain = pulled.rarity === 'legendary' ? 2 : (pulled.rarity === 'epic' ? 3 : 4);
+        playerData.shards[pulled.id] = (playerData.shards[pulled.id] || 0) + gain;
+        results.push({ item: pulled, gain: gain });
       }
 
-      updateBattleUI();
-      showScreen("gameScreen");
-      startCameraAndPose();
-    }
-
-    function onSquatSuccess() {
-      if (isSettling) return;
-      const pet = activePet();
-      let shopBonus = 0;
-      if(data.shop) data.shop.forEach(i => { shopBonus += (i.level * i.baseStat); });
-
-      const dmg = data.roleAttack + pet.attack + shopBonus;
-      bossHp = Math.max(0, bossHp - dmg);
-
-      data.combo++; data.coins += 6;
-      document.getElementById("floatingText").textContent = `⚔️ -${dmg}`;
-      updateBattleUI(); save();
-
-      if (bossHp <= 0) {
-        isSettling = true;
-        setTimeout(() => {
-          alert(`🎉 擊殺 STAGE ${currentBattleStage} 怪物！`);
-          if (currentBattleStage === data.stage) data.stage++;
-          data.combo = 0; save(); showScreen("mapScreen");
-        }, 300);
+      if (currentUser) {
+        await updateDoc(doc(db, "players", currentUser.uid), { gold: playerData.gold, shards: playerData.shards });
       }
+      updateUI();
+
+      document.getElementById("gacha-modal-title").textContent = type === 'equipment' ? `⚔️ 神兵鍛造 (${count}抽)` : `🐉 深淵召喚 (${count}抽)`;
+      document.getElementById("gacha-results-grid").innerHTML = results.map(r => `
+        <div class="gacha-reward-chip rarity-${r.item.rarity}" style="border: 1.5px solid;">
+          <div style="width: 36px; height: 36px; flex-shrink: 0;">
+            <svg viewBox="0 0 100 100" width="100%" height="100%">${r.item.iconSvg}</svg>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: bold;" class="badge-${r.item.rarity}">[${r.item.rarityName}] ${r.item.id}</div>
+            <div style="font-size: 11px; color: var(--accent-gold);">碎片 +${r.gain}</div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById("gacha-reveal-modal").style.display = "flex";
+    };
+
+    window.closeGachaModal = function() {
+      document.getElementById("gacha-reveal-modal").style.display = "none";
+    };
+
+    window.synthesizeItem = async function(itemId) {
+      const item = [...shopItems, ...petItems].find(i => i.id === itemId);
+      if (!item) return;
+      const req = item.requiredShards || 5;
+      if ((playerData.shards[itemId] || 0) < req) return alert(`碎片不足！需要 ${req} 個碎片。`);
+
+      playerData.shards[itemId] -= req;
+      if (shopItems.some(i => i.id === itemId)) {
+        if (!playerData.inventory.includes(itemId)) playerData.inventory.push(itemId);
+      } else {
+        if (!playerData.pets.includes(itemId)) playerData.pets.push(itemId);
+      }
+
+      await updateDoc(doc(db, "players", currentUser.uid), { inventory: playerData.inventory, pets: playerData.pets, shards: playerData.shards });
+      alert(`🎉 成功合成【${itemId}】！`);
+      renderShardsBag();
+      renderInventory();
+    };
+
+    function renderShardsBag() {
+      const container = document.getElementById("shards-container");
+      const keys = Object.keys(playerData.shards).filter(k => playerData.shards[k] > 0);
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="list-row" style="justify-content:center; color:var(--text-muted); padding:24px;">目前尚無碎片，快去轉蛋所或討伐魔王收集吧！</div>`;
+        return;
+      }
+      container.innerHTML = keys.map(id => {
+        const count = playerData.shards[id];
+        const item = [...shopItems, ...petItems].find(i => i.id === id);
+        const req = item ? (item.requiredShards || 5) : 5;
+        const canSynth = count >= req;
+        const pct = Math.min(100, (count / req) * 100);
+        return `
+          <div class="list-row rarity-${item?.rarity || 'common'}" style="border-left: 4px solid;">
+            <div style="display:flex; align-items:center; gap:10px; flex:1;">
+              <div style="width:40px; height:40px; flex-shrink:0;">
+                <svg viewBox="0 0 100 100" width="100%" height="100%">${item?.iconSvg || ''}</svg>
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:bold; font-size:13px;">${id} <span class="badge-${item?.rarity || 'common'}" style="font-size:10px;">[${item?.rarityName || '一般'}]</span></div>
+                <div class="task-progress-bg" style="margin-top:4px;">
+                  <div class="task-progress-fill" style="width:${pct}%; background:${canSynth ? 'var(--accent-green)' : 'var(--accent-gold)'};"></div>
+                </div>
+                <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">碎片進度：<b style="color:var(--accent-gold);">${count}</b> / ${req}</div>
+              </div>
+            </div>
+            ${canSynth ? `<button onclick="synthesizeItem('${id}')" class="task-btn-ready">⚡ 鍛造合成</button>` : `<span style="font-size:11px; color:var(--text-muted);">收集中</span>`}
+          </div>
+        `;
+      }).join('');
     }
 
-    function updateBattleUI() {
-      document.getElementById("hpText").textContent = `${bossHp} / ${maxBossHp}`;
-      document.getElementById("hpFill").style.width = `${(bossHp / maxBossHp) * 100}%`;
-      document.getElementById("combo").textContent = `COMBO x${data.combo}`;
+    function renderShop() {
+      const filtered = currentShopFilter === 'all' ? shopItems : shopItems.filter(i => i.type === currentShopFilter);
+      document.getElementById("shop-items-container").innerHTML = filtered.map(item => {
+        const owned = playerData.inventory.includes(item.id);
+        return `
+          <div class="item-card rarity-${item.rarity}">
+            <div style="font-size: 11px; font-weight: bold;" class="badge-${item.rarity}">[${item.rarityName}] ${item.typeLabel}</div>
+            <div class="item-icon-box"><svg viewBox="0 0 100 100">${item.iconSvg}</svg></div>
+            <div style="font-weight: 900; font-size: 13px;">${item.id}</div>
+            <div style="color: var(--accent-green); font-size: 11px; font-weight: bold; margin: 3px 0;">⚔️ 攻擊力 +${item.bonus}</div>
+            <div style="color: var(--accent-gold); font-size: 11px; margin-bottom: 6px;">價值 💰 ${item.price.toLocaleString()} (需 ${item.requiredShards} 碎片)</div>
+            ${owned ? '<div class="task-btn-claimed" style="padding:5px;">✓ 已解鎖擁有</div>' : `<div style="font-size:10px; color:var(--text-muted); background:#111320; padding:5px; border-radius:6px;">透過轉蛋 / 碎片合成解鎖</div>`}
+          </div>
+        `;
+      }).join('');
     }
 
-    window.onload = function() { refreshTop(); };
+    function renderPetsShop() {
+      document.getElementById("shop-pets-container").innerHTML = petItems.map(pet => {
+        const owned = playerData.pets.includes(pet.id);
+        const isEquipped = playerData.equippedPet === pet.id;
+        return `
+          <div class="item-card rarity-${pet.rarity}">
+            <div style="font-size: 11px; font-weight: bold;" class="badge-${pet.rarity}">[${pet.rarityName}] 兇猛戰寵</div>
+            <div class="item-icon-box" style="width: 64px; height: 64px;">${pet.iconSvg}</div>
+            <div style="font-weight: 900; font-size: 13px;">${pet.id}</div>
+            <div style="color: var(--accent-green); font-size: 11px; font-weight: bold; margin: 2px 0;">🩸 羈絆攻擊 +${pet.bonusAtk}</div>
+            <div style="color: var(--text-muted); font-size: 10px; margin-bottom: 6px;">${pet.desc} (需 ${pet.requiredShards} 碎片)</div>
+            ${isEquipped ? '<div class="task-btn-claimed" style="padding:5px;">✓ 出戰隨行中</div>' :
+              (owned ? `<button onclick="equipPet('${pet.id}')" style="width:100%; padding:6px; background:var(--accent-green); color:#000; font-size:11px;">召喚隨行</button>` :
+              `<div style="font-size:10px; color:var(--text-muted); background:#111320; padding:5px; border-radius:6px;">透過深淵召喚 / 碎片合成</div>`)}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.equipPet = async function(petId) {
+      playerData.equippedPet = petId;
+      await updateDoc(doc(db, "players", currentUser.uid), { equippedPet: playerData.equippedPet });
+      renderPetsShop();
+      syncHeroSVG();
+      updateUI();
+    };
+
+    function renderInventory() {
+      document.getElementById("slot-weapon").textContent = playerData.equipped.weapon || "無";
+      document.getElementById("slot-head").textContent = playerData.equipped.head || "無";
+      document.getElementById("slot-chest").textContent = playerData.equipped.chest || "無";
+      document.getElementById("slot-shoes").textContent = playerData.equipped.shoes || "無";
+      syncHeroSVG();
+      updateUI();
+
+      const ownedItems = playerData.inventory.map(itemId => {
+        return shopItems.find(i => i.id === itemId) || { id: itemId, type: "weapon", typeLabel: "武器", rarity: "common", rarityName: "一般", bonus: 5, iconSvg: "" };
+      }).filter(item => currentInvFilter === 'all' || item.type === currentInvFilter);
+
+      const container = document.getElementById("inventory-container");
+      if (ownedItems.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:20px; font-size:12px;">此部位尚無已解鎖裝備，快去轉蛋或合成爐看看吧！</div>`;
+        return;
+      }
+
+      container.innerHTML = ownedItems.map(item => {
+        const isEquipped = Object.values(playerData.equipped).includes(item.id);
+        return `
+          <div class="item-card rarity-${item.rarity} ${isEquipped ? 'equipped' : ''}">
+            <div style="font-size: 11px; font-weight: bold;" class="badge-${item.rarity}">[${item.rarityName}] ${item.typeLabel}</div>
+            <div class="item-icon-box"><svg viewBox="0 0 100 100">${item.iconSvg}</svg></div>
+            <div style="font-weight: 900; font-size: 13px;">${item.id}</div>
+            <div style="color: var(--accent-green); font-size: 11px; font-weight: bold; margin: 3px 0 8px 0;">⚔️ 攻擊 +${item.bonus}</div>
+            ${isEquipped ? '<div class="task-btn-claimed" style="padding: 5px;">✓ 穿戴上陣中</div>' : `<button onclick="equipItem('${item.id}')" style="width:100%; padding:7px; background:linear-gradient(135deg, #00e676, #00b0ff); color:#000; font-weight:900; font-size:11px;">穿戴裝備</button>`}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.equipItem = async function(itemId) {
+      const item = shopItems.find(i => i.id === itemId);
+      if (!item) return;
+      playerData.equipped[item.type] = itemId;
+      await updateDoc(doc(db, "players", currentUser.uid), { equipped: playerData.equipped });
+      renderInventory();
+      updateUI();
+    };
+
+    async function loadLeaderboard() {
+      const listEl = document.getElementById("leaderboard-list");
+      listEl.innerHTML = "讀取排行榜中...";
+      const q = query(collection(db, "players"), orderBy("totalSquats", "desc"), limit(10));
+      const querySnapshot = await getDocs(q);
+      let html = "", rank = 1;
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+        const borderStyle = rank === 1 ? "border-color:#ffd700; background:linear-gradient(135deg,#2b230c,#141624);" : "";
+        html += `
+          <div class="list-row" style="${borderStyle}">
+            <span><b style="font-size:15px;">${medal}</b> <b>${data.name}</b> <span style="color:var(--accent-cyan); font-size:11px;">(Lv.${data.level || 1})</span></span>
+            <span style="color: var(--accent-gold); font-weight:900;">🔥 ${data.totalSquats || 0} 次</span>
+          </div>
+        `;
+        rank++;
+      });
+      listEl.innerHTML = html || "目前尚無資料";
+    }
+
+    function renderFriends() {
+      const fList = document.getElementById("friends-list");
+      if (!fList) return;
+      if (!playerData.friends || playerData.friends.length === 0) {
+        fList.innerHTML = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:12px;">目前尚無結盟好友，快輸入朋友的 Google Email 結盟吧！</div>`;
+        return;
+      }
+      fList.innerHTML = playerData.friends.map(f => `
+        <div class="list-row">
+          <span>⚔️ <b>${f.name}</b> <span style="color:var(--accent-cyan); font-size:11px;">(Lv.${f.level || 1})</span></span>
+          <span style="color: var(--accent-gold); font-size:11px; font-weight:bold;">🔥 累計 ${f.totalSquats || 0} 次</span>
+        </div>
+      `).join('');
+    }
+
+    window.addFriend = async function() {
+      const emailInput = document.getElementById("friend-email-input");
+      const email = emailInput.value.trim();
+      if (!email) return alert("請輸入好友的 Google Email！");
+      if (currentUser && email === currentUser.email) return alert("不能加自己為好友喔！");
+
+      const q = query(collection(db, "players"), where("email", "==", email));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        return alert("找不到該 Email 的勇者！請確認朋友已經登入過本遊戲。");
+      }
+
+      const friendDoc = snap.docs[0].data();
+      if (playerData.friends.some(f => f.email === email)) {
+        return alert("這位勇者已經在你的好友名單中囉！");
+      }
+
+      playerData.friends.push({
+        name: friendDoc.name || "神秘勇者",
+        email: friendDoc.email,
+        level: friendDoc.level || 1,
+        totalSquats: friendDoc.totalSquats || 0
+      });
+
+      if (currentUser) {
+        await updateDoc(doc(db, "players", currentUser.uid), { friends: playerData.friends });
+      }
+      emailInput.value = "";
+      alert(`🎉 成功與【${friendDoc.name}】結為冒險好友！`);
+      renderFriends();
+    };
+
+    // MediaPipe 嚴格防作弊多關節交叉驗證引擎
+    const videoElement = document.getElementById('input_video');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const statusBadge = document.getElementById('pose-status');
+
+    let poseState = "UP";
+    let minSquatAngle = 180;
+    let lastHighKneeLeg = null;
+    let currentLiftLeg = null;
+    let cameraInstance = null;
+    let cameraStarted = false;
+
+    function resetPoseTrackingState() {
+      poseState = "UP";
+      minSquatAngle = 180;
+      currentLiftLeg = null;
+    }
+
+    function calculateAngle(a, b, c) {
+      const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+      let angle = Math.abs(radians * 180.0 / Math.PI);
+      return angle > 180.0 ? 360 - angle : angle;
+    }
+
+    function drawMinimalImportantSkeleton(ctx, lm, w, h, activeMoveType) {
+      const corePairs = [[11, 12], [11, 23], [12, 24], [23, 24], [11, 13], [13, 15], [12, 14], [14, 16], [23, 25], [25, 27], [24, 26], [26, 28]];
+      ctx.lineWidth = 4; ctx.lineCap = "round";
+
+      corePairs.forEach(([i, j]) => {
+        const p1 = lm[i], p2 = lm[j];
+        if (p1 && p2 && p1.visibility > 0.5 && p2.visibility > 0.5) {
+          const isLegBone = i >= 23 || j >= 23;
+          const isArmBone = (i >= 11 && i <= 16) && (j >= 11 && j <= 16);
+          ctx.strokeStyle = ((activeMoveType === "squat" || activeMoveType === "high_knees") && isLegBone) ? "#00e676" :
+                            (activeMoveType === "jumping_jack" && (isArmBone || isLegBone)) ? "#ffea00" : "rgba(255, 255, 255, 0.35)";
+          ctx.beginPath(); ctx.moveTo(p1.x * w, p1.y * h); ctx.lineTo(p2.x * w, p2.y * h); ctx.stroke();
+        }
+      });
+
+      [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28].forEach(idx => {
+        const pt = lm[idx];
+        if (pt && pt.visibility > 0.5) {
+          ctx.fillStyle = pt.visibility > 0.65 ? (idx >= 23 ? "#00e676" : "#00e5ff") : "#ff1744";
+          ctx.beginPath(); ctx.arc(pt.x * w, pt.y * h, 5, 0, Math.PI * 2); ctx.fill();
+        }
+      });
+    }
+
+    function onResults(results) {
+      if (!cameraStarted) return;
+      const w = canvasElement.width, h = canvasElement.height;
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, w, h);
+      canvasCtx.drawImage(results.image, 0, 0, w, h);
+
+      if (results.poseLandmarks && currentStage) {
+        const lm = results.poseLandmarks;
+        const moveType = comboMoveList[currentComboIndex] || "squat";
+        drawMinimalImportantSkeleton(canvasCtx, lm, w, h, moveType);
+
+        if (isBattleActive && !isBattlePaused) {
+          const requiredIndices = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+          const allFullBodyVisible = requiredIndices.every(idx => lm[idx] && lm[idx].visibility > 0.65);
+
+          if (!allFullBodyVisible) {
+            statusBadge.textContent = "⚠️ 請退後讓全身(含手腕與雙腳腳踝)完整入鏡！";
+            statusBadge.style.color = "#ff5252";
+            canvasCtx.restore();
+            return;
+          }
+
+          const nose = lm[0];
+          const lShoulder = lm[11], rShoulder = lm[12];
+          const lWrist = lm[15], rWrist = lm[16];
+          const lHip = lm[23], rHip = lm[24];
+          const lKnee = lm[25], rKnee = lm[26];
+          const lAnkle = lm[27], rAnkle = lm[28];
+
+          const isUprightTorso = (lShoulder.y < lHip.y - 0.12) && (rShoulder.y < rHip.y - 0.12);
+          if (!isUprightTorso) {
+            statusBadge.textContent = "⚠️ 請保持直立站姿面對鏡頭！";
+            statusBadge.style.color = "#ff5252";
+            canvasCtx.restore();
+            return;
+          }
+
+          const angleL = calculateAngle(lHip, lKnee, lAnkle);
+          const angleR = calculateAngle(rHip, rKnee, rAnkle);
+
+          if (moveType === "squat") {
+            const avgAngle = (angleL + angleR) / 2;
+            const isSymmetric = Math.abs(angleL - angleR) <= 20;
+            const thighLenL = Math.hypot(lHip.x - lKnee.x, lHip.y - lKnee.y);
+            const thighLenR = Math.hypot(rHip.x - rKnee.x, rHip.y - rKnee.y);
+            const avgThighLen = (thighLenL + thighLenR) / 2;
+            const avgHipY = (lHip.y + rHip.y) / 2;
+            const avgKneeY = (lKnee.y + rKnee.y) / 2;
+
+            const isHipSunk = (avgKneeY - avgHipY) < (avgThighLen * 0.55);
+
+            if (angleL < 100 && angleR < 100 && isSymmetric && isHipSunk) {
+              poseState = "DOWN";
+              if (avgAngle < minSquatAngle) minSquatAngle = avgAngle;
+              statusBadge.textContent = `✅ 雙腿深蹲到位 (${Math.round(avgAngle)}°) - 請站直攻擊！`;
+              statusBadge.style.color = "#ffea00";
+            } else if (angleL > 165 && angleR > 165 && poseState === "DOWN") {
+              poseState = "UP";
+              const isPerfect = minSquatAngle < 88;
+              minSquatAngle = 180;
+              statusBadge.textContent = isPerfect ? `💥 完美深度深蹲暴擊 (1.3x)！` : `💥 標準深蹲攻擊 (1.0x)！`;
+              statusBadge.style.color = "#00e676";
+              triggerActionSuccess(isPerfect ? 1.3 : 1.0, isPerfect ? "完美深蹲" : "深蹲");
+            } else if (poseState === "UP") {
+              if ((angleL < 125 || angleR < 125) && !isHipSunk) {
+                statusBadge.textContent = `⚠️ 請往下蹲低臀部，勿僅彎腰鞠躬！`;
+                statusBadge.style.color = "#ff8a80";
+              } else {
+                statusBadge.textContent = `🏋️ 請雙腿同步下蹲 <100° (目前 ${Math.round(avgAngle)}°)`;
+                statusBadge.style.color = "#ffffff";
+              }
+            }
+          } else if (moveType === "jumping_jack") {
+            const hipWidth = Math.max(0.05, Math.abs(lHip.x - rHip.x));
+            const ankleDist = Math.abs(lAnkle.x - rAnkle.x);
+            const noseY = nose && nose.visibility > 0.5 ? nose.y : (Math.min(lShoulder.y, rShoulder.y) - 0.08);
+
+            const handsAboveHead = (lWrist.y < noseY) && (rWrist.y < noseY);
+            const legsWideOpen = ankleDist > (hipWidth * 1.6);
+
+            const handsBackToHip = (lWrist.y > lHip.y - 0.08) && (rWrist.y > rHip.y - 0.08);
+            const legsClosedTogether = ankleDist < (hipWidth * 1.15);
+
+            if (handsAboveHead && legsWideOpen) {
+              poseState = "OPEN";
+              statusBadge.textContent = `✅ 手腳張開達標 - 請收回雙手並併攏雙腳！`;
+              statusBadge.style.color = "#ffea00";
+            } else if (handsBackToHip && legsClosedTogether && poseState === "OPEN") {
+              poseState = "UP";
+              statusBadge.textContent = `💥 標準開合跳攻擊成功！`;
+              statusBadge.style.color = "#00e676";
+              triggerActionSuccess(1.15, "開合跳");
+            } else if (poseState !== "OPEN") {
+              if (handsAboveHead && !legsWideOpen) {
+                statusBadge.textContent = `⚠️ 雙腳張開幅度不足，請跳開雙腳！`;
+                statusBadge.style.color = "#ff8a80";
+              } else {
+                statusBadge.textContent = `🤸 請高舉雙手過頭頂，並同時跳開雙腳`;
+                statusBadge.style.color = "#ffffff";
+              }
+            } else {
+              statusBadge.textContent = `🤸 請放下雙手至腰側並併攏雙腳完成動作`;
+              statusBadge.style.color = "#ffea00";
+            }
+          } else if (moveType === "high_knees") {
+            const leftLegValidLift = (lKnee.y <= lHip.y + 0.01) && (angleL < 110) && (angleR > 155);
+            const rightLegValidLift = (rKnee.y <= rHip.y + 0.01) && (angleR < 110) && (angleL > 155);
+            const bothLegsStanding = (lKnee.y > lHip.y + 0.14) && (rKnee.y > rHip.y + 0.14) && (angleL > 155) && (angleR > 155);
+
+            if (poseState === "UP") {
+              if (leftLegValidLift) {
+                if (lastHighKneeLeg === "L") {
+                  statusBadge.textContent = `⚠️ 請換【右腳】提膝，需左右交替！`;
+                  statusBadge.style.color = "#ff8a80";
+                } else {
+                  poseState = "LIFT";
+                  currentLiftLeg = "L";
+                  statusBadge.textContent = `✅ 左腳提膝達標 - 請落地站直完成攻擊！`;
+                  statusBadge.style.color = "#ffea00";
+                }
+              } else if (rightLegValidLift) {
+                if (lastHighKneeLeg === "R") {
+                  statusBadge.textContent = `⚠️ 請換【左腳】提膝，需左右交替！`;
+                  statusBadge.style.color = "#ff8a80";
+                } else {
+                  poseState = "LIFT";
+                  currentLiftLeg = "R";
+                  statusBadge.textContent = `✅ 右腳提膝達標 - 請落地站直完成攻擊！`;
+                  statusBadge.style.color = "#ffea00";
+                }
+              } else {
+                const nextHint = lastHighKneeLeg === "L" ? "請抬【右膝】" : (lastHighKneeLeg === "R" ? "請抬【左膝】" : "請單腳提膝");
+                statusBadge.textContent = `🏃 ${nextHint}至髖部高度 (支撐腳需保持站直)`;
+                statusBadge.style.color = "#ffffff";
+              }
+            } else if (poseState === "LIFT" && bothLegsStanding) {
+              lastHighKneeLeg = currentLiftLeg;
+              poseState = "UP";
+              statusBadge.textContent = `💥 交替高抬腿衝擊成功！`;
+              statusBadge.style.color = "#00e676";
+              triggerActionSuccess(1.1, "高抬腿");
+            }
+          }
+        }
+      }
+      canvasCtx.restore();
+    }
+
+    const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    pose.onResults(onResults);
+
+    async function startCameraEngine() {
+      if (cameraStarted) return;
+      cameraInstance = new Camera(videoElement, {
+        onFrame: async () => {
+          if (cameraStarted && document.getElementById("fullscreen-battle").style.display === "flex") {
+            await pose.send({ image: videoElement });
+          }
+        },
+        facingMode: 'user', width: 480, height: 640
+      });
+      await cameraInstance.start();
+      cameraStarted = true;
+    }
   </script>
 </body>
 </html>
