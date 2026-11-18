@@ -527,7 +527,7 @@
                 <div class="banner-tag-row">
                   <span class="gacha-pill pill-cyan" id="cam-ready-indicator">📷 鏡頭待命</span>
                 </div>
-                <h2 class="banner-title" style="color: #e0f2f1;">🏰 冒險者大廳</h2>
+                <h2 class="banner-title" style="color: #e0f2f1;">🏰 冒險者公會聖殿</h2>
                 <p class="banner-subtitle" style="margin-bottom: 0;">燃燒體能極限，累積經驗升階解鎖神聖戰力！</p>
               </div>
               <div class="banner-art-box">
@@ -585,7 +585,7 @@
           <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0;">📜 每日任務</h3>
+                <h3 style="margin: 0;">📜 公會每日懸賞任務</h3>
                 <span class="gacha-pill pill-cyan" id="daily-moves-summary">今日動作：0下 | 行走：0m</span>
               </div>
               <div id="daily-tasks-container"></div>
@@ -998,7 +998,7 @@
     let comboMoveList = [], currentComboIndex = 0, lastAttackTimestamp = 0, hasAskedCameraConsent = false;
 
     // =========================================================================
-    // 🚶 工業級防手搖計步引擎 (PrecisionStepEngine v2.0)
+    // 🚶 實機校準版防手搖計步引擎 (PrecisionStepEngine v2.1)
     // =========================================================================
     class PrecisionStepEngine {
       constructor({ onStepConfirmed, onStatusChange } = {}) {
@@ -1006,7 +1006,8 @@
         this.onStatusChange = onStatusChange || (() => {});
 
         this.gravity = { x: 0, y: 0, z: 0 };
-        this.alpha = 0.8;
+        this.alpha = 0.85;
+        this.isGravityInitialized = false;
 
         this.prevAcc = 0;
         this.currAcc = 0;
@@ -1020,14 +1021,14 @@
         this.isListening = false;
 
         this.PARAMS = {
-          WALK_MIN_PEAK: 1.45,       // 走路最小有效波峰 (m/s²)
-          RUN_THRESHOLD: 4.8,        // 跑步模式切換門檻 (m/s²)
-          MAX_HUMAN_PEAK: 18.0,      // 人類正常跑步落地極限，超過視為暴力甩機
-          MIN_STEP_MS: 240,          // 最小步間隔 (240ms ≈ 250步/分，職業跑者極限)
-          MAX_STEP_MS: 1350,         // 最大步間隔 (超過 1.35 秒視為停下腳步)
-          ROTATION_ENERGY_LIMIT: 55, // 角速度(deg/s)與線性加速度比值上限 (攔截坐著甩手腕)
-          CONFIRM_STEPS: 12,         // 連續穩定步數門檻 (達標後一次性補發)
-          MAX_CV: 0.24               // 步頻變異係數上限 (攔截節奏凌亂的手搖)
+          WALK_MIN_PEAK: 0.65,       // 調降走路波峰門檻 (0.65 m/s²)，拿手上/放口袋輕步走皆可偵測
+          RUN_THRESHOLD: 3.8,        // 跑步模式切換門檻 (m/s²)
+          MAX_HUMAN_PEAK: 20.0,      // 超過此值視為暴力甩機作弊
+          MIN_STEP_MS: 250,          // 最小步間隔 (250ms = 每秒4步，擋掉所有快速手搖)
+          MAX_STEP_MS: 1600,         // 最大步間隔 (放寬至 1.6 秒，慢走也不會斷掉)
+          MAX_SHAKE_ROTATION: 320,   // 絕對角速度上限 (deg/s)：僅攔截手腕猛力翻轉甩動
+          CONFIRM_STEPS: 5,          // 連續走 5 步即確認啟動並補發步數
+          MAX_CV: 0.35               // 步頻變異係數上限
         };
 
         this.handleMotion = this.handleMotion.bind(this);
@@ -1062,7 +1063,7 @@
           window.addEventListener('devicemotion', this.handleMotion, { passive: true });
           this.isListening = true;
         }
-        this.setStatus('IDLE', '防作弊步態引擎監測中 (需連續12步啟動)');
+        this.setStatus('IDLE', '計步感應中 (連續走 5 步開始累加)');
         return true;
       }
 
@@ -1078,11 +1079,18 @@
 
       getLinearAcceleration(event) {
         const acc = event.acceleration;
-        if (acc && acc.x !== null && (acc.x !== 0 || acc.y !== 0 || acc.z !== 0)) {
+        if (acc && acc.x !== null && (Math.abs(acc.x) > 0.01 || Math.abs(acc.y) > 0.01 || Math.abs(acc.z) > 0.01)) {
           return Math.sqrt(acc.x ** 2 + acc.y ** 2 + acc.z ** 2);
         }
+
         const accG = event.accelerationIncludingGravity;
         if (!accG || accG.x === null) return 0;
+
+        if (!this.isGravityInitialized) {
+          this.gravity = { x: accG.x, y: accG.y, z: accG.z };
+          this.isGravityInitialized = true;
+          return 0;
+        }
 
         this.gravity.x = this.alpha * this.gravity.x + (1 - this.alpha) * accG.x;
         this.gravity.y = this.alpha * this.gravity.y + (1 - this.alpha) * accG.y;
@@ -1117,18 +1125,16 @@
 
         if (now < this.freezeUntil) return;
         if (this.currentStatus === 'CHEAT_LOCKED') {
-          this.setStatus('IDLE', '冷卻結束，恢復步態偵測');
+          this.setStatus('IDLE', '已恢復偵測，請正常步行');
         }
 
         const linearAcc = this.getLinearAcceleration(event);
 
-        // 1. 暴力甩機瞬間攔截
         if (linearAcc > this.PARAMS.MAX_HUMAN_PEAK) {
-          this.resetState('CHEAT_LOCKED', '⚠️ 偵測到異常劇烈晃動，已攔截計步', 2500);
+          this.resetState('CHEAT_LOCKED', '⚠️ 偵測到劇烈甩動，已暫停計步', 2000);
           return;
         }
 
-        // 2. 局部極大值波峰偵測 (prevAcc -> currAcc -> linearAcc)
         const isLocalPeak = this.isRising && (linearAcc < this.currAcc) && (this.currAcc >= this.PARAMS.WALK_MIN_PEAK);
         this.isRising = linearAcc > this.currAcc;
         const peakValue = this.currAcc;
@@ -1137,27 +1143,24 @@
 
         if (!isLocalPeak) {
           if (this.stepBuffer.length > 0 && (now - this.lastPeakTime > this.PARAMS.MAX_STEP_MS)) {
-            this.resetState('IDLE', '步行已暫停 (需連續12步啟動)');
+            this.resetState('IDLE', '計步感應中 (連續走 5 步開始累加)');
           }
           return;
         }
 
-        // 3. 陀螺儀手腕旋轉能量比檢測 (防坐著甩手腕)
         const rotSpeed = this.getNormalizedRotation(event);
-        if (rotSpeed > 0 && (rotSpeed / peakValue) > this.PARAMS.ROTATION_ENERGY_LIMIT) {
-          this.resetState('CHEAT_LOCKED', '⚠️ 偵測到手腕旋轉甩動，請正常步行或跑步', 2000);
+        if (rotSpeed > this.PARAMS.MAX_SHAKE_ROTATION) {
+          this.resetState('CHEAT_LOCKED', '⚠️ 偵測到手腕劇烈翻轉，請正常步行', 1500);
           return;
         }
 
         const dt = now - this.lastPeakTime;
 
-        // 4. 超高頻手搖過濾 (< 240ms)
         if (this.lastPeakTime !== 0 && dt < this.PARAMS.MIN_STEP_MS) {
-          this.resetState('CHEAT_LOCKED', '⚠️ 步頻異常過快，判定為手搖晃動', 2000);
+          this.resetState('CHEAT_LOCKED', '⚠️ 晃動頻率過快，判定為手搖作弊', 1500);
           return;
         }
 
-        // 5. 步態間隔記錄
         if (this.lastPeakTime !== 0 && dt <= this.PARAMS.MAX_STEP_MS) {
           this.intervals.push(dt);
           if (this.intervals.length > 8) this.intervals.shift();
@@ -1169,26 +1172,24 @@
         this.lastPeakTime = now;
         this.stepBuffer.push(now);
 
-        // 6. 節奏穩定度 (CV 值) 檢核
-        if (this.intervals.length >= 5) {
+        if (this.intervals.length >= 4) {
           const cv = this.getIntervalCV();
           if (cv > this.PARAMS.MAX_CV) {
-            this.resetState('CHEAT_LOCKED', '⚠️ 步伐節奏不穩，已重置步態驗證', 1500);
+            this.resetState('CHEAT_LOCKED', '⚠️ 步伐節奏不規律，已重置計步', 1200);
             return;
           }
         }
 
-        // 7. 步數結算與 UI 回報
         const modeLabel = peakValue >= this.PARAMS.RUN_THRESHOLD ? '🏃 跑步模式' : '🚶 步行模式';
         const bufferedCount = this.stepBuffer.length;
 
         if (bufferedCount < this.PARAMS.CONFIRM_STEPS) {
-          this.setStatus('VERIFYING', `步態驗證中 (${bufferedCount}/${this.PARAMS.CONFIRM_STEPS})...`);
+          this.setStatus('VERIFYING', `步態確認中 (${bufferedCount}/${this.PARAMS.CONFIRM_STEPS})...`);
         } else if (bufferedCount === this.PARAMS.CONFIRM_STEPS) {
-          this.setStatus('ACTIVE', `${modeLabel} · 有效計步中`);
+          this.setStatus('ACTIVE', `${modeLabel} · 計步中`);
           this.onStepConfirmed(this.PARAMS.CONFIRM_STEPS);
         } else {
-          this.setStatus('ACTIVE', `${modeLabel} · 有效計步中`);
+          this.setStatus('ACTIVE', `${modeLabel} · 計步中`);
           this.onStepConfirmed(1);
         }
       }
