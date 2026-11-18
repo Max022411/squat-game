@@ -106,6 +106,8 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex: 1;
+      min-width: 0;
     }
     .step-icon-badge {
       width: 40px;
@@ -119,6 +121,14 @@
       font-size: 20px;
       flex-shrink: 0;
     }
+    .step-status-sub {
+      font-size: 10px;
+      color: #84ffff;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .btn-step-action {
       background: rgba(0, 229, 255, 0.18);
       border: 1px solid #00e5ff;
@@ -128,6 +138,7 @@
       font-size: 11px;
       font-weight: bold;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .bar-bg { width: 100%; height: 12px; background-color: rgba(10, 12, 22, 0.85); border-radius: 6px; overflow: hidden; margin: 4px 0; border: 1px solid rgba(255,255,255,0.1); }
@@ -201,9 +212,7 @@
     .gacha-results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin: 14px 0; padding: 4px; }
     .gacha-reward-chip { background: #1a1c2e; border-radius: 12px; padding: 8px; display: flex; align-items: center; gap: 8px; text-align: left; }
 
-    /* =========================================
-       🛡️ 角色裝備展示台 (RPG 左右環繞四部位插槽)
-       ========================================= */
+    /* 🛡️ 角色裝備展示台 (RPG 左右環繞四部位插槽) */
     .hero-armory-showcase {
       background:
         radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.22) 0%, rgba(213, 0, 249, 0.12) 45%, rgba(10, 12, 24, 0.95) 78%),
@@ -394,7 +403,7 @@
     <div style="font-size: 14px; color: var(--accent-green); margin-top: 16px;">請退後讓全身(含手腕與腳踝)完整入鏡！</div>
   </div>
 
-  <!-- 🔥 滿屏上下雙畫面戰鬥視窗 (右上角僅保留設定齒輪) -->
+  <!-- 🔥 滿屏上下雙畫面戰鬥視窗 -->
   <div class="fullscreen-battle" id="fullscreen-battle">
     <div class="battle-top-controls">
       <button class="btn-icon-circle" onclick="openPauseMenu()" title="設定選單">⚙️</button>
@@ -553,13 +562,14 @@
               </div>
             </div>
 
-            <!-- 🚶 今日步行步數與里程紀錄面板 (已移除測試按鈕) -->
+            <!-- 🚶 今日步行步數與防手搖狀態面板 -->
             <div class="step-tracker-panel">
               <div class="step-panel-left">
                 <div class="step-icon-badge">🚶</div>
-                <div>
+                <div style="min-width: 0;">
                   <div style="font-size: 11px; color: var(--text-muted);">今日步行步數 (約 <span id="home-walk-meters" style="color:var(--accent-cyan); font-weight:bold;">0</span> m)</div>
                   <div style="font-size: 18px; font-weight: 900; color: #fff;"><span id="home-daily-steps">0</span> <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">步</span></div>
+                  <div class="step-status-sub" id="step-engine-status">防作弊步態引擎待命中</div>
                 </div>
               </div>
               <button class="btn-step-action" id="btn-step-sensor" onclick="enableStepSensor()">📱 開啟計步感應</button>
@@ -777,7 +787,6 @@
             <div id="equip-hero-section">
               <div class="hero-armory-showcase">
                 <div class="armory-stage-grid">
-                  <!-- 左欄：武器 + 頭盔 -->
                   <div class="armory-side-col">
                     <div class="armory-slot-box" id="box-slot-weapon">
                       <span class="armory-slot-type">🗡️ 武器</span>
@@ -793,7 +802,6 @@
                     </div>
                   </div>
 
-                  <!-- 中央：帥氣稜角戰神模型 + 雙層旋轉星陣 -->
                   <div class="svg-stage">
                     <svg viewBox="0 0 200 230" width="100%" height="100%">
                       <defs>
@@ -837,7 +845,6 @@
                     </svg>
                   </div>
 
-                  <!-- 右欄：胸甲 + 鞋子 -->
                   <div class="armory-side-col">
                     <div class="armory-slot-box" id="box-slot-chest">
                       <span class="armory-slot-type">🦺 胸甲</span>
@@ -855,7 +862,6 @@
                 </div>
               </div>
 
-              <!-- 背包部位分類篩選器 -->
               <div class="filter-pills-row" id="inv-filter-bar">
                 <button class="filter-pill-btn active" onclick="filterInventoryItems('all', this)">全部已擁有</button>
                 <button class="filter-pill-btn" onclick="filterInventoryItems('weapon', this)">🗡️ 武器</button>
@@ -977,9 +983,8 @@
 
     let currentShopFilter = "all";
     let currentInvFilter = "all";
-    const STEP_LENGTH_METERS = 0.8; // 標準步幅：1步 = 0.8m (1250步 = 1000m)
+    const STEP_LENGTH_METERS = 0.8;
 
-    // 每日懸賞任務設定 (含「每日行走 1000m」任務)
     const dailyQuestsConfig = [
       { id: "daily_walk_1000m", title: "🚶 每日行走 1000m", rewardText: "獎勵：+120 金幣 & 疾風之靴碎片 x3", target: 1000, unit: "m", getProgress: () => Math.floor((playerData.dailySteps || 0) * STEP_LENGTH_METERS), goldReward: 120, shardItem: "疾風之靴", shardCount: 3 },
       { id: "daily_10_moves", title: "🔥 完成 10 下體感動作", rewardText: "獎勵：+100 金幣 & 精鋼戰劍碎片 x3", target: 10, unit: "下", getProgress: () => playerData.dailyMoves || 0, goldReward: 100, shardItem: "精鋼戰劍", shardCount: 3 },
@@ -992,47 +997,239 @@
     let isBattleActive = false, isBattlePaused = false;
     let comboMoveList = [], currentComboIndex = 0, lastAttackTimestamp = 0, hasAskedCameraConsent = false;
 
-    // 手機加速度計步感應變數
-    let stepSensorListening = false;
-    let lastStepTime = 0;
+    // =========================================================================
+    // 🚶 工業級防手搖計步引擎 (PrecisionStepEngine v2.0)
+    // =========================================================================
+    class PrecisionStepEngine {
+      constructor({ onStepConfirmed, onStatusChange } = {}) {
+        this.onStepConfirmed = onStepConfirmed || (() => {});
+        this.onStatusChange = onStatusChange || (() => {});
 
-    window.enableStepSensor = async function() {
-      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-        try {
-          const permission = await DeviceMotionEvent.requestPermission();
-          if (permission !== 'granted') return alert("需要允許動作感應權限才能自動計步！");
-        } catch (err) {
-          console.error(err);
+        this.gravity = { x: 0, y: 0, z: 0 };
+        this.alpha = 0.8;
+
+        this.prevAcc = 0;
+        this.currAcc = 0;
+        this.isRising = false;
+
+        this.stepBuffer = [];
+        this.intervals = [];
+        this.lastPeakTime = 0;
+        this.freezeUntil = 0;
+        this.currentStatus = 'IDLE';
+        this.isListening = false;
+
+        this.PARAMS = {
+          WALK_MIN_PEAK: 1.45,       // 走路最小有效波峰 (m/s²)
+          RUN_THRESHOLD: 4.8,        // 跑步模式切換門檻 (m/s²)
+          MAX_HUMAN_PEAK: 18.0,      // 人類正常跑步落地極限，超過視為暴力甩機
+          MIN_STEP_MS: 240,          // 最小步間隔 (240ms ≈ 250步/分，職業跑者極限)
+          MAX_STEP_MS: 1350,         // 最大步間隔 (超過 1.35 秒視為停下腳步)
+          ROTATION_ENERGY_LIMIT: 55, // 角速度(deg/s)與線性加速度比值上限 (攔截坐著甩手腕)
+          CONFIRM_STEPS: 12,         // 連續穩定步數門檻 (達標後一次性補發)
+          MAX_CV: 0.24               // 步頻變異係數上限 (攔截節奏凌亂的手搖)
+        };
+
+        this.handleMotion = this.handleMotion.bind(this);
+      }
+
+      setStatus(newStatus, detail = '') {
+        this.currentStatus = newStatus;
+        this.onStatusChange(newStatus, detail);
+      }
+
+      async start() {
+        if (typeof DeviceMotionEvent === 'undefined') {
+          this.setStatus('UNSUPPORTED', '此裝置不支援動態感測器');
+          return false;
+        }
+
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+          try {
+            const res = await DeviceMotionEvent.requestPermission();
+            if (res !== 'granted') {
+              this.setStatus('DENIED', '需要允許動作與方向感測器權限');
+              alert("需要允許動作感應權限才能自動計步！");
+              return false;
+            }
+          } catch (e) {
+            this.setStatus('ERROR', '請點擊按鈕開啟感應');
+            return false;
+          }
+        }
+
+        if (!this.isListening) {
+          window.addEventListener('devicemotion', this.handleMotion, { passive: true });
+          this.isListening = true;
+        }
+        this.setStatus('IDLE', '防作弊步態引擎監測中 (需連續12步啟動)');
+        return true;
+      }
+
+      resetState(status = 'IDLE', detail = '', freezeMs = 0) {
+        this.stepBuffer = [];
+        this.intervals = [];
+        this.isRising = false;
+        if (freezeMs > 0) {
+          this.freezeUntil = Date.now() + freezeMs;
+        }
+        this.setStatus(status, detail);
+      }
+
+      getLinearAcceleration(event) {
+        const acc = event.acceleration;
+        if (acc && acc.x !== null && (acc.x !== 0 || acc.y !== 0 || acc.z !== 0)) {
+          return Math.sqrt(acc.x ** 2 + acc.y ** 2 + acc.z ** 2);
+        }
+        const accG = event.accelerationIncludingGravity;
+        if (!accG || accG.x === null) return 0;
+
+        this.gravity.x = this.alpha * this.gravity.x + (1 - this.alpha) * accG.x;
+        this.gravity.y = this.alpha * this.gravity.y + (1 - this.alpha) * accG.y;
+        this.gravity.z = this.alpha * this.gravity.z + (1 - this.alpha) * accG.z;
+
+        const lx = accG.x - this.gravity.x;
+        const ly = accG.y - this.gravity.y;
+        const lz = accG.z - this.gravity.z;
+        return Math.sqrt(lx ** 2 + ly ** 2 + lz ** 2);
+      }
+
+      getNormalizedRotation(event) {
+        const rot = event.rotationRate;
+        if (!rot || rot.alpha === null) return 0;
+        let mag = Math.sqrt((rot.alpha || 0) ** 2 + (rot.beta || 0) ** 2 + (rot.gamma || 0) ** 2);
+        if (mag > 0 && mag < 12 && Math.abs(rot.alpha) < 6.3) {
+          mag = mag * (180 / Math.PI);
+        }
+        return mag;
+      }
+
+      getIntervalCV() {
+        const n = this.intervals.length;
+        if (n < 4) return 0;
+        const mean = this.intervals.reduce((sum, v) => sum + v, 0) / n;
+        const variance = this.intervals.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n;
+        return Math.sqrt(variance) / mean;
+      }
+
+      handleMotion(event) {
+        const now = Date.now();
+
+        if (now < this.freezeUntil) return;
+        if (this.currentStatus === 'CHEAT_LOCKED') {
+          this.setStatus('IDLE', '冷卻結束，恢復步態偵測');
+        }
+
+        const linearAcc = this.getLinearAcceleration(event);
+
+        // 1. 暴力甩機瞬間攔截
+        if (linearAcc > this.PARAMS.MAX_HUMAN_PEAK) {
+          this.resetState('CHEAT_LOCKED', '⚠️ 偵測到異常劇烈晃動，已攔截計步', 2500);
+          return;
+        }
+
+        // 2. 局部極大值波峰偵測 (prevAcc -> currAcc -> linearAcc)
+        const isLocalPeak = this.isRising && (linearAcc < this.currAcc) && (this.currAcc >= this.PARAMS.WALK_MIN_PEAK);
+        this.isRising = linearAcc > this.currAcc;
+        const peakValue = this.currAcc;
+        this.prevAcc = this.currAcc;
+        this.currAcc = linearAcc;
+
+        if (!isLocalPeak) {
+          if (this.stepBuffer.length > 0 && (now - this.lastPeakTime > this.PARAMS.MAX_STEP_MS)) {
+            this.resetState('IDLE', '步行已暫停 (需連續12步啟動)');
+          }
+          return;
+        }
+
+        // 3. 陀螺儀手腕旋轉能量比檢測 (防坐著甩手腕)
+        const rotSpeed = this.getNormalizedRotation(event);
+        if (rotSpeed > 0 && (rotSpeed / peakValue) > this.PARAMS.ROTATION_ENERGY_LIMIT) {
+          this.resetState('CHEAT_LOCKED', '⚠️ 偵測到手腕旋轉甩動，請正常步行或跑步', 2000);
+          return;
+        }
+
+        const dt = now - this.lastPeakTime;
+
+        // 4. 超高頻手搖過濾 (< 240ms)
+        if (this.lastPeakTime !== 0 && dt < this.PARAMS.MIN_STEP_MS) {
+          this.resetState('CHEAT_LOCKED', '⚠️ 步頻異常過快，判定為手搖晃動', 2000);
+          return;
+        }
+
+        // 5. 步態間隔記錄
+        if (this.lastPeakTime !== 0 && dt <= this.PARAMS.MAX_STEP_MS) {
+          this.intervals.push(dt);
+          if (this.intervals.length > 8) this.intervals.shift();
+        } else {
+          this.stepBuffer = [];
+          this.intervals = [];
+        }
+
+        this.lastPeakTime = now;
+        this.stepBuffer.push(now);
+
+        // 6. 節奏穩定度 (CV 值) 檢核
+        if (this.intervals.length >= 5) {
+          const cv = this.getIntervalCV();
+          if (cv > this.PARAMS.MAX_CV) {
+            this.resetState('CHEAT_LOCKED', '⚠️ 步伐節奏不穩，已重置步態驗證', 1500);
+            return;
+          }
+        }
+
+        // 7. 步數結算與 UI 回報
+        const modeLabel = peakValue >= this.PARAMS.RUN_THRESHOLD ? '🏃 跑步模式' : '🚶 步行模式';
+        const bufferedCount = this.stepBuffer.length;
+
+        if (bufferedCount < this.PARAMS.CONFIRM_STEPS) {
+          this.setStatus('VERIFYING', `步態驗證中 (${bufferedCount}/${this.PARAMS.CONFIRM_STEPS})...`);
+        } else if (bufferedCount === this.PARAMS.CONFIRM_STEPS) {
+          this.setStatus('ACTIVE', `${modeLabel} · 有效計步中`);
+          this.onStepConfirmed(this.PARAMS.CONFIRM_STEPS);
+        } else {
+          this.setStatus('ACTIVE', `${modeLabel} · 有效計步中`);
+          this.onStepConfirmed(1);
         }
       }
-      if (!stepSensorListening) {
-        window.addEventListener('devicemotion', handleDeviceMotion);
-        stepSensorListening = true;
-      }
-      const btn = document.getElementById("btn-step-sensor");
-      if (btn) {
-        btn.textContent = "📱 計步感應中";
-        btn.style.background = "rgba(0, 230, 118, 0.2)";
-        btn.style.borderColor = "#00e676";
-        btn.style.color = "#00e676";
-      }
-    };
+    }
 
-    function handleDeviceMotion(event) {
-      const acc = event.accelerationIncludingGravity;
-      if (!acc) return;
-      const magnitude = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
-      const now = Date.now();
-      // 偵測步行步伐震動峰值 (大於 13.2 m/s² 且間隔 > 350ms)
-      if (magnitude > 13.2 && (now - lastStepTime > 350)) {
-        lastStepTime = now;
-        playerData.dailySteps = (playerData.dailySteps || 0) + 1;
+    const stepEngine = new PrecisionStepEngine({
+      onStepConfirmed: (addedSteps) => {
+        playerData.dailySteps = (playerData.dailySteps || 0) + addedSteps;
         updateUI();
         if (playerData.dailySteps % 10 === 0 && currentUser) {
           updateDoc(doc(db, "players", currentUser.uid), { dailySteps: playerData.dailySteps });
         }
+      },
+      onStatusChange: (status, message) => {
+        const statusEl = document.getElementById("step-engine-status");
+        if (!statusEl) return;
+        statusEl.textContent = message;
+        if (status === 'CHEAT_LOCKED') {
+          statusEl.style.color = '#ff5252';
+        } else if (status === 'ACTIVE') {
+          statusEl.style.color = '#00e676';
+        } else if (status === 'VERIFYING') {
+          statusEl.style.color = '#ffea00';
+        } else {
+          statusEl.style.color = '#84ffff';
+        }
       }
-    }
+    });
+
+    window.enableStepSensor = async function() {
+      const ok = await stepEngine.start();
+      if (ok) {
+        const btn = document.getElementById("btn-step-sensor");
+        if (btn) {
+          btn.textContent = "📱 防作弊計步中";
+          btn.style.background = "rgba(0, 230, 118, 0.2)";
+          btn.style.borderColor = "#00e676";
+          btn.style.color = "#00e676";
+        }
+      }
+    };
 
     const exerciseVisuals = {
       squat: { name: "深蹲", svg: `<svg viewBox="0 0 60 60" width="36" height="36"><circle cx="30" cy="12" r="6" fill="#00e676"/><path d="M30 18 L26 32 L16 36 L18 48 M26 32 L38 36 L40 48 M30 22 L42 26" stroke="#00e676" stroke-width="4" stroke-linecap="round" fill="none"/></svg>` },
@@ -1040,7 +1237,6 @@
       high_knees: { name: "高抬腿", svg: `<svg viewBox="0 0 60 60" width="36" height="36"><circle cx="30" cy="12" r="6" fill="#00e5ff"/><path d="M30 18 L30 34 L22 50 M30 34 L44 28 L44 42 M20 26 L30 20 L40 26" stroke="#00e5ff" stroke-width="4" stroke-linecap="round" fill="none"/></svg>` }
     };
 
-    // 25 件全品階帥氣裝備產生器
     function createEquipVisuals(type, style, c1, c2, c3, rarity) {
       const glowBg = rarity === 'legendary' ? `rgba(255,171,0,0.28)` : (rarity === 'epic' ? `rgba(213,0,249,0.22)` : (rarity === 'rare' ? `rgba(0,176,255,0.2)` : `rgba(176,190,197,0.12)`));
       const ringStroke = rarity === 'legendary' ? `stroke="#ffea00" stroke-width="1.5" stroke-dasharray="6 3"` : (rarity === 'epic' ? `stroke="#d500f9" stroke-width="1.2" stroke-dasharray="4 4"` : ``);
@@ -1335,7 +1531,7 @@
         renderQuestMap();
         renderInventory();
 
-        // 若裝置支援免權限直接監聽加速度計，自動開啟步數偵測
+        // 若為 Android 或支援免權限直接監聽感測器，自動開啟防手搖計步
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') {
           window.enableStepSensor();
         }
